@@ -2,6 +2,9 @@ import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { supabase } from './lib/supabase';
 import { useAuthStore } from './stores/authStore';
+import { NetworkStatus } from './components/NetworkStatus';
+import { fetchRemoteTasks, processSyncQueue } from './lib/sync';
+import { useNetwork } from './hooks/useNetwork';
 import Login from './pages/Login';
 import Home from './pages/Home';
 
@@ -20,7 +23,8 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 function App() {
-  const { setSession, setUser, setIsLoading } = useAuthStore();
+  const { setSession, setUser, setIsLoading, session } = useAuthStore();
+  const { isOnline } = useNetwork();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -39,8 +43,17 @@ function App() {
     return () => subscription.unsubscribe();
   }, [setSession, setUser, setIsLoading]);
 
+  useEffect(() => {
+    if (session && isOnline) {
+      fetchRemoteTasks().then(() => {
+        processSyncQueue();
+      });
+    }
+  }, [session, isOnline]);
+
   return (
     <BrowserRouter>
+      <NetworkStatus />
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route

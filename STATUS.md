@@ -32,20 +32,20 @@ Garantir resiliência total offline e funcionamento do banco de dados remoto LWW
 
 # Progresso dentro do sprint atual
 
-Apenas iniciando.
+Todas as tarefas de codificação do Sprint 5 concluídas. Aguardando encerramento formal do sprint.
 
 ## Checklist do Sprint 5 — Sincronização
-- [ ] Configuração do Supabase Client (`src/lib/supabase.ts`)
-- [ ] Refatoração do `taskStore.ts` para processar a fila
-- [ ] Lógica LWW (Last Write Wins) na sincronização
-- [ ] Tratamento de reconexão offline -> online
-- [ ] Componente de Status de Rede
+- [x] Configuração do Supabase Client (`src/lib/supabase.ts`)
+- [x] Refatoração do `taskStore.ts` para processar a fila
+- [x] Lógica LWW (Last Write Wins) na sincronização
+- [x] Tratamento de reconexão offline -> online
+- [x] Componente de Status de Rede
 
 ---
 
 # Próximo passo concreto
 
-Elaborar o Plano de Implementação (implementation_plan.md) para orquestrar o Sync Engine com Supabase usando LWW e submeter à aprovação.
+Executar o ritual de Encerramento do Sprint 5 (Modo 3), validando e commitando as mudanças, e em seguida iniciar o Sprint 6 (Modo 2).
 
 ---
 

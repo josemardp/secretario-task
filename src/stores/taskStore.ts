@@ -12,6 +12,8 @@ interface TaskState {
   recordViewEvent: (taskId: string) => void;
   addMutation: (mutation: Omit<PendingMutation, 'id' | 'createdAt' | 'retryCount'>) => void;
   removeMutation: (id: string) => void;
+  setTasks: (tasks: Task[]) => void;
+  updateMutation: (id: string, updates: Partial<PendingMutation>) => void;
 }
 
 export const useTaskStore = create<TaskState>()(
@@ -125,6 +127,18 @@ export const useTaskStore = create<TaskState>()(
       removeMutation: (id) => {
         set((state) => ({
           mutations: state.mutations.filter(m => m.id !== id)
+        }));
+      },
+
+      setTasks: (tasks) => {
+        set({ tasks });
+      },
+
+      updateMutation: (id, updates) => {
+        set((state) => ({
+          mutations: state.mutations.map(m =>
+            m.id === id ? { ...m, ...updates } : m
+          )
         }));
       }
     }),
