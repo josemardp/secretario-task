@@ -3,14 +3,24 @@ import { useTaskStore } from '../stores/taskStore';
 import { useContextStore } from '../stores/contextStore';
 import { supabase } from '../lib/supabase';
 import { parseTaskInput } from '../lib/parser';
+import { generateEmbedding, generateSmartBriefing } from '../lib/ai';
 import { TaskBoard } from '../components/TaskBoard';
+import { SettingsModal } from '../components/SettingsModal';
 import { getDailyBriefing } from '../lib/briefing';
 import type { ContextType } from '../types';
 
 export default function Home() {
   const [taskText, setTaskText] = useState('');
+  const [searchText, setSearchText] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+  const [semanticResults, setSemanticResults] = useState<{id: string, similarity: number}[] | null>(null);
+
+  const [smartBriefingText, setSmartBriefingText] = useState<string | null>(null);
+  const [isGeneratingBriefing, setIsGeneratingBriefing] = useState(false);
+
   const { tasks, addTask, deleteTask } = useTaskStore();
-  const { activeContext, setActiveContext, currentEnergy, setCurrentEnergy } = useContextStore();
+  const { activeContext, setActiveContext, currentEnergy, setCurrentEnergy, aiApiKey } = useContextStore();
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const briefingTasks = getDailyBriefing(tasks, currentEnergy, activeContext, 3);
 
@@ -39,19 +49,87 @@ export default function Home() {
     await supabase.auth.signOut();
   };
 
+  const handleSemanticSearch = async () => {
+    if (!searchText.trim() || !aiApiKey) {
+      setSemanticResults(null);
+      return;
+    }
+    
+    setIsSearching(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) throw new Error("Não autenticado");
+
+      const embedding = await generateEmbedding(searchText, aiApiKey);
+      const { data, error } = await supabase.rpc('match_tasks', {
+        query_embedding: embedding,
+        match_threshold: 0.5, // 50% similarity
+        match_count: 5,
+        user_id_param: sessionData.session.user.id
+      });
+
+      if (error) throw error;
+      setSemanticResults(data || []);
+    } catch (err) {
+      console.error('Erro na busca semântica:', err);
+      alert('Falha na busca semântica. Verifique sua chave da API ou conexão.');
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const clearSearch = () => {
+    setSearchText('');
+    setSemanticResults(null);
+  };
+
+  const handleGenerateBriefing = async () => {
+    if (!aiApiKey) {
+      alert("Configure a chave da API (OpenAI) nas configurações primeiro.");
+      return;
+    }
+    
+    setIsGeneratingBriefing(true);
+    try {
+      const text = await generateSmartBriefing(briefingTasks, currentEnergy, aiApiKey);
+      setSmartBriefingText(text);
+    } catch (err) {
+      console.error('Falha ao gerar briefing:', err);
+      alert('Falha ao gerar o briefing. Tente novamente mais tarde.');
+    } finally {
+      setIsGeneratingBriefing(false);
+    }
+  };
+
+  // Filter tasks based on semantic results or normal text
+  const displayedTasks = semanticResults 
+    ? tasks.filter(t => semanticResults.some(r => r.id === t.id))
+    : tasks.filter(t => searchText ? t.title.toLowerCase().includes(searchText.toLowerCase()) : true);
+
   return (
     <div className="min-h-screen bg-gray-100">
       <header className="bg-white shadow">
         <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 flex justify-between items-center">
           <h1 className="text-3xl font-bold tracking-tight text-gray-900">SecretárioTask</h1>
-          <button 
-            onClick={handleLogout}
-            className="text-sm text-gray-600 hover:text-gray-900"
-          >
-            Sair
-          </button>
+          <div className="flex items-center gap-4">
+            <button 
+              onClick={() => setIsSettingsOpen(true)}
+              className="text-sm text-gray-600 hover:text-gray-900"
+              title="Configurações"
+            >
+              ⚙️
+            </button>
+            <button 
+              onClick={handleLogout}
+              className="text-sm text-gray-600 hover:text-gray-900"
+            >
+              Sair
+            </button>
+          </div>
         </div>
       </header>
+      
+      <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
       
       <main className="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
@@ -91,9 +169,30 @@ export default function Home() {
 
           {briefingTasks.length > 0 && (
             <div className="mb-8">
-              <h2 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
-                <span>🎯</span> Foco do Dia
-              </h2>
+              <div className="flex justify-between items-center mb-3">
+                <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                  <span>🎯</span> Foco do Dia
+                </h2>
+                <button
+                  onClick={handleGenerateBriefing}
+                  disabled={isGeneratingBriefing || !aiApiKey}
+                  className={`text-sm font-medium px-3 py-1.5 rounded-full transition-colors ${
+                    !aiApiKey 
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                      : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
+                  }`}
+                  title={!aiApiKey ? "Configure sua API Key primeiro" : "Briefing gerado por IA"}
+                >
+                  {isGeneratingBriefing ? 'Pensando...' : '✨ Briefing Inteligente'}
+                </button>
+              </div>
+
+              {smartBriefingText && (
+                <div className="mb-4 bg-purple-50 border border-purple-100 rounded-xl p-4 text-purple-900 text-sm leading-relaxed shadow-sm">
+                  <p><strong>Assistente:</strong> {smartBriefingText}</p>
+                </div>
+              )}
+
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {briefingTasks.map((task, idx) => (
                   <div key={task.id} className="bg-gradient-to-br from-indigo-50 to-white p-4 rounded-xl shadow-sm border border-indigo-100 flex flex-col justify-between">
@@ -142,7 +241,32 @@ export default function Home() {
             </div>
           </form>
 
-            <TaskBoard tasks={tasks} />
+          {/* Barra de Busca */}
+          <div className="mb-8 flex gap-2">
+            <input
+              type="text"
+              className="block w-full rounded-md border-0 py-2.5 px-4 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+              placeholder="Buscar tarefas (texto ou semântica)..."
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleSemanticSearch()}
+            />
+            {searchText && (
+              <button onClick={clearSearch} className="px-3 py-2 text-gray-500 hover:text-gray-700">✕</button>
+            )}
+            <button
+              onClick={handleSemanticSearch}
+              disabled={isSearching || !searchText.trim() || !aiApiKey}
+              title={!aiApiKey ? "Configure sua API Key primeiro na engrenagem" : "Buscar usando IA"}
+              className={`rounded-md px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors ${
+                !aiApiKey ? 'bg-gray-400 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-500'
+              }`}
+            >
+              {isSearching ? 'Buscando...' : '✨ Busca Inteligente'}
+            </button>
+          </div>
+
+          <TaskBoard tasks={displayedTasks} />
         </div>
       </main>
     </div>

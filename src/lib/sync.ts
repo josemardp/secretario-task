@@ -1,5 +1,7 @@
 import { supabase } from './supabase';
 import { useTaskStore } from '../stores/taskStore';
+import { useContextStore } from '../stores/contextStore';
+import { generateEmbedding } from './ai';
 import type { Task } from '../types';
 
 export async function fetchRemoteTasks() {
@@ -75,15 +77,32 @@ export async function processSyncQueue() {
   for (const mutation of pendingMutations) {
     try {
       if (mutation.entity === 'task') {
+        let payloadToSync = { ...mutation.payload } as any;
+
+        // Gerar embedding se a chave da API estiver presente e houver texto
+        const apiKey = useContextStore.getState().aiApiKey;
+        if (apiKey && (mutation.operation === 'insert' || mutation.operation === 'update')) {
+          const taskData = mutation.payload as Partial<Task>;
+          const textToEmbed = `${taskData.title || ''} ${taskData.description || ''}`.trim();
+          if (textToEmbed) {
+            try {
+              const embedding = await generateEmbedding(textToEmbed, apiKey);
+              payloadToSync.embedding = embedding;
+            } catch (embedErr) {
+              console.warn('Falha não-crítica ao gerar embedding:', embedErr);
+            }
+          }
+        }
+
         if (mutation.operation === 'insert') {
           const { error } = await supabase.from('tasks').insert({
-            ...(mutation.payload as any),
+            ...payloadToSync,
             user_id: userId
           });
           if (error) throw error;
         } else if (mutation.operation === 'update' || mutation.operation === 'delete') {
           const { error } = await supabase.from('tasks')
-            .update(mutation.payload)
+            .update(payloadToSync)
             .eq('id', mutation.entityId)
             .eq('user_id', userId);
           if (error) throw error;
