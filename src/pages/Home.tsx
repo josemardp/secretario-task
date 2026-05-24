@@ -7,6 +7,7 @@ import { generateEmbedding, generateSmartBriefing, estimateTaskTime } from '../l
 import { TaskBoard } from '../components/TaskBoard';
 import { TimelineView } from '../components/TimelineView';
 import { SettingsModal } from '../components/SettingsModal';
+import { InstallPWA } from '../components/InstallPWA';
 import { getDailyBriefing } from '../lib/briefing';
 import type { ContextType } from '../types';
 
@@ -132,6 +133,7 @@ export default function Home() {
         <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 flex justify-between items-center">
           <h1 className="text-3xl font-bold tracking-tight text-gray-900">SecretárioTask</h1>
           <div className="flex items-center gap-4">
+            <InstallPWA />
             <button 
               onClick={() => setIsSettingsOpen(true)}
               className="text-sm text-gray-600 hover:text-gray-900"
