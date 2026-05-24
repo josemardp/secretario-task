@@ -115,3 +115,28 @@ ${historyText || "(Sem histórico ainda. Assuma tempos normais: emails=15m, coda
   if (isNaN(parsed) || parsed <= 0) return 30;
   return parsed;
 }
+
+export async function transcribeAudio(audioBlob: Blob, apiKey: string): Promise<string> {
+  const formData = new FormData();
+  // Whisper requires a file name with an extension to guess the format
+  formData.append('file', audioBlob, 'audio.webm');
+  formData.append('model', 'whisper-1');
+  formData.append('language', 'pt'); // Force Portuguese to improve accuracy for neurodivergent stutters/accents
+
+  const response = await fetch(`${OPENAI_API_URL}/audio/transcriptions`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+    },
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const errorBody = await response.text();
+    console.error('Whisper API Error:', errorBody);
+    throw new Error('Falha ao transcrever o áudio');
+  }
+
+  const data = await response.json();
+  return data.text.trim();
+}
