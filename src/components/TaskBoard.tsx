@@ -26,10 +26,22 @@ export function TaskBoard({ tasks }: TaskBoardProps) {
   }, [tasks, recordViewEvent]);
 
   const handleStatusChange = (taskId: string, currentStatus: TaskStatus) => {
+    const task = tasks.find(t => t.id === taskId);
     const currentIndex = COLUMNS.findIndex(c => c.id === currentStatus);
     const nextStatus = COLUMNS[currentIndex + 1]?.id;
     if (nextStatus) {
-      updateTask(taskId, { status: nextStatus });
+      const updates: Partial<Task> = { status: nextStatus };
+      
+      if (nextStatus === 'doing') {
+        updates.started_at = new Date().toISOString();
+      } else if (nextStatus === 'done' && task?.started_at) {
+        const start = new Date(task.started_at).getTime();
+        const end = new Date().getTime();
+        const diffMinutes = Math.round((end - start) / 60000);
+        updates.actual_minutes = diffMinutes;
+      }
+      
+      updateTask(taskId, updates);
     }
   };
 
@@ -86,6 +98,34 @@ export function TaskBoard({ tasks }: TaskBoardProps) {
                       <span className="inline-flex items-center text-indigo-600">
                         🗓️ {new Date(task.due_at).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}
                       </span>
+                    )}
+                  </div>
+
+                  {/* Controle de Tempo (Sprint 9) */}
+                  <div className="flex justify-between items-center bg-gray-50 p-2 rounded border border-gray-100 mb-3 text-xs">
+                    <div className="flex items-center gap-1">
+                      <span className="text-gray-500">⏳ Tempo:</span>
+                      <span className="font-bold text-gray-700">
+                        {task.actual_minutes !== undefined && task.actual_minutes !== null 
+                          ? `${task.actual_minutes}m (real)` 
+                          : `${task.estimated_minutes || '?'}m (est)`}
+                      </span>
+                    </div>
+                    {task.status !== 'done' && (
+                      <div className="flex gap-1">
+                        <button 
+                          onClick={() => updateTask(task.id, { estimated_minutes: Math.max(5, (task.estimated_minutes || 30) - 15) })}
+                          className="px-1.5 py-0.5 bg-white border border-gray-200 rounded text-gray-600 hover:bg-gray-100"
+                        >
+                          -15m
+                        </button>
+                        <button 
+                          onClick={() => updateTask(task.id, { estimated_minutes: (task.estimated_minutes || 30) + 15 })}
+                          className="px-1.5 py-0.5 bg-white border border-gray-200 rounded text-gray-600 hover:bg-gray-100"
+                        >
+                          +15m
+                        </button>
+                      </div>
                     )}
                   </div>
                   
