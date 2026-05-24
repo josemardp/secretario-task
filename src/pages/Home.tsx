@@ -9,6 +9,7 @@ import { TaskBoard } from '../components/TaskBoard';
 import { TimelineView } from '../components/TimelineView';
 import { SettingsModal } from '../components/SettingsModal';
 import { InstallPWA } from '../components/InstallPWA';
+import { NotificationEngine } from '../components/NotificationEngine';
 import { getDailyBriefing } from '../lib/briefing';
 import type { ContextType } from '../types';
 
@@ -156,6 +157,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-100">
+      <NotificationEngine />
       <header className="bg-white shadow">
         <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 flex justify-between items-center">
           <h1 className="text-3xl font-bold tracking-tight text-gray-900">SecretárioTask</h1>
