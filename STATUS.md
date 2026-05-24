@@ -23,10 +23,10 @@
 
 # Sprint atual
 
-Sprint 4 — Briefing + UX
+Sprint 5 — Persistência e Sincronização Local First
 
 ## Observação
-Refinar a experiência operacional e consolidar os briefings determinísticos (sem IA) que guiam o dia do usuário.
+Garantir resiliência total offline e funcionamento do banco de dados remoto LWW (Last Write Wins).
 
 ---
 
@@ -34,21 +34,18 @@ Refinar a experiência operacional e consolidar os briefings determinísticos (s
 
 Apenas iniciando.
 
-## Checklist do Sprint 4 — Briefing + UX
-- [x] Implementação de `src/lib/briefing.ts`
-- [x] Briefing determinístico diário
-- [x] Throttling de eventos `viewed` (max 1/dia por tarefa)
-- [x] Refinos de UX
-- [x] Melhorias de navegação
-- [x] Feedback visual de prioridade
-- [x] Ajustes de fluxo operacional
-- [x] Refinos de captura rápida
+## Checklist do Sprint 5 — Sincronização
+- [ ] Configuração do Supabase Client (`src/lib/supabase.ts`)
+- [ ] Refatoração do `taskStore.ts` para processar a fila
+- [ ] Lógica LWW (Last Write Wins) na sincronização
+- [ ] Tratamento de reconexão offline -> online
+- [ ] Componente de Status de Rede
 
 ---
 
 # Próximo passo concreto
 
-Fazer testes de UX e mecânica do Briefing na aplicação local.
+Elaborar o Plano de Implementação (implementation_plan.md) para orquestrar o Sync Engine com Supabase usando LWW e submeter à aprovação.
 
 ---
 
@@ -63,3 +60,4 @@ Nenhum.
 - Sprint 1 — Fundação (concluído em 2026-05-23)
 - Sprint 2 — CRUD + Parser (concluído em 2026-05-24)
 - Sprint 3 — Ranking Engine (concluído em 2026-05-24)
+- Sprint 4 — Briefing + UX (concluído em 2026-05-24)
