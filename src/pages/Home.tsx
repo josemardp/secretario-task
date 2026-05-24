@@ -83,7 +83,8 @@ export default function Home() {
         status: 'todo',
         due_at: parsed.due_at || null,
         deleted_at: null,
-        estimated_minutes: estimatedTime
+        estimated_minutes: estimatedTime,
+        recurrence_rule: parsed.recurrence_rule || null
       });
       
       setTaskText('');

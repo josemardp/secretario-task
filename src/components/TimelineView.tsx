@@ -5,6 +5,8 @@ import { calculateTaskScore } from '../lib/ranking';
 import { useContextStore } from '../stores/contextStore';
 import { useTaskStore } from '../stores/taskStore';
 import { TaskActions } from './TaskActions';
+import { CalendarWidget } from './CalendarWidget';
+import { useState } from 'react';
 
 interface TimelineViewProps {
   tasks: Task[];
@@ -22,6 +24,8 @@ interface TimelineBlock {
 export function TimelineView({ tasks }: TimelineViewProps) {
   const { currentEnergy, activeContext } = useContextStore();
   const { updateTask } = useTaskStore();
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   const handleComplete = (taskId: string) => {
     const task = tasks.find(t => t.id === taskId);
@@ -48,20 +52,39 @@ export function TimelineView({ tasks }: TimelineViewProps) {
 
   const blocks = useMemo(() => {
     const now = new Date();
-    const limitNormal = new Date(now.getTime());
+    const isToday = selectedDate.getDate() === now.getDate() && 
+                    selectedDate.getMonth() === now.getMonth() && 
+                    selectedDate.getFullYear() === now.getFullYear();
+
+    const limitNormal = new Date(selectedDate.getTime());
     limitNormal.setHours(17, 0, 0, 0);
-    const limitUrgent = new Date(now.getTime());
+    const limitUrgent = new Date(selectedDate.getTime());
     limitUrgent.setHours(21, 0, 0, 0);
 
-    const startOfDay = new Date(now.getTime());
+    const startOfDay = new Date(selectedDate.getTime());
     startOfDay.setHours(8, 30, 0, 0);
     
-    // O início real da linha do tempo é 08h30 OU a hora atual (o que for maior).
-    // Assim, se for 12h27, o planejamento das tarefas começa de 12h27 pra frente.
-    let currentTime = new Date(Math.max(now.getTime(), startOfDay.getTime()));
+    // O início da linha do tempo
+    let currentTime = new Date(isToday ? Math.max(now.getTime(), startOfDay.getTime()) : startOfDay.getTime());
     
     // Pegar apenas tarefas "A Fazer" (todo)
-    const todoTasks = tasks.filter(t => t.status === 'todo' && !t.deleted_at);
+    let todoTasks = tasks.filter(t => t.status === 'todo' && !t.deleted_at);
+    
+    if (isToday) {
+      todoTasks = todoTasks.filter(t => {
+        if (!t.due_at) return true;
+        const due = new Date(t.due_at);
+        return due <= now || (due.getDate() === now.getDate() && due.getMonth() === now.getMonth() && due.getFullYear() === now.getFullYear());
+      });
+    } else {
+      todoTasks = todoTasks.filter(t => {
+        if (!t.due_at) return false;
+        const due = new Date(t.due_at);
+        return due.getDate() === selectedDate.getDate() && 
+               due.getMonth() === selectedDate.getMonth() && 
+               due.getFullYear() === selectedDate.getFullYear();
+      });
+    }
     
     // Ordenar pelo ranking de prioridade (as mais urgentes/melhor score vêm primeiro)
     const sortedTasks = todoTasks
@@ -127,15 +150,7 @@ export function TimelineView({ tasks }: TimelineViewProps) {
     }
 
     return timeline;
-  }, [tasks, currentEnergy, activeContext]);
-
-  if (blocks.length === 0) {
-    return (
-      <div className="text-center py-12 text-gray-500">
-        Nenhuma tarefa pendente para organizar na linha do tempo hoje.
-      </div>
-    );
-  }
+  }, [tasks, currentEnergy, activeContext, selectedDate]);
 
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
@@ -143,8 +158,41 @@ export function TimelineView({ tasks }: TimelineViewProps) {
 
   return (
     <div className="max-w-3xl mx-auto py-6">
-      <div className="relative border-l-2 border-indigo-200 ml-4">
-        {blocks.map((block, idx) => (
+      
+      {/* Calendar Header */}
+      <div className="mb-8 flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+        <div>
+          <h2 className="text-xl font-bold text-gray-800">
+            Agenda do Dia
+          </h2>
+          <p className="text-sm text-gray-500 capitalize">
+            {selectedDate.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
+          </p>
+        </div>
+        <button 
+          onClick={() => setIsCalendarOpen(true)}
+          className="flex items-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 font-semibold rounded-lg hover:bg-indigo-100 transition-colors"
+        >
+          📅 Mês
+        </button>
+      </div>
+
+      {isCalendarOpen && (
+        <CalendarWidget
+          selectedDate={selectedDate}
+          onSelectDate={setSelectedDate}
+          onClose={() => setIsCalendarOpen(false)}
+          tasks={tasks}
+        />
+      )}
+
+      {blocks.length === 0 ? (
+        <div className="text-center py-12 text-gray-500 bg-white rounded-xl border border-dashed border-gray-300">
+          Nenhuma tarefa programada para este dia.
+        </div>
+      ) : (
+        <div className="relative border-l-2 border-indigo-200 ml-4">
+          {blocks.map((block, idx) => (
           <div key={block.id} className="mb-6 ml-6 relative">
             <span className={`absolute -left-[35px] flex items-center justify-center w-6 h-6 rounded-full ring-4 ring-white ${
               block.type === 'break' ? 'bg-orange-100 text-orange-500 text-xs' : 'bg-indigo-600 text-white text-xs font-bold'
@@ -219,9 +267,9 @@ export function TimelineView({ tasks }: TimelineViewProps) {
                 </>
               )}
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
