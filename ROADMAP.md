@@ -1,0 +1,254 @@
+# ROADMAP.md — SecretárioTask
+
+Última revisão: 2026-05-12
+Linha de base oficial: MVP enxuto
+Duração sugerida por sprint: 1–2 semanas
+
+---
+
+# Objetivo do Roadmap
+
+Definir a evolução oficial do MVP do SecretárioTask de forma:
+- incremental
+- previsível
+- operacionalmente sustentável
+- alinhada à filosofia de simplicidade do produto
+
+O roadmap prioriza:
+- estabilidade
+- uso diário real
+- baixo custo operacional
+- previsibilidade arquitetural
+
+---
+
+# Sprint 1 — Fundação
+
+## Objetivo
+Estabelecer a base técnica do projeto com autenticação, persistência inicial, gerenciamento de estado, captura offline simples e schema completo do banco.
+
+## Entregas concretas
+- Scaffold React 19 + Vite 6 + TypeScript 5
+- Tailwind CSS 3 configurado (com `tailwind.config.ts`)
+- Integração inicial com Supabase (Supabase JS 2)
+- `.env.example` versionado, `.env` no `.gitignore`
+- `vercel.json` na raiz com rewrite SPA
+- Fluxo de autenticação via magic link (email OTP)
+- Estrutura inicial de stores com Zustand 5
+- Persistência local via `zustand/middleware/persist` (localStorage)
+- Fila offline de mutações (`PendingMutation[]`) implementada no `taskStore`
+- Geração de UUID no cliente via `crypto.randomUUID()`
+- Schema do MVP aplicado integralmente:
+  - `tasks` (com `due_at`, `deleted_at`, CHECK constraints em `priority` e `energy`)
+  - `task_events` (com CHECK constraint em `type`)
+  - `sync_log` (com trigger de imutabilidade)
+- Trigger `updated_at` em `tasks`
+- Políticas RLS aplicadas nas três tabelas
+- Captura offline básica baseada em input simples
+- Estrutura base de rotas (React Router 7)
+
+## Observação
+Não há tabelas `profiles` ou `user_settings` no MVP. O Supabase já fornece `auth.users` com os dados básicos do usuário. Preferências locais (contexto ativo, energia atual) são persistidas via Zustand em localStorage.
+
+A `sync_log` é criada já no Sprint 1, mas seu uso operacional (LWW, retry, observabilidade) só é implementado no Sprint 5.
+
+## Fora do escopo
+- CRUD avançado de tarefas
+- Parser de linguagem natural
+- IA ou LLM
+- Embeddings
+- Sincronização avançada
+- Sistema de ranking
+- Briefing automático
+
+## Critério de conclusão
+- Aplicação inicia corretamente
+- Login funcional (magic link)
+- Banco conectado, três tabelas aplicadas com constraints e triggers
+- Persistência local funcional
+- Estrutura base operacional pronta
+- `vercel.json` em produção respondendo a rotas profundas
+
+---
+
+# Sprint 2 — CRUD + Parser
+
+## Objetivo
+Implementar o fluxo operacional principal de tarefas com parser determinístico local.
+
+## Entregas concretas
+- CRUD completo de tarefas
+- Edição de tarefas
+- Exclusão de tarefas via soft delete (marcando `deleted_at`)
+- Todas as queries filtrando `WHERE deleted_at IS NULL`
+- Parser local determinístico baseado em regras
+  - identifica `priority`
+  - identifica `context`
+  - identifica `due_at` (datas relativas e horários)
+- Board simples de visualização
+- Troca de contexto operacional
+- Interpretação básica de prioridade e contexto
+
+## Fora do escopo
+- IA generativa
+- Embeddings
+- Recomendação automática baseada em ML
+- Parsing semântico
+
+## Critério de conclusão
+- Usuário consegue criar, editar e remover tarefas
+- Soft delete funcional (tarefas excluídas não aparecem nas listagens)
+- Parser interpreta entradas previsivelmente, incluindo `due_at`
+- Board operacional funcional
+
+---
+
+# Sprint 3 — Ranking Engine
+
+## Objetivo
+Criar um sistema de priorização totalmente determinístico e transparente, integrando o `due_at` e a energia disponível do usuário.
+
+## Entregas concretas
+- Ranking determinístico baseado em regras explícitas
+- `f_urgency` combinando `priority` e proximidade de `due_at`
+- `f_energy` calculada por proximidade entre energia da tarefa e energia disponível (`contextStore.energiaAtual`)
+- `f_age` limitada a 30 dias
+- `f_context` binária (1 quando contexto da tarefa = contexto ativo)
+- Score final entre 0 e 1
+- Priorização previsível de tarefas
+- Recomendações transparentes e auditáveis
+- Critérios configuráveis de priorização
+- Ordenação consistente de tarefas
+
+## Observação
+O termo "Ranking Engine" é utilizado no lugar de "Recommendation Engine" para evitar associação com machine learning ou IA.
+
+Toda priorização desta etapa é baseada exclusivamente em regras determinísticas. A fórmula completa está em `ARCHITECTURE.md`.
+
+## Critério de conclusão
+- Ranking reproduzível (mesma entrada → mesmo score)
+- Critérios auditáveis (cada fator inspecionável separadamente)
+- Ordenação consistente entre execuções
+- `f_energy` reflete corretamente o estado do usuário (testar com energiaAtual variando)
+
+---
+
+# Sprint 4 — Briefing + UX
+
+## Objetivo
+Melhorar a experiência operacional e consolidar os briefings automáticos determinísticos.
+
+## Entregas concretas
+- Briefing determinístico diário (aplicando `ranking.ts`)
+- Throttling de eventos `viewed`: no máximo 1 por tarefa por dia
+- Refinos de UX
+- Melhorias operacionais
+- Ajustes de navegação
+- Feedback visual de prioridades
+- Refinos de fluxo de captura
+
+## Fora do escopo
+- Assistente conversacional
+- IA contextual
+- Automação inteligente
+- Briefing baseado em LLM
+
+## Critério de conclusão
+- Briefing previsível e funcional
+- `task_events` não infla com `viewed` duplicado
+- Fluxo operacional mais fluido
+- Navegação consistente
+
+---
+
+# Sprint 5 — Sync + Hardening
+
+## Objetivo
+Adicionar sincronização básica, mecanismos mínimos de resiliência e endurecimento operacional. A tabela `sync_log` já existe desde o Sprint 1; este sprint trata do seu uso.
+
+## Entregas concretas
+- Estratégia de sincronização Last Write Wins (LWW) em nível de registro inteiro
+- Consumo operacional da `sync_log`:
+  - registrar entradas para cada mutação
+  - atualizar `status`, `retry_count`, `last_error`, `synced_at`
+  - confiar no trigger de imutabilidade
+- Consumo da fila `PendingMutation[]` no `taskStore`
+- Retry simples de requisições falhas
+- Observabilidade mínima via `task_events`
+- Tratamento básico de falhas offline/online
+- Hardening operacional inicial
+- Recuperação simples de sync
+
+## Observação
+A estratégia LWW deve ser documentada explicitamente para evitar ambiguidades futuras de sincronização. O risco aceito de perda de atualizações concorrentes em campos diferentes está descrito em `ARCHITECTURE.md` (CDP6).
+
+Conflitos de delete-vs-update entre devices são mitigados pelo soft delete (`deleted_at`) já presente desde o Sprint 1.
+
+## Critério de conclusão
+- Sync básico funcional
+- Retry operacional
+- Sistema tolera falhas simples de conectividade
+- Eventos mínimos auditáveis
+- Trigger de imutabilidade protege campos não-operacionais de `sync_log`
+
+---
+
+# Sprint 6 — Uso Real
+
+## Objetivo
+Preparar o sistema para uso diário contínuo.
+
+## Entregas concretas
+- Correção de bugs
+- Ajustes finais de UX
+- Refinos de performance
+- Estabilização operacional
+- Uso real contínuo
+- Validação prática do fluxo principal
+- Ajustes baseados em uso diário
+
+## Critério de conclusão
+- Sistema utilizável diariamente
+- Bugs críticos resolvidos
+- Performance operacional aceitável
+- Fluxo principal estável
+
+---
+
+# Pós-MVP (v1.1+)
+
+## Possíveis evoluções futuras
+- Integração com LLM
+- Embeddings
+- Busca semântica
+- Notificações push
+- Geofencing
+- Voice capture
+- Outbox avançada
+- Automações
+- Sync avançado (resolução fina de conflitos)
+- Sugestões inteligentes
+- Dashboard analítico
+- Análise comportamental
+- Briefing inteligente
+- Tabelas `profiles` e `user_settings` (caso surja necessidade de dados de perfil compartilhados entre dispositivos)
+- Migração de persistência local para IndexedDB
+- Migração para Tailwind 4 (paradigma CSS-first)
+- Conversão de `task_events.type` para ENUM PostgreSQL (caso a lista estabilize)
+- Conversão de `sync_log.entity_type` para ENUM (quando outras entidades passarem a sincronizar)
+
+---
+
+# Diretriz Oficial de Evolução
+
+Nenhuma funcionalidade pós-MVP deve ser implementada antes que:
+- o fluxo principal esteja estável
+- o uso diário seja validado
+- os custos operacionais estejam controlados
+- o sistema seja previsível e simples de manter
+
+A evolução do produto deve preservar:
+- simplicidade
+- previsibilidade
+- baixo custo
+- transparência operacional
