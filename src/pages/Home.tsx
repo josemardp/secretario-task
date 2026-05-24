@@ -7,6 +7,7 @@ import { generateEmbedding, generateSmartBriefing, estimateTaskTime, transcribeA
 import { useAudioRecorder } from '../hooks/useAudioRecorder';
 import { TaskBoard } from '../components/TaskBoard';
 import { TimelineView } from '../components/TimelineView';
+import { DashboardView } from '../components/DashboardView';
 import { SettingsModal } from '../components/SettingsModal';
 import { InstallPWA } from '../components/InstallPWA';
 import { NotificationEngine } from '../components/NotificationEngine';
@@ -18,7 +19,7 @@ export default function Home() {
   const [searchText, setSearchText] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [isAddingTask, setIsAddingTask] = useState(false);
-  const [viewMode, setViewMode] = useState<'kanban' | 'timeline'>('kanban');
+  const [viewMode, setViewMode] = useState<'kanban' | 'timeline' | 'dashboard'>('kanban');
   const [semanticResults, setSemanticResults] = useState<{id: string, similarity: number}[] | null>(null);
 
   const [smartBriefingText, setSmartBriefingText] = useState<string | null>(null);
@@ -331,6 +332,16 @@ export default function Home() {
             >
               ⏳ Linha do Tempo
             </button>
+            <button
+              onClick={() => setViewMode('dashboard')}
+              className={`py-2 px-4 text-sm font-medium border-b-2 transition-colors ${
+                viewMode === 'dashboard' 
+                  ? 'border-indigo-600 text-indigo-600' 
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              📈 Estatísticas
+            </button>
           </div>
 
           {/* Barra de Busca (Apenas Kanban) */}
@@ -362,8 +373,10 @@ export default function Home() {
 
           {viewMode === 'kanban' ? (
             <TaskBoard tasks={displayedTasks} />
-          ) : (
+          ) : viewMode === 'timeline' ? (
             <TimelineView tasks={displayedTasks} />
+          ) : (
+            <DashboardView tasks={tasks} />
           )}
         </div>
       </main>
