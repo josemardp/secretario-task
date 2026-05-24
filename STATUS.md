@@ -64,3 +64,4 @@ Nenhum.
 - Sprint 11 — Transformação em PWA Instalável (concluído em 2026-05-24)
 - Sprint 14 — Dashboard Analítico Avançado (concluído em 2026-05-24)
 - Sprint 15 — Automações de Recorrência (concluído em 2026-05-24)
+- Sprint 16 — Calendário Mensal e Agenda (concluído em 2026-05-24)

@@ -41,8 +41,8 @@ export function DashboardView({ tasks }: DashboardViewProps) {
     for (let i = 6; i <= 23; i++) hourCounts[`${i}h`] = 0; // Preencher de 6h as 23h
 
     doneTasks.forEach(t => {
-      if (t.completed_at) {
-        const hour = new Date(t.completed_at).getHours();
+      if (t.updated_at) {
+        const hour = new Date(t.updated_at).getHours();
         const key = `${hour}h`;
         if (hourCounts[key] !== undefined) {
           hourCounts[key]++;
@@ -73,8 +73,8 @@ export function DashboardView({ tasks }: DashboardViewProps) {
     }
 
     doneTasks.forEach(t => {
-      if (t.completed_at) {
-        const d = new Date(t.completed_at);
+      if (t.updated_at) {
+        const d = new Date(t.updated_at);
         // Só conta se foi nos últimos 7 dias
         const diffTime = Math.abs(today.getTime() - d.getTime());
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -182,9 +182,9 @@ export function DashboardView({ tasks }: DashboardViewProps) {
                   outerRadius={80}
                   paddingAngle={5}
                   dataKey="value"
-                  label={({name, percent}) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  label={({name, percent}) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
                 >
-                  {contextData.map((entry, index) => (
+                  {contextData.map((_entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
