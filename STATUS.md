@@ -23,29 +23,26 @@
 
 # Sprint atual
 
-Sprint 6 — Uso Real
+Sprint 7 — Planejamento Pós-MVP (v1.1+)
 
 ## Observação
-Preparar o sistema para uso diário contínuo, com correções finais e estabilização operacional.
+Definição da primeira entrega arquitetural e de produto da fase v1.1+ (Inteligência, Infra avançada, etc).
 
 ---
 
 # Progresso dentro do sprint atual
 
-Apenas iniciando.
+Planejamento inicial.
 
-## Checklist do Sprint 6 — Uso Real
-- [ ] Correções finais
-- [ ] Estabilização operacional
-- [ ] Refinos de UX
-- [ ] Ajustes de performance
-- [ ] Validação prática do fluxo principal
+## Checklist do Sprint 7
+- [ ] Definir roadmap inicial do v1.1+
+- [ ] Obter aprovação do Plano de Implementação
 
 ---
 
 # Próximo passo concreto
 
-Revisar o aplicativo rodando em modo produção localmente para identificar os primeiros bugs ou gargalos de performance.
+Aprovar o Plano de Implementação que define a direção da versão 1.1 do SecretárioTask.
 
 ---
 
@@ -62,3 +59,4 @@ Nenhum.
 - Sprint 3 — Ranking Engine (concluído em 2026-05-24)
 - Sprint 4 — Briefing + UX (concluído em 2026-05-24)
 - Sprint 5 — Sync + Hardening (concluído em 2026-05-24)
+- Sprint 6 — Uso Real (encurtado, concluído em 2026-05-24)
