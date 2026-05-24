@@ -50,11 +50,11 @@ Iniciamos as configurações base (Scaffold do Vite, Tailwind, .env e inicializa
 - [x] Layout base da aplicação
 - [x] Captura offline básica via input simples
 - [x] Estrutura base de rotas (React Router 7)
-- [ ] Schema `tasks` aplicado no Supabase (com `due_at`, `deleted_at`, CHECK constraints)
-- [ ] Schema `task_events` aplicado no Supabase (com CHECK constraint em `type`)
-- [ ] Schema `sync_log` aplicado no Supabase
-- [ ] Trigger `updated_at` em `tasks`
-- [ ] Políticas RLS aplicadas nas três tabelas
+- [x] Schema `tasks` aplicado no Supabase (com `due_at`, `deleted_at`, CHECK constraints)
+- [x] Schema `task_events` aplicado no Supabase (com CHECK constraint em `type`)
+- [x] Schema `sync_log` aplicado no Supabase
+- [x] Trigger `updated_at` em `tasks`
+- [x] Políticas RLS aplicadas nas três tabelas
 
 ---
 
