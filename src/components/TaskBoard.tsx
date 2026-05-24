@@ -17,7 +17,7 @@ const COLUMNS: { id: TaskStatus; title: string }[] = [
 
 export function TaskBoard({ tasks }: TaskBoardProps) {
   const { updateTask, deleteTask, recordViewEvent } = useTaskStore();
-  const { currentEnergy, activeContext } = useContextStore();
+  const { currentEnergy, activeContext, contexts } = useContextStore();
 
   useEffect(() => {
     // Record view events for all active tasks
@@ -96,9 +96,16 @@ export function TaskBoard({ tasks }: TaskBoardProps) {
                   </div>
                   
                   <div className="flex items-center gap-2 text-xs text-gray-500 mb-3 flex-wrap">
-                    <span className="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10">
-                      {task.context}
-                    </span>
+                    <select
+                      value={task.context}
+                      onChange={(e) => updateTask(task.id, { context: e.target.value as any })}
+                      className="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10 cursor-pointer outline-none border-0 focus:ring-2 focus:ring-indigo-600 appearance-none text-center min-w-[70px]"
+                      title="Clique para alterar o contexto"
+                    >
+                      {contexts.map(ctx => (
+                        <option key={ctx} value={ctx}>{ctx}</option>
+                      ))}
+                    </select>
                     {task.priority > 0 && (
                       <span className={`inline-flex items-center rounded-md px-2 py-1 font-medium ring-1 ring-inset ${
                         task.priority >= 8 ? 'bg-red-50 text-red-700 ring-red-600/10' :
