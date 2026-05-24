@@ -42,12 +42,12 @@ export function parseTaskInput(rawText: string, defaultContext: ContextType): Pa
   let baseDate = new Date();
   let dateFound = false;
 
-  const wordRegex = /\b(hoje|amanhã|amanha|depois\s+de\s+amanhã|depois\s+de\s+amanha|segunda(?:-feira)?|terça(?:-feira)?|terca(?:-feira)?|quarta(?:-feira)?|quinta(?:-feira)?|sexta(?:-feira)?|sábado|sabado|domingo)\b/i;
+  const wordRegex = /(?:^|\s)(hoje|amanhã|amanha|depois\s+de\s+amanhã|depois\s+de\s+amanha|segunda(?:-feira)?|terça(?:-feira)?|terca(?:-feira)?|quarta(?:-feira)?|quinta(?:-feira)?|sexta(?:-feira)?|sábado|sabado|domingo)(?:\s|$)/i;
   const dateMatch = title.match(wordRegex);
   if (dateMatch) {
     dateFound = true;
     const word = dateMatch[1].toLowerCase();
-    title = title.replace(wordRegex, '');
+    title = title.replace(new RegExp(`(?:^|\\s)${word}(?:\\s|$)`, 'i'), ' ');
 
     if (word === 'hoje') {
       // baseDate is already today

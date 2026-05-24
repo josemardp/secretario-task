@@ -35,18 +35,18 @@ Implementar priorização determinística transparente e auditável, consumindo 
 Apenas iniciando.
 
 ## Checklist do Sprint 3 — Ranking Engine
-- [ ] Implementação de `src/lib/ranking.ts`
-- [ ] Cálculo de `f_urgency` = `(priority/10) * 0.6 + f_due * 0.4`
-- [ ] Cálculo de `f_energy` (consumindo `contextStore.energiaAtual`)
-- [ ] Cálculo de `f_age`
-- [ ] Cálculo de `f_context`
-- [ ] Score final entre 0 e 1 e ordenação na listagem
+- [x] Implementação de `src/lib/ranking.ts`
+- [x] Cálculo de `f_urgency` = `(priority/10) * 0.6 + f_due * 0.4`
+- [x] Cálculo de `f_energy` (consumindo `contextStore.energiaAtual`)
+- [x] Cálculo de `f_age`
+- [x] Cálculo de `f_context`
+- [x] Score final entre 0 e 1 e ordenação na listagem
 
 ---
 
 # Próximo passo concreto
 
-Adicionar o estado `energiaAtual` (0 a 10) no `contextStore.ts` com um seletor visual na UI para que o Ranking Engine possa consumir.
+Realizar os testes da mecânica de priorização localmente.
 
 ---
 
