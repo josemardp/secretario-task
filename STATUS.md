@@ -23,44 +23,32 @@
 
 # Sprint atual
 
-Sprint 1 — Fundação
+Sprint 2 — CRUD + Parser
 
 ## Observação
-Os 10 arquivos de documentação foram consolidados em 2026-05-12 após auditoria técnica que identificou 10 ajustes bloqueantes/críticos. Todos os ajustes foram aplicados na baseline. Próximo passo é iniciar o Sprint 1.
+Iniciando a implementação do fluxo principal operacional de tarefas com parser determinístico local.
 
 ---
 
 # Progresso dentro do sprint atual
 
-Iniciamos as configurações base (Scaffold do Vite, Tailwind, .env e inicialização do Git).
+Apenas iniciando.
 
-## Checklist do Sprint 1 — Fundação
-- [x] Scaffold React 19 + Vite 6 + TypeScript 5
-- [x] Tailwind CSS 3 configurado (`tailwind.config.ts`)
-- [x] Projeto Supabase criado
-- [x] `.env.example` criado e versionado
-- [x] `.env` preenchido localmente (e adicionado ao `.gitignore`)
-- [x] `vercel.json` com rewrite SPA criado
-- [x] Fluxo de login funcional (magic link via Supabase)
-- [x] Estrutura inicial com Zustand 5
-- [x] Persistência local via `zustand/middleware/persist`
-- [x] `taskStore.ts` com geração de UUID no cliente (`crypto.randomUUID()`)
-- [x] `contextStore.ts` com contexto ativo e energia atual
-- [x] `authStore.ts` (não persistida)
-- [x] Layout base da aplicação
-- [x] Captura offline básica via input simples
-- [x] Estrutura base de rotas (React Router 7)
-- [x] Schema `tasks` aplicado no Supabase (com `due_at`, `deleted_at`, CHECK constraints)
-- [x] Schema `task_events` aplicado no Supabase (com CHECK constraint em `type`)
-- [x] Schema `sync_log` aplicado no Supabase
-- [x] Trigger `updated_at` em `tasks`
-- [x] Políticas RLS aplicadas nas três tabelas
+## Checklist do Sprint 2 — CRUD + Parser
+- [ ] CRUD completo de tarefas
+- [ ] Edição de tarefas
+- [ ] Exclusão de tarefas via soft delete (`deleted_at`)
+- [ ] Todas as queries do app filtrando `WHERE deleted_at IS NULL`
+- [ ] Parser local determinístico (`src/lib/parser.ts`) baseado em regras (priority, context, due_at)
+- [ ] Board simples de visualização
+- [ ] Context switch operacional
+- [ ] Interpretação básica de prioridade e contexto
 
 ---
 
 # Próximo passo concreto
 
-Executar o arquivo `supabase/migrations/0001_initial_schema.sql` no SQL Editor do dashboard do Supabase para criar as tabelas `tasks`, `task_events`, `sync_log`, habilitar o RLS e configurar as políticas e triggers.
+Criar o `src/lib/parser.ts` com expressões regulares básicas para interpretar contexto, prioridade e `due_at` (hoje, amanhã, horários).
 
 ---
 
@@ -72,4 +60,4 @@ Nenhum.
 
 # Histórico de sprints concluídos
 
-Nenhum sprint concluído ainda.
+- Sprint 1 — Fundação (concluído em 2026-05-23)
