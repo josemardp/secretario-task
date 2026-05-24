@@ -1,5 +1,6 @@
-import React, { useEffect } from 'react';
+import { useEffect } from 'react';
 import type { Task, TaskStatus } from '../types';
+import { CONTEXTS_LIST } from '../types';
 import { useTaskStore } from '../stores/taskStore';
 import { useContextStore } from '../stores/contextStore';
 import { calculateTaskScore } from '../lib/ranking';
@@ -17,7 +18,7 @@ const COLUMNS: { id: TaskStatus; title: string }[] = [
 
 export function TaskBoard({ tasks }: TaskBoardProps) {
   const { updateTask, deleteTask, recordViewEvent } = useTaskStore();
-  const { currentEnergy, activeContext, contexts } = useContextStore();
+  const { currentEnergy, activeContext } = useContextStore();
 
   useEffect(() => {
     // Record view events for all active tasks
@@ -102,7 +103,7 @@ export function TaskBoard({ tasks }: TaskBoardProps) {
                       className="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10 cursor-pointer outline-none border-0 focus:ring-2 focus:ring-indigo-600 appearance-none text-center min-w-[70px]"
                       title="Clique para alterar o contexto"
                     >
-                      {contexts.map(ctx => (
+                      {CONTEXTS_LIST.map((ctx) => (
                         <option key={ctx} value={ctx}>{ctx}</option>
                       ))}
                     </select>

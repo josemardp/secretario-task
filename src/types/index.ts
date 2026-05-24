@@ -1,4 +1,5 @@
 export type ContextType = 'PM' | 'Esdra' | 'Pessoal' | 'Familia' | 'CCB' | 'Estudo' | 'Saude';
+export const CONTEXTS_LIST: ContextType[] = ['PM', 'Esdra', 'Pessoal', 'Familia', 'CCB', 'Estudo', 'Saude'];
 export type TaskStatus = 'todo' | 'doing' | 'done';
 
 export interface Task {
