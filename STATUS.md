@@ -1,6 +1,6 @@
 # STATUS.md — SecretárioTask
 
-Última atualização: 2026-05-23
+Última atualização: 2026-05-24
 
 ---
 
@@ -23,10 +23,10 @@
 
 # Sprint atual
 
-Sprint 3 — Ranking Engine
+Sprint 4 — Briefing + UX
 
 ## Observação
-Implementar priorização determinística transparente e auditável, consumindo o `due_at` e a energia disponível do usuário.
+Refinar a experiência operacional e consolidar os briefings determinísticos (sem IA) que guiam o dia do usuário.
 
 ---
 
@@ -34,19 +34,21 @@ Implementar priorização determinística transparente e auditável, consumindo 
 
 Apenas iniciando.
 
-## Checklist do Sprint 3 — Ranking Engine
-- [x] Implementação de `src/lib/ranking.ts`
-- [x] Cálculo de `f_urgency` = `(priority/10) * 0.6 + f_due * 0.4`
-- [x] Cálculo de `f_energy` (consumindo `contextStore.energiaAtual`)
-- [x] Cálculo de `f_age`
-- [x] Cálculo de `f_context`
-- [x] Score final entre 0 e 1 e ordenação na listagem
+## Checklist do Sprint 4 — Briefing + UX
+- [x] Implementação de `src/lib/briefing.ts`
+- [x] Briefing determinístico diário
+- [x] Throttling de eventos `viewed` (max 1/dia por tarefa)
+- [x] Refinos de UX
+- [x] Melhorias de navegação
+- [x] Feedback visual de prioridade
+- [x] Ajustes de fluxo operacional
+- [x] Refinos de captura rápida
 
 ---
 
 # Próximo passo concreto
 
-Realizar os testes da mecânica de priorização localmente.
+Fazer testes de UX e mecânica do Briefing na aplicação local.
 
 ---
 
@@ -60,3 +62,4 @@ Nenhum.
 
 - Sprint 1 — Fundação (concluído em 2026-05-23)
 - Sprint 2 — CRUD + Parser (concluído em 2026-05-24)
+- Sprint 3 — Ranking Engine (concluído em 2026-05-24)

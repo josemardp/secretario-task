@@ -18,10 +18,10 @@ export interface Task {
 
 export type PendingMutation = {
   id: string;
-  entity: 'task';
+  entity: 'task' | 'task_event';
   operation: 'insert' | 'update' | 'delete';
   entityId: string;
-  payload: Partial<Task>;
+  payload: any;
   createdAt: string;
   retryCount: number;
 };

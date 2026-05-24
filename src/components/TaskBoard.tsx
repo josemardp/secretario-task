@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import type { Task, TaskStatus } from '../types';
 import { useTaskStore } from '../stores/taskStore';
 import { useContextStore } from '../stores/contextStore';
@@ -15,8 +15,15 @@ const COLUMNS: { id: TaskStatus; title: string }[] = [
 ];
 
 export function TaskBoard({ tasks }: TaskBoardProps) {
-  const { updateTask, deleteTask } = useTaskStore();
+  const { updateTask, deleteTask, recordViewEvent } = useTaskStore();
   const { currentEnergy, activeContext } = useContextStore();
+
+  useEffect(() => {
+    // Record view events for all active tasks
+    tasks.filter(t => !t.deleted_at).forEach(task => {
+      recordViewEvent(task.id);
+    });
+  }, [tasks, recordViewEvent]);
 
   const handleStatusChange = (taskId: string, currentStatus: TaskStatus) => {
     const currentIndex = COLUMNS.findIndex(c => c.id === currentStatus);
