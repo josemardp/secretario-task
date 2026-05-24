@@ -3,8 +3,9 @@ import { useTaskStore } from '../stores/taskStore';
 import { useContextStore } from '../stores/contextStore';
 import { supabase } from '../lib/supabase';
 import { parseTaskInput } from '../lib/parser';
-import { generateEmbedding, generateSmartBriefing } from '../lib/ai';
+import { generateEmbedding, generateSmartBriefing, estimateTaskTime } from '../lib/ai';
 import { TaskBoard } from '../components/TaskBoard';
+import { TimelineView } from '../components/TimelineView';
 import { SettingsModal } from '../components/SettingsModal';
 import { getDailyBriefing } from '../lib/briefing';
 import type { ContextType } from '../types';
@@ -13,6 +14,8 @@ export default function Home() {
   const [taskText, setTaskText] = useState('');
   const [searchText, setSearchText] = useState('');
   const [isSearching, setIsSearching] = useState(false);
+  const [isAddingTask, setIsAddingTask] = useState(false);
+  const [viewMode, setViewMode] = useState<'kanban' | 'timeline'>('kanban');
   const [semanticResults, setSemanticResults] = useState<{id: string, similarity: number}[] | null>(null);
 
   const [smartBriefingText, setSmartBriefingText] = useState<string | null>(null);
@@ -24,25 +27,42 @@ export default function Home() {
 
   const briefingTasks = getDailyBriefing(tasks, currentEnergy, activeContext, 3);
 
-  const handleAddTask = (e: React.FormEvent) => {
+  const handleTaskSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!taskText.trim()) return;
 
-    const parsedData = parseTaskInput(taskText, activeContext);
-
-    addTask({
-      user_id: '', // Set on sync or later
-      title: parsedData.title || 'Nova Tarefa',
-      description: null,
-      context: parsedData.context || activeContext,
-      priority: parsedData.priority || 0,
-      energy: parsedData.energy || 0,
-      status: 'todo',
-      due_at: parsedData.due_at || null,
-      deleted_at: null,
-    });
+    setIsAddingTask(true);
     
-    setTaskText('');
+    try {
+      const parsed = parseTaskInput(taskText, activeContext);
+      let estimatedTime = 30; // default
+      
+      if (aiApiKey) {
+        // Estima o tempo baseado na IA e no histórico
+        const recentTasks = tasks.filter(t => t.status === 'done' && !t.deleted_at);
+        estimatedTime = await estimateTaskTime(parsed.title, recentTasks, aiApiKey);
+      }
+      
+      addTask({
+        user_id: '',
+        title: parsed.title || 'Nova Tarefa',
+        description: null,
+        context: parsed.context || activeContext,
+        priority: parsed.priority || 0,
+        energy: parsed.energy || 0,
+        status: 'todo',
+        due_at: parsed.due_at || null,
+        deleted_at: null,
+        estimated_minutes: estimatedTime
+      });
+      
+      setTaskText('');
+    } catch (err) {
+      console.error("Erro ao adicionar tarefa:", err);
+      alert("Falha ao adicionar a tarefa.");
+    } finally {
+      setIsAddingTask(false);
+    }
   };
 
   const handleLogout = async () => {
@@ -220,7 +240,7 @@ export default function Home() {
             </div>
           )}
 
-          <form onSubmit={handleAddTask} className="mb-8">
+          <form onSubmit={handleTaskSubmit} className="mb-8">
             <label htmlFor="task" className="sr-only">Nova Tarefa</label>
             <div className="flex gap-2">
               <input
@@ -231,42 +251,74 @@ export default function Home() {
                 placeholder="Adicionar tarefa rápida..."
                 value={taskText}
                 onChange={(e) => setTaskText(e.target.value)}
+                disabled={isAddingTask}
               />
               <button
                 type="submit"
-                className="rounded-md bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                disabled={isAddingTask}
+                className="rounded-md bg-indigo-600 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 transition-colors disabled:bg-indigo-400"
               >
-                Adicionar
+                {isAddingTask ? 'Adicionando...' : 'Adicionar'}
               </button>
             </div>
           </form>
 
-          {/* Barra de Busca */}
-          <div className="mb-8 flex gap-2">
-            <input
-              type="text"
-              className="block w-full rounded-md border-0 py-2.5 px-4 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-              placeholder="Buscar tarefas (texto ou semântica)..."
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSemanticSearch()}
-            />
-            {searchText && (
-              <button onClick={clearSearch} className="px-3 py-2 text-gray-500 hover:text-gray-700">✕</button>
-            )}
+          {/* Controle de Abas */}
+          <div className="flex border-b border-gray-200 mb-6">
             <button
-              onClick={handleSemanticSearch}
-              disabled={isSearching || !searchText.trim() || !aiApiKey}
-              title={!aiApiKey ? "Configure sua API Key primeiro na engrenagem" : "Buscar usando IA"}
-              className={`rounded-md px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors ${
-                !aiApiKey ? 'bg-gray-400 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-500'
+              onClick={() => setViewMode('kanban')}
+              className={`py-2 px-4 text-sm font-medium border-b-2 transition-colors ${
+                viewMode === 'kanban' 
+                  ? 'border-indigo-600 text-indigo-600' 
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
-              {isSearching ? 'Buscando...' : '✨ Busca Inteligente'}
+              📊 Quadros (Kanban)
+            </button>
+            <button
+              onClick={() => setViewMode('timeline')}
+              className={`py-2 px-4 text-sm font-medium border-b-2 transition-colors ${
+                viewMode === 'timeline' 
+                  ? 'border-indigo-600 text-indigo-600' 
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              ⏳ Linha do Tempo
             </button>
           </div>
 
-          <TaskBoard tasks={displayedTasks} />
+          {/* Barra de Busca (Apenas Kanban) */}
+          {viewMode === 'kanban' && (
+            <div className="mb-8 flex gap-2">
+              <input
+                type="text"
+                className="block w-full rounded-md border-0 py-2.5 px-4 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                placeholder="Buscar tarefas (texto ou semântica)..."
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleSemanticSearch()}
+              />
+              {searchText && (
+                <button onClick={clearSearch} className="px-3 py-2 text-gray-500 hover:text-gray-700">✕</button>
+              )}
+              <button
+                onClick={handleSemanticSearch}
+                disabled={isSearching || !searchText.trim() || !aiApiKey}
+                title={!aiApiKey ? "Configure sua API Key primeiro na engrenagem" : "Buscar usando IA"}
+                className={`rounded-md px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors ${
+                  !aiApiKey ? 'bg-gray-400 cursor-not-allowed' : 'bg-purple-600 hover:bg-purple-500'
+                }`}
+              >
+                {isSearching ? 'Buscando...' : '✨ Busca Inteligente'}
+              </button>
+            </div>
+          )}
+
+          {viewMode === 'kanban' ? (
+            <TaskBoard tasks={displayedTasks} />
+          ) : (
+            <TimelineView tasks={displayedTasks} />
+          )}
         </div>
       </main>
     </div>

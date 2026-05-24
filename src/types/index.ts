@@ -14,6 +14,9 @@ export interface Task {
   deleted_at: string | null;
   created_at: string;
   updated_at: string;
+  estimated_minutes?: number | null;
+  actual_minutes?: number | null;
+  started_at?: string | null;
 }
 
 export type PendingMutation = {
