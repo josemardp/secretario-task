@@ -3,6 +3,7 @@ import type { Task, TaskStatus } from '../types';
 import { useTaskStore } from '../stores/taskStore';
 import { useContextStore } from '../stores/contextStore';
 import { calculateTaskScore } from '../lib/ranking';
+import { TaskActions } from './TaskActions';
 
 interface TaskBoardProps {
   tasks: Task[];
@@ -51,6 +52,19 @@ export function TaskBoard({ tasks }: TaskBoardProps) {
     if (prevStatus) {
       updateTask(taskId, { status: prevStatus });
     }
+  };
+
+  const handlePostponeTomorrow = (taskId: string) => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(23, 59, 59, 999);
+    updateTask(taskId, { due_at: tomorrow.toISOString() });
+  };
+
+  const handlePostponeDate = (taskId: string, dateString: string) => {
+    // dateString vem no formato "YYYY-MM-DD"
+    const selected = new Date(dateString + 'T23:59:59');
+    updateTask(taskId, { due_at: selected.toISOString() });
   };
 
   return (
@@ -129,6 +143,17 @@ export function TaskBoard({ tasks }: TaskBoardProps) {
                     )}
                   </div>
                   
+                  {column.id !== 'done' && (
+                    <div className="mb-3 pt-2 border-t border-gray-100">
+                      <TaskActions 
+                        showComplete={true}
+                        onComplete={() => handleStatusChange(task.id, 'done')}
+                        onPostponeTomorrow={() => handlePostponeTomorrow(task.id)}
+                        onPostponeDate={(dateString) => handlePostponeDate(task.id, dateString)}
+                      />
+                    </div>
+                  )}
+
                   <div className="flex justify-between items-center border-t border-gray-100 pt-2 mt-2">
                     <div className="flex gap-2">
                       {column.id !== 'todo' && (
