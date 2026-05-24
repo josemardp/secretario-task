@@ -40,16 +40,16 @@ Iniciamos as configurações base (Scaffold do Vite, Tailwind, .env e inicializa
 - [x] Projeto Supabase criado
 - [x] `.env.example` criado e versionado
 - [x] `.env` preenchido localmente (e adicionado ao `.gitignore`)
-- [ ] `vercel.json` com rewrite SPA criado
-- [ ] Fluxo de login funcional (magic link via Supabase)
-- [ ] Estrutura inicial com Zustand 5
-- [ ] Persistência local via `zustand/middleware/persist`
-- [ ] `taskStore.ts` com geração de UUID no cliente (`crypto.randomUUID()`)
-- [ ] `contextStore.ts` com contexto ativo e energia atual
-- [ ] `authStore.ts` (não persistida)
-- [ ] Layout base da aplicação
-- [ ] Captura offline básica via input simples
-- [ ] Estrutura base de rotas (React Router 7)
+- [x] `vercel.json` com rewrite SPA criado
+- [x] Fluxo de login funcional (magic link via Supabase)
+- [x] Estrutura inicial com Zustand 5
+- [x] Persistência local via `zustand/middleware/persist`
+- [x] `taskStore.ts` com geração de UUID no cliente (`crypto.randomUUID()`)
+- [x] `contextStore.ts` com contexto ativo e energia atual
+- [x] `authStore.ts` (não persistida)
+- [x] Layout base da aplicação
+- [x] Captura offline básica via input simples
+- [x] Estrutura base de rotas (React Router 7)
 - [ ] Schema `tasks` aplicado no Supabase (com `due_at`, `deleted_at`, CHECK constraints)
 - [ ] Schema `task_events` aplicado no Supabase (com CHECK constraint em `type`)
 - [ ] Schema `sync_log` aplicado no Supabase
@@ -60,7 +60,7 @@ Iniciamos as configurações base (Scaffold do Vite, Tailwind, .env e inicializa
 
 # Próximo passo concreto
 
-Criar `vercel.json` com rewrite SPA, implementar a autenticação via magic link do Supabase e estruturar o estado base com Zustand (`authStore.ts`, `taskStore.ts`, `contextStore.ts`).
+Executar o arquivo `supabase/migrations/0001_initial_schema.sql` no SQL Editor do dashboard do Supabase para criar as tabelas `tasks`, `task_events`, `sync_log`, habilitar o RLS e configurar as políticas e triggers.
 
 ---
 
