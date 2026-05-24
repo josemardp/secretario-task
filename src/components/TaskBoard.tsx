@@ -90,7 +90,10 @@ export function TaskBoard({ tasks }: TaskBoardProps) {
               {tasksWithScore.map(task => (
                 <div key={task.id} className="bg-white p-3 rounded-md shadow-sm border border-gray-200">
                   <div className="flex justify-between items-start mb-2">
-                    <h3 className="text-sm font-medium text-gray-900">{task.title}</h3>
+                    <h3 className="text-sm font-medium text-gray-900 flex items-center gap-1">
+                      {task.recurrence_rule && <span title="Tarefa Recorrente" className="text-indigo-500 text-xs">🔁</span>}
+                      {task.title}
+                    </h3>
                     <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-sm bg-purple-100 text-purple-800" title="Score do Ranking">
                       ★ {task.score.toFixed(2)}
                     </span>

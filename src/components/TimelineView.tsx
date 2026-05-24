@@ -178,9 +178,12 @@ export function TimelineView({ tasks }: TimelineViewProps) {
                 )}
               </div>
               
-              <h3 className={`text-base font-semibold ${
+              <h3 className={`text-base font-semibold flex items-center gap-1 ${
                 block.type === 'break' ? 'text-orange-700' : 'text-gray-900'
               }`}>
+                {block.type === 'task' && block.task?.recurrence_rule && (
+                  <span title="Tarefa Recorrente" className="text-indigo-500 text-xs">🔁</span>
+                )}
                 {block.title}
               </h3>
               
