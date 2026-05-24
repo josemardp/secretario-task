@@ -63,7 +63,7 @@ export default function Home() {
       const embedding = await generateEmbedding(searchText, aiApiKey);
       const { data, error } = await supabase.rpc('match_tasks', {
         query_embedding: embedding,
-        match_threshold: 0.5, // 50% similarity
+        match_threshold: 0.2, // 20% similarity (mais permissivo)
         match_count: 5,
         user_id_param: sessionData.session.user.id
       });

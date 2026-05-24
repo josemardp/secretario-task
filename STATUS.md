@@ -23,26 +23,27 @@
 
 # Sprint atual
 
-Sprint 7 — Planejamento Pós-MVP (v1.1+)
+Sprint 8 — Uso Real v1.1
 
 ## Observação
-Definição da primeira entrega arquitetural e de produto da fase v1.1+ (Inteligência, Infra avançada, etc).
+Testar as novas ferramentas de Inteligência Artificial no uso diário e coletar feedback.
 
 ---
 
 # Progresso dentro do sprint atual
 
-Planejamento inicial.
+A IA está implantada. Fase de testes de uso na rotina diária.
 
-## Checklist do Sprint 7
-- [ ] Definir roadmap inicial do v1.1+
-- [ ] Obter aprovação do Plano de Implementação
+## Checklist do Sprint 8
+- [ ] Validar a qualidade dos briefings gerados
+- [ ] Validar precisão da busca semântica no dia a dia
+- [ ] Identificar oportunidades de prompt engineering
 
 ---
 
 # Próximo passo concreto
 
-Aprovar o Plano de Implementação que define a direção da versão 1.1 do SecretárioTask.
+Usar o sistema livremente no dia a dia. Relatar qualquer comportamento anômalo da OpenAI ou da interface.
 
 ---
 
@@ -60,3 +61,4 @@ Nenhum.
 - Sprint 4 — Briefing + UX (concluído em 2026-05-24)
 - Sprint 5 — Sync + Hardening (concluído em 2026-05-24)
 - Sprint 6 — Uso Real (encurtado, concluído em 2026-05-24)
+- Sprint 7 — Trilha da Inteligência v1.1+ (concluído em 2026-05-24)
