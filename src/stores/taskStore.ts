@@ -2,6 +2,31 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Task, PendingMutation } from '../types';
 
+function getNextOccurrence(baseDateStr: string | null, rule: string): string {
+  const d = baseDateStr ? new Date(baseDateStr) : new Date();
+  // Ensure we don't accidentally schedule for the past if they're very late
+  const now = new Date();
+  
+  do {
+    switch (rule) {
+      case 'daily':
+        d.setDate(d.getDate() + 1);
+        break;
+      case 'weekly':
+        d.setDate(d.getDate() + 7);
+        break;
+      case 'monthly':
+        d.setMonth(d.getMonth() + 1);
+        break;
+      default: // monday, tuesday, etc.
+        d.setDate(d.getDate() + 7);
+        break;
+    }
+  } while (d < now && rule !== 'monthly'); // For monthly we don't auto-skip multiple months to be safe
+  
+  return d.toISOString();
+}
+
 interface TaskState {
   tasks: Task[];
   mutations: PendingMutation[];
@@ -46,6 +71,34 @@ export const useTaskStore = create<TaskState>()(
       },
 
       updateTask: (id, updates) => {
+        const { tasks, addTask } = get();
+        const taskToUpdate = tasks.find(t => t.id === id);
+
+        // Se a tarefa está sendo concluída e tem regra de recorrência
+        if (
+          taskToUpdate && 
+          updates.status === 'done' && 
+          taskToUpdate.status !== 'done' && 
+          taskToUpdate.recurrence_rule
+        ) {
+           const nextDueAt = getNextOccurrence(taskToUpdate.due_at, taskToUpdate.recurrence_rule);
+           // Cria o clone de forma assíncrona para não dar conflito com o set() atual do Zustand
+           setTimeout(() => {
+             addTask({
+               user_id: taskToUpdate.user_id,
+               title: taskToUpdate.title,
+               description: taskToUpdate.description,
+               context: taskToUpdate.context,
+               priority: taskToUpdate.priority,
+               energy: taskToUpdate.energy,
+               status: 'todo',
+               due_at: nextDueAt,
+               deleted_at: null,
+               recurrence_rule: taskToUpdate.recurrence_rule
+             });
+           }, 500);
+        }
+
         set((state) => ({
           tasks: state.tasks.map((t) => 
             t.id === id ? { ...t, ...updates, updated_at: new Date().toISOString() } : t

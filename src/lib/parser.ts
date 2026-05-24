@@ -6,7 +6,9 @@ export function parseTaskInput(rawText: string, defaultContext: ContextType): Pa
   let title = rawText;
   let context: ContextType = defaultContext;
   let priority = 0;
-  let due_at: Date | null = null;
+  let energy = 0;
+  let due_at: string | null = null;
+  let recurrence_rule: string | null = null;
   
   // Parse Context
   const contextRegex = /@(PM|Esdra|Pessoal|Familia|CCB|Estudo|Saude)/i;
@@ -38,7 +40,6 @@ export function parseTaskInput(rawText: string, defaultContext: ContextType): Pa
   }
 
   // Parse Energy
-  let energy = 0;
   const energyKeywordRegex = /energia\s+(alta|média|media|baixa)/i;
   const energyKeywordMatch = title.match(energyKeywordRegex);
   if (energyKeywordMatch) {
@@ -87,41 +88,54 @@ export function parseTaskInput(rawText: string, defaultContext: ContextType): Pa
   }
 
   // Parse Time
-  let timeFound = false;
-  // Matches formats like "às 14h", "14:30h", "14h"
   const timeRegex = /(?:às\s+)?([0-9]{1,2})(?::([0-9]{2}))?h?\b/i;
   const timeMatch = title.match(timeRegex);
   
   if (timeMatch) {
-    timeFound = true;
     const hours = parseInt(timeMatch[1], 10);
     const minutes = timeMatch[2] ? parseInt(timeMatch[2], 10) : 0;
     
-    // Ensure valid time
     if (hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59) {
       baseDate.setHours(hours, minutes, 0, 0);
-      title = title.replace(timeRegex, '');
-      
-      // If they specified a time but no date, assume today
+      title = title.replace(timeMatch[0], '');
       dateFound = true;
     }
   } else if (dateFound) {
-    // If date was found but no time, set to end of day
     baseDate.setHours(23, 59, 59, 999);
   }
 
   if (dateFound) {
-    due_at = baseDate;
+    due_at = baseDate.toISOString();
   }
 
-  // Cleanup title spaces
-  title = title.replace(/\s+/g, ' ').trim();
+  // Parse Recurrence
+  const recurrenceRegexes = [
+    { regex: /\btodos os dias\b|\btodo dia\b/i, rule: 'daily' },
+    { regex: /\btoda semana\b/i, rule: 'weekly' },
+    { regex: /\btodo mes\b|\btodo mês\b/i, rule: 'monthly' },
+    { regex: /\btoda segunda\b/i, rule: 'monday' },
+    { regex: /\btoda ter[cç]a\b/i, rule: 'tuesday' },
+    { regex: /\btoda quarta\b/i, rule: 'wednesday' },
+    { regex: /\btoda quinta\b/i, rule: 'thursday' },
+    { regex: /\btoda sexta\b/i, rule: 'friday' },
+    { regex: /\btodo s[aá]bado\b/i, rule: 'saturday' },
+    { regex: /\btodo domingo\b/i, rule: 'sunday' },
+  ];
+
+  for (const rec of recurrenceRegexes) {
+    if (rec.regex.test(title)) {
+      recurrence_rule = rec.rule;
+      title = title.replace(rec.regex, '');
+      break;
+    }
+  }
 
   return {
-    title,
+    title: title.trim().replace(/\s+/g, ' '),
     context,
     priority,
     energy,
-    ...(due_at ? { due_at: due_at.toISOString() } : {})
+    due_at: due_at ?? undefined,
+    recurrence_rule: recurrence_rule ?? undefined
   };
 }
