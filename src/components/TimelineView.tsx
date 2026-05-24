@@ -156,14 +156,24 @@ export function TimelineView({ tasks }: TimelineViewProps) {
                 ? 'bg-orange-50 border-orange-100' 
                 : 'bg-white border-gray-200'
             }`}>
-              <div className="flex justify-between items-center mb-1">
+              <div className="flex justify-between items-start mb-1">
                 <span className="text-sm font-bold text-gray-500">
                   {formatTime(block.startTime)} - {formatTime(block.endTime)}
                 </span>
                 {block.type === 'task' && block.task && (
-                  <span className="text-xs font-medium px-2 py-1 rounded bg-gray-100 text-gray-600">
-                    {block.task.estimated_minutes || 30} min
-                  </span>
+                  <div className="flex gap-2 items-center">
+                    {/* Lógica de Tarefa Atrasada */}
+                    {((block.task.due_at && new Date(block.task.due_at) < new Date()) || 
+                      (!block.task.due_at && new Date(block.task.created_at).getTime() < new Date().getTime() - 3 * 60 * 60 * 1000 && new Date(block.task.created_at).getDate() === new Date().getDate())
+                    ) && (
+                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-700 border border-red-200 animate-pulse">
+                        ⚠️ Atrasada
+                      </span>
+                    )}
+                    <span className="text-xs font-medium px-2 py-1 rounded bg-gray-100 text-gray-600">
+                      {block.task.estimated_minutes || 30} min
+                    </span>
+                  </div>
                 )}
               </div>
               
