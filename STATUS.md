@@ -23,10 +23,10 @@
 
 # Sprint atual
 
-Sprint 2 — CRUD + Parser
+Sprint 3 — Ranking Engine
 
 ## Observação
-Iniciando a implementação do fluxo principal operacional de tarefas com parser determinístico local.
+Implementar priorização determinística transparente e auditável, consumindo o `due_at` e a energia disponível do usuário.
 
 ---
 
@@ -34,21 +34,19 @@ Iniciando a implementação do fluxo principal operacional de tarefas com parser
 
 Apenas iniciando.
 
-## Checklist do Sprint 2 — CRUD + Parser
-- [x] CRUD completo de tarefas
-- [x] Edição de tarefas
-- [x] Exclusão de tarefas via soft delete (`deleted_at`)
-- [x] Todas as queries do app filtrando `WHERE deleted_at IS NULL`
-- [x] Parser local determinístico (`src/lib/parser.ts`) baseado em regras (priority, context, due_at)
-- [x] Board simples de visualização
-- [x] Context switch operacional
-- [x] Interpretação básica de prioridade e contexto
+## Checklist do Sprint 3 — Ranking Engine
+- [ ] Implementação de `src/lib/ranking.ts`
+- [ ] Cálculo de `f_urgency` = `(priority/10) * 0.6 + f_due * 0.4`
+- [ ] Cálculo de `f_energy` (consumindo `contextStore.energiaAtual`)
+- [ ] Cálculo de `f_age`
+- [ ] Cálculo de `f_context`
+- [ ] Score final entre 0 e 1 e ordenação na listagem
 
 ---
 
 # Próximo passo concreto
 
-Fazer testes manuais rigorosos do Parser na UI, e em seguida documentar a conclusão do Sprint 2.
+Adicionar o estado `energiaAtual` (0 a 10) no `contextStore.ts` com um seletor visual na UI para que o Ranking Engine possa consumir.
 
 ---
 
@@ -61,3 +59,4 @@ Nenhum.
 # Histórico de sprints concluídos
 
 - Sprint 1 — Fundação (concluído em 2026-05-23)
+- Sprint 2 — CRUD + Parser (concluído em 2026-05-24)
