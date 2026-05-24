@@ -46,8 +46,18 @@ export function TimelineView({ tasks }: TimelineViewProps) {
   };
 
   const blocks = useMemo(() => {
-    const today = new Date();
-    today.setHours(8, 30, 0, 0); // Início às 08:30
+    const now = new Date();
+    const limitNormal = new Date(now.getTime());
+    limitNormal.setHours(17, 0, 0, 0);
+    const limitUrgent = new Date(now.getTime());
+    limitUrgent.setHours(21, 0, 0, 0);
+
+    const startOfDay = new Date(now.getTime());
+    startOfDay.setHours(8, 30, 0, 0);
+    
+    // O início real da linha do tempo é 08h30 OU a hora atual (o que for maior).
+    // Assim, se for 12h27, o planejamento das tarefas começa de 12h27 pra frente.
+    let currentTime = new Date(Math.max(now.getTime(), startOfDay.getTime()));
     
     // Pegar apenas tarefas "A Fazer" (todo)
     const todoTasks = tasks.filter(t => t.status === 'todo' && !t.deleted_at);
@@ -61,11 +71,6 @@ export function TimelineView({ tasks }: TimelineViewProps) {
       .sort((a, b) => b.score - a.score);
 
     const timeline: TimelineBlock[] = [];
-    let currentTime = new Date(today.getTime());
-    const limitNormal = new Date(today.getTime());
-    limitNormal.setHours(17, 0, 0, 0);
-    const limitUrgent = new Date(today.getTime());
-    limitUrgent.setHours(21, 0, 0, 0);
 
     for (const task of sortedTasks) {
       const duration = task.estimated_minutes || 30;
