@@ -267,9 +267,10 @@ export function TimelineView({ tasks }: TimelineViewProps) {
                 </>
               )}
             </div>
-          ))}
-        </div>
-      )}
+          </div>
+        ))}
+      </div>
+    )}
     </div>
   );
 }
