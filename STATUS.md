@@ -23,27 +23,25 @@
 
 # Sprint atual
 
-Sprint 8 — Uso Real v1.1
+Fase de Refinamento e Implantação Final (Vercel)
 
 ## Observação
-Testar as novas ferramentas de Inteligência Artificial no uso diário e coletar feedback.
+Todos os épicos do Pós-MVP foram concluídos com sucesso. O app está pronto para ser lançado e usado em produção.
 
 ---
 
 # Progresso dentro do sprint atual
 
-A IA está implantada. Fase de testes de uso na rotina diária.
+Aguardando decisão do usuário sobre os próximos passos (deploy para o Vercel ou polimento final).
 
-## Checklist do Sprint 8
-- [ ] Validar a qualidade dos briefings gerados
-- [ ] Validar precisão da busca semântica no dia a dia
-- [ ] Identificar oportunidades de prompt engineering
+## Checklist
+- [ ] Decidir estratégia de Deploy
 
 ---
 
 # Próximo passo concreto
 
-Usar o sistema livremente no dia a dia. Relatar qualquer comportamento anômalo da OpenAI ou da interface.
+Perguntar ao usuário qual é a prioridade final.
 
 ---
 
@@ -62,3 +60,7 @@ Nenhum.
 - Sprint 5 — Sync + Hardening (concluído em 2026-05-24)
 - Sprint 6 — Uso Real (encurtado, concluído em 2026-05-24)
 - Sprint 7 — Trilha da Inteligência v1.1+ (concluído em 2026-05-24)
+- Sprint 8 — Uso Real IA (concluído em 2026-05-24)
+- Sprint 11 — Transformação em PWA Instalável (concluído em 2026-05-24)
+- Sprint 14 — Dashboard Analítico Avançado (concluído em 2026-05-24)
+- Sprint 15 — Automações de Recorrência (concluído em 2026-05-24)
