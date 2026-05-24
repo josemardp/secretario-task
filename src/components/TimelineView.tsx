@@ -2,6 +2,8 @@ import React, { useMemo } from 'react';
 import type { Task } from '../types';
 import { calculateTaskScore } from '../lib/ranking';
 import { useContextStore } from '../stores/contextStore';
+import { useTaskStore } from '../stores/taskStore';
+import { TaskActions } from './TaskActions';
 
 interface TimelineViewProps {
   tasks: Task[];
@@ -18,6 +20,30 @@ interface TimelineBlock {
 
 export function TimelineView({ tasks }: TimelineViewProps) {
   const { currentEnergy, activeContext } = useContextStore();
+  const { updateTask } = useTaskStore();
+
+  const handleComplete = (taskId: string) => {
+    const task = tasks.find(t => t.id === taskId);
+    const updates: Partial<Task> = { status: 'done' };
+    if (task?.started_at) {
+      const start = new Date(task.started_at).getTime();
+      const end = new Date().getTime();
+      updates.actual_minutes = Math.round((end - start) / 60000);
+    }
+    updateTask(taskId, updates);
+  };
+
+  const handlePostponeTomorrow = (taskId: string) => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    tomorrow.setHours(23, 59, 59, 999);
+    updateTask(taskId, { due_at: tomorrow.toISOString() });
+  };
+
+  const handlePostponeDate = (taskId: string, dateString: string) => {
+    const selected = new Date(dateString + 'T23:59:59');
+    updateTask(taskId, { due_at: selected.toISOString() });
+  };
 
   const blocks = useMemo(() => {
     const today = new Date();
@@ -143,14 +169,25 @@ export function TimelineView({ tasks }: TimelineViewProps) {
               </h3>
               
               {block.type === 'task' && block.task && (
-                <div className="mt-2 flex gap-2 text-xs">
-                  <span className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded">
-                    Energia: {block.task.energy}
-                  </span>
-                  <span className="bg-red-50 text-red-700 px-2 py-0.5 rounded">
-                    Prioridade: {block.task.priority}
-                  </span>
-                </div>
+                <>
+                  <div className="mt-2 flex gap-2 text-xs mb-3">
+                    <span className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded">
+                      Energia: {block.task.energy}
+                    </span>
+                    <span className="bg-red-50 text-red-700 px-2 py-0.5 rounded">
+                      Prioridade: {block.task.priority}
+                    </span>
+                  </div>
+                  
+                  <div className="pt-2 border-t border-gray-100">
+                    <TaskActions 
+                      showComplete={true}
+                      onComplete={() => handleComplete(block.task!.id)}
+                      onPostponeTomorrow={() => handlePostponeTomorrow(block.task!.id)}
+                      onPostponeDate={(dateString) => handlePostponeDate(block.task!.id, dateString)}
+                    />
+                  </div>
+                </>
               )}
             </div>
           </div>
