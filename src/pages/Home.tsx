@@ -9,7 +9,7 @@ import type { ContextType } from '../types';
 export default function Home() {
   const [taskText, setTaskText] = useState('');
   const { tasks, addTask, deleteTask } = useTaskStore();
-  const { activeContext, setActiveContext } = useContextStore();
+  const { activeContext, setActiveContext, currentEnergy, setCurrentEnergy } = useContextStore();
 
   const handleAddTask = (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,20 +53,37 @@ export default function Home() {
       <main className="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
           
-          <div className="mb-6 flex gap-2 overflow-x-auto pb-2">
-            {['PM', 'Esdra', 'Pessoal', 'Familia', 'CCB', 'Estudo', 'Saude'].map(ctx => (
-              <button
-                key={ctx}
-                onClick={() => setActiveContext(ctx as ContextType)}
-                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                  activeContext === ctx 
-                    ? 'bg-indigo-600 text-white shadow-sm' 
-                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
-                }`}
-              >
-                {ctx}
-              </button>
-            ))}
+          <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-200 pb-4">
+            <div className="flex gap-2 overflow-x-auto pb-2 sm:pb-0">
+              {['PM', 'Esdra', 'Pessoal', 'Familia', 'CCB', 'Estudo', 'Saude'].map(ctx => (
+                <button
+                  key={ctx}
+                  onClick={() => setActiveContext(ctx as ContextType)}
+                  className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+                    activeContext === ctx 
+                      ? 'bg-indigo-600 text-white shadow-sm' 
+                      : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+                  }`}
+                >
+                  {ctx}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-full border border-gray-200 shadow-sm">
+              <label htmlFor="energy" className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                Minha Energia: <span className={currentEnergy >= 7 ? 'text-green-600' : currentEnergy <= 3 ? 'text-red-600' : 'text-yellow-600'}>{currentEnergy}/10</span>
+              </label>
+              <input 
+                type="range" 
+                id="energy" 
+                min="0" 
+                max="10" 
+                value={currentEnergy} 
+                onChange={(e) => setCurrentEnergy(parseInt(e.target.value, 10))}
+                className="w-24 sm:w-32 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+              />
+            </div>
           </div>
 
           <form onSubmit={handleAddTask} className="mb-8">

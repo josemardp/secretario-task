@@ -1,6 +1,8 @@
 import React from 'react';
 import type { Task, TaskStatus } from '../types';
 import { useTaskStore } from '../stores/taskStore';
+import { useContextStore } from '../stores/contextStore';
+import { calculateTaskScore } from '../lib/ranking';
 
 interface TaskBoardProps {
   tasks: Task[];
@@ -14,6 +16,7 @@ const COLUMNS: { id: TaskStatus; title: string }[] = [
 
 export function TaskBoard({ tasks }: TaskBoardProps) {
   const { updateTask, deleteTask } = useTaskStore();
+  const { currentEnergy, activeContext } = useContextStore();
 
   const handleStatusChange = (taskId: string, currentStatus: TaskStatus) => {
     const currentIndex = COLUMNS.findIndex(c => c.id === currentStatus);
@@ -34,16 +37,29 @@ export function TaskBoard({ tasks }: TaskBoardProps) {
   return (
     <div className="flex gap-4 overflow-x-auto pb-4">
       {COLUMNS.map(column => {
+        // Obter as tarefas não excluídas desta coluna
         const columnTasks = tasks.filter(t => t.status === column.id && !t.deleted_at);
+        
+        // Calcular o score e anexar temporariamente para ordenação e exibição
+        const tasksWithScore = columnTasks.map(task => ({
+          ...task,
+          score: calculateTaskScore(task, currentEnergy, activeContext)
+        }));
+
+        // Ordenar pela maior nota
+        tasksWithScore.sort((a, b) => b.score - a.score);
         
         return (
           <div key={column.id} className="flex-1 min-w-[300px] bg-gray-50 rounded-lg p-4">
             <h2 className="text-sm font-semibold text-gray-700 mb-4">{column.title} ({columnTasks.length})</h2>
             <div className="space-y-3">
-              {columnTasks.map(task => (
+              {tasksWithScore.map(task => (
                 <div key={task.id} className="bg-white p-3 rounded-md shadow-sm border border-gray-200">
                   <div className="flex justify-between items-start mb-2">
                     <h3 className="text-sm font-medium text-gray-900">{task.title}</h3>
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-sm bg-purple-100 text-purple-800" title="Score do Ranking">
+                      ★ {task.score.toFixed(2)}
+                    </span>
                   </div>
                   
                   <div className="flex items-center gap-2 text-xs text-gray-500 mb-3 flex-wrap">
