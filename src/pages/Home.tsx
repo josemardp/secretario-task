@@ -4,12 +4,15 @@ import { useContextStore } from '../stores/contextStore';
 import { supabase } from '../lib/supabase';
 import { parseTaskInput } from '../lib/parser';
 import { TaskBoard } from '../components/TaskBoard';
+import { getDailyBriefing } from '../lib/briefing';
 import type { ContextType } from '../types';
 
 export default function Home() {
   const [taskText, setTaskText] = useState('');
   const { tasks, addTask, deleteTask } = useTaskStore();
   const { activeContext, setActiveContext, currentEnergy, setCurrentEnergy } = useContextStore();
+
+  const briefingTasks = getDailyBriefing(tasks, currentEnergy, activeContext, 3);
 
   const handleAddTask = (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,7 +26,7 @@ export default function Home() {
       description: null,
       context: parsedData.context || activeContext,
       priority: parsedData.priority || 0,
-      energy: 0,
+      energy: parsedData.energy || 0,
       status: 'todo',
       due_at: parsedData.due_at || null,
       deleted_at: null,
@@ -85,6 +88,38 @@ export default function Home() {
               />
             </div>
           </div>
+
+          {briefingTasks.length > 0 && (
+            <div className="mb-8">
+              <h2 className="text-lg font-bold text-gray-900 mb-3 flex items-center gap-2">
+                <span>🎯</span> Foco do Dia
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {briefingTasks.map((task, idx) => (
+                  <div key={task.id} className="bg-gradient-to-br from-indigo-50 to-white p-4 rounded-xl shadow-sm border border-indigo-100 flex flex-col justify-between">
+                    <div>
+                      <div className="flex justify-between items-start mb-2">
+                        <span className="text-xs font-bold text-indigo-800 bg-indigo-100 px-2 py-1 rounded-full">Top {idx + 1}</span>
+                        {task.due_at && (
+                          <span className="text-xs text-indigo-600 font-medium">
+                            {new Date(task.due_at).toLocaleDateString('pt-BR')}
+                          </span>
+                        )}
+                      </div>
+                      <h3 className="font-semibold text-gray-900 leading-snug">{task.title}</h3>
+                    </div>
+                    {task.priority > 0 && (
+                      <div className="mt-3">
+                        <span className="text-xs font-medium text-red-600 bg-red-50 px-2 py-0.5 rounded border border-red-100">
+                          Prioridade Alta (P{task.priority})
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           <form onSubmit={handleAddTask} className="mb-8">
             <label htmlFor="task" className="sr-only">Nova Tarefa</label>

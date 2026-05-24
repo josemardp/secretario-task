@@ -37,6 +37,25 @@ export function parseTaskInput(rawText: string, defaultContext: ContextType): Pa
     }
   }
 
+  // Parse Energy
+  let energy = 0;
+  const energyKeywordRegex = /energia\s+(alta|média|media|baixa)/i;
+  const energyKeywordMatch = title.match(energyKeywordRegex);
+  if (energyKeywordMatch) {
+    const keyword = energyKeywordMatch[1].toLowerCase();
+    if (keyword === 'baixa') energy = 2;
+    if (keyword === 'media' || keyword === 'média') energy = 5;
+    if (keyword === 'alta') energy = 8;
+    title = title.replace(energyKeywordRegex, '');
+  } else {
+    const eRegex = /\be([0-9]|10)\b/i;
+    const eMatch = title.match(eRegex);
+    if (eMatch) {
+      energy = parseInt(eMatch[1], 10);
+      title = title.replace(eRegex, '');
+    }
+  }
+
   // Parse Date (Relative days)
   const today = new Date();
   let baseDate = new Date();
@@ -102,6 +121,7 @@ export function parseTaskInput(rawText: string, defaultContext: ContextType): Pa
     title,
     context,
     priority,
+    energy,
     ...(due_at ? { due_at: due_at.toISOString() } : {})
   };
 }

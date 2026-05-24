@@ -225,4 +225,14 @@ Contexto: pré-Sprint 1.
 
 # Decisões durante o desenvolvimento
 
-(Nenhuma ainda. As próximas entradas vão chegando à medida que os sprints avançarem.)
+## 2026-05-24 — Extração de "energia" no Parser
+Decisão: O parser agora extrai o campo `energia` através de palavras-chave (`energia alta|media|baixa`) ou prefixos explícitos (`e8`, `e2`), assim como faz com prioridade.
+Motivo: Durante testes de validação, constatamos que sem a definição da energia individual da tarefa, o algoritmo do Ranking Engine aplicava penalidades idênticas a todas as tarefas simultaneamente ao mudar a Energia Atual (já que todas as tarefas nasciam com energy=0). Isso alterava a nota, mas não reordenava as tarefas. Extrair a energia via texto resolve o problema matematicamente.
+Alternativas descartadas: Adicionar UI com inputs avançados — descartado para manter a filosofia "capture via texto livre" do MVP.
+Contexto: Sprint 4.
+
+## 2026-05-24 — Throttling de eventos `viewed` simplificado
+Decisão: O throttling dos eventos diários `viewed` usa um dicionário local `Record<string, string>` mapeando `taskId` para a string da data de hoje (`YYYY-MM-DD`).
+Motivo: Evita complexidade de lidar com timestamps, expirações ou banco de dados para uma trava efêmera. Atende perfeitamente ao requisito "1 por dia por tarefa".
+Alternativas descartadas: Consultar o Zustand para contar quantos eventos já foram despachados hoje — descartado por ser ineficiente e propenso a falhas no re-render.
+Contexto: Sprint 4.

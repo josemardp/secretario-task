@@ -5,18 +5,21 @@ import type { Task, PendingMutation } from '../types';
 interface TaskState {
   tasks: Task[];
   mutations: PendingMutation[];
+  viewedRecords: Record<string, string>;
   addTask: (task: Omit<Task, 'id' | 'created_at' | 'updated_at'>) => void;
   updateTask: (id: string, updates: Partial<Task>) => void;
   deleteTask: (id: string) => void;
+  recordViewEvent: (taskId: string) => void;
   addMutation: (mutation: Omit<PendingMutation, 'id' | 'createdAt' | 'retryCount'>) => void;
   removeMutation: (id: string) => void;
 }
 
 export const useTaskStore = create<TaskState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       tasks: [],
       mutations: [],
+      viewedRecords: {},
       
       addTask: (taskData) => {
         const id = crypto.randomUUID();
@@ -68,6 +71,41 @@ export const useTaskStore = create<TaskState>()(
           operation: 'delete',
           entityId: id,
           payload: { deleted_at: now }
+        });
+      },
+
+      recordViewEvent: (taskId) => {
+        const today = new Date().toISOString().split('T')[0]; // "YYYY-MM-DD"
+        const { viewedRecords } = get();
+        
+        // Throttling: if already viewed today, ignore
+        if (viewedRecords[taskId] === today) {
+          return;
+        }
+
+        // Update local throttling state
+        set((state) => ({
+          viewedRecords: {
+            ...state.viewedRecords,
+            [taskId]: today
+          }
+        }));
+
+        // Register the event mutation
+        const eventId = crypto.randomUUID();
+        const now = new Date().toISOString();
+        
+        useTaskStore.getState().addMutation({
+          entity: 'task_event',
+          operation: 'insert',
+          entityId: eventId,
+          payload: {
+            id: eventId,
+            task_id: taskId,
+            user_id: '', // Set on sync
+            type: 'viewed',
+            created_at: now
+          }
         });
       },
 
