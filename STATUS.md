@@ -35,20 +35,20 @@ Iniciando a implementação do fluxo principal operacional de tarefas com parser
 Apenas iniciando.
 
 ## Checklist do Sprint 2 — CRUD + Parser
-- [ ] CRUD completo de tarefas
-- [ ] Edição de tarefas
-- [ ] Exclusão de tarefas via soft delete (`deleted_at`)
-- [ ] Todas as queries do app filtrando `WHERE deleted_at IS NULL`
-- [ ] Parser local determinístico (`src/lib/parser.ts`) baseado em regras (priority, context, due_at)
-- [ ] Board simples de visualização
-- [ ] Context switch operacional
-- [ ] Interpretação básica de prioridade e contexto
+- [x] CRUD completo de tarefas
+- [x] Edição de tarefas
+- [x] Exclusão de tarefas via soft delete (`deleted_at`)
+- [x] Todas as queries do app filtrando `WHERE deleted_at IS NULL`
+- [x] Parser local determinístico (`src/lib/parser.ts`) baseado em regras (priority, context, due_at)
+- [x] Board simples de visualização
+- [x] Context switch operacional
+- [x] Interpretação básica de prioridade e contexto
 
 ---
 
 # Próximo passo concreto
 
-Criar o `src/lib/parser.ts` com expressões regulares básicas para interpretar contexto, prioridade e `due_at` (hoje, amanhã, horários).
+Fazer testes manuais rigorosos do Parser na UI, e em seguida documentar a conclusão do Sprint 2.
 
 ---
 

@@ -2,27 +2,30 @@ import { useState } from 'react';
 import { useTaskStore } from '../stores/taskStore';
 import { useContextStore } from '../stores/contextStore';
 import { supabase } from '../lib/supabase';
+import { parseTaskInput } from '../lib/parser';
+import { TaskBoard } from '../components/TaskBoard';
 import type { ContextType } from '../types';
 
 export default function Home() {
   const [taskText, setTaskText] = useState('');
-  const { tasks, addTask } = useTaskStore();
-  const { activeContext } = useContextStore();
+  const { tasks, addTask, deleteTask } = useTaskStore();
+  const { activeContext, setActiveContext } = useContextStore();
 
   const handleAddTask = (e: React.FormEvent) => {
     e.preventDefault();
     if (!taskText.trim()) return;
 
-    // A simple parsing logic can be added later. For MVP, we use default values.
+    const parsedData = parseTaskInput(taskText, activeContext);
+
     addTask({
-      user_id: '', // Will be updated on sync or handled via Supabase defaults if possible, but better to get from authStore later.
-      title: taskText,
+      user_id: '', // Set on sync or later
+      title: parsedData.title || 'Nova Tarefa',
       description: null,
-      context: activeContext,
-      priority: 0,
+      context: parsedData.context || activeContext,
+      priority: parsedData.priority || 0,
       energy: 0,
       status: 'todo',
-      due_at: null,
+      due_at: parsedData.due_at || null,
       deleted_at: null,
     });
     
@@ -50,6 +53,22 @@ export default function Home() {
       <main className="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
         <div className="px-4 py-6 sm:px-0">
           
+          <div className="mb-6 flex gap-2 overflow-x-auto pb-2">
+            {['PM', 'Esdra', 'Pessoal', 'Familia', 'CCB', 'Estudo', 'Saude'].map(ctx => (
+              <button
+                key={ctx}
+                onClick={() => setActiveContext(ctx as ContextType)}
+                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+                  activeContext === ctx 
+                    ? 'bg-indigo-600 text-white shadow-sm' 
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+                }`}
+              >
+                {ctx}
+              </button>
+            ))}
+          </div>
+
           <form onSubmit={handleAddTask} className="mb-8">
             <label htmlFor="task" className="sr-only">Nova Tarefa</label>
             <div className="flex gap-2">
@@ -71,25 +90,7 @@ export default function Home() {
             </div>
           </form>
 
-          <div className="bg-white shadow rounded-lg p-6">
-            <h2 className="text-xl font-semibold mb-4">Tarefas ({tasks.filter(t => !t.deleted_at).length})</h2>
-            <ul className="divide-y divide-gray-200">
-              {tasks.filter(t => !t.deleted_at).map(task => (
-                <li key={task.id} className="py-4">
-                  <div className="flex space-x-3">
-                    <div className="flex-1 space-y-1">
-                      <h3 className="text-sm font-medium text-gray-900">{task.title}</h3>
-                      <p className="text-sm text-gray-500">Contexto: {task.context}</p>
-                    </div>
-                  </div>
-                </li>
-              ))}
-              {tasks.filter(t => !t.deleted_at).length === 0 && (
-                <p className="text-sm text-gray-500">Nenhuma tarefa encontrada.</p>
-              )}
-            </ul>
-          </div>
-          
+            <TaskBoard tasks={tasks} />
         </div>
       </main>
     </div>
