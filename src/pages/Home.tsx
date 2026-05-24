@@ -21,7 +21,7 @@ export default function Home() {
   const [smartBriefingText, setSmartBriefingText] = useState<string | null>(null);
   const [isGeneratingBriefing, setIsGeneratingBriefing] = useState(false);
 
-  const { tasks, addTask, deleteTask } = useTaskStore();
+  const { tasks, addTask } = useTaskStore();
   const { activeContext, setActiveContext, currentEnergy, setCurrentEnergy, aiApiKey } = useContextStore();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
@@ -40,7 +40,7 @@ export default function Home() {
       if (aiApiKey) {
         // Estima o tempo baseado na IA e no histórico
         const recentTasks = tasks.filter(t => t.status === 'done' && !t.deleted_at);
-        estimatedTime = await estimateTaskTime(parsed.title, recentTasks, aiApiKey);
+        estimatedTime = await estimateTaskTime(parsed.title || 'Nova Tarefa', recentTasks, aiApiKey);
       }
       
       addTask({

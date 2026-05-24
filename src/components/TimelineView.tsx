@@ -1,5 +1,6 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import type { Task } from '../types';
+import { CONTEXTS_LIST } from '../types';
 import { calculateTaskScore } from '../lib/ranking';
 import { useContextStore } from '../stores/contextStore';
 import { useTaskStore } from '../stores/taskStore';
@@ -19,7 +20,7 @@ interface TimelineBlock {
 }
 
 export function TimelineView({ tasks }: TimelineViewProps) {
-  const { currentEnergy, activeContext, contexts } = useContextStore();
+  const { currentEnergy, activeContext } = useContextStore();
   const { updateTask } = useTaskStore();
 
   const handleComplete = (taskId: string) => {
@@ -192,7 +193,7 @@ export function TimelineView({ tasks }: TimelineViewProps) {
                       className="inline-flex items-center rounded-md bg-gray-50 px-2 py-0.5 font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10 cursor-pointer outline-none border-0 focus:ring-2 focus:ring-indigo-600 appearance-none text-center"
                       title="Clique para alterar o contexto"
                     >
-                      {contexts.map(ctx => (
+                      {CONTEXTS_LIST.map((ctx) => (
                         <option key={ctx} value={ctx}>{ctx}</option>
                       ))}
                     </select>

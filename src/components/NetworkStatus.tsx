@@ -1,4 +1,3 @@
-import React from 'react';
 import { useNetwork } from '../hooks/useNetwork';
 
 export function NetworkStatus() {
