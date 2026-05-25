@@ -2,20 +2,59 @@ import type { Task, ContextType } from '../types';
 import { parseTaskInput } from './parser';
 
 const OPENAI_API_URL = 'https://api.openai.com/v1';
-
 const CONTEXTS = ['PM', 'Esdra', 'Pessoal', 'Familia', 'CCB', 'Estudo', 'Saude'];
+
+// Extrai horário no formato brasileiro "09h05" ou "09:05" de um texto
+function extractBrazilianTime(text: string): { hour: number; minute: number } | null {
+  // Formato "09h05", "9h5", "9h00"
+  const hMatch = text.match(/\b(\d{1,2})h(\d{2})\b/i);
+  if (hMatch) return { hour: parseInt(hMatch[1]), minute: parseInt(hMatch[2]) };
+  // Formato "às 09:05", "as 9:05"
+  const colonMatch = text.match(/\b(?:às?|as)\s+(\d{1,2}):(\d{2})\b/i);
+  if (colonMatch) return { hour: parseInt(colonMatch[1]), minute: parseInt(colonMatch[2]) };
+  return null;
+}
+
+// Extrai regra de recorrência de um texto em português
+function extractRecurrenceRule(text: string): string | null {
+  if (/segunda[- ]a[- ]sexta|dias?\s+út(?:e|ei)is?|todo\s+dia\s+út(?:e|ei)l/i.test(text))
+    return 'monday,tuesday,wednesday,thursday,friday';
+  if (/todo\s+dia|diariamente|todos\s+os\s+dias/i.test(text))
+    return 'daily';
+  if (/toda\s+semana|semanalmente/i.test(text))
+    return 'weekly';
+  if (/todo\s+m[eê]s|mensalmente/i.test(text))
+    return 'monthly';
+  if (/toda(?:s)?\s+segunda/i.test(text)) return 'monday';
+  if (/toda(?:s)?\s+ter[cç]a/i.test(text)) return 'tuesday';
+  if (/toda(?:s)?\s+quarta/i.test(text)) return 'wednesday';
+  if (/toda(?:s)?\s+quinta/i.test(text)) return 'thursday';
+  if (/toda(?:s)?\s+sexta/i.test(text)) return 'friday';
+  return null;
+}
+
+// Dado um due_at retornado pela AI e o tempo correto, reaplica hora e minuto locais em UTC
+function applyLocalTimeToDate(dueAt: string | null | undefined, time: { hour: number; minute: number }): string {
+  const tzOffsetMin = new Date().getTimezoneOffset(); // ex: 180 para UTC-3
+  const base = dueAt ? new Date(dueAt) : new Date();
+  if (isNaN(base.getTime())) {
+    const fallback = new Date();
+    fallback.setUTCHours(time.hour + tzOffsetMin / 60, time.minute, 0, 0);
+    return fallback.toISOString();
+  }
+  // Mantém a DATA que a AI escolheu, apenas substitui o horário
+  const utcHour = time.hour + tzOffsetMin / 60;
+  base.setUTCHours(Math.floor(utcHour) % 24, time.minute, 0, 0);
+  return base.toISOString();
+}
 
 export async function parseMultipleTasks(rawText: string, defaultContext: ContextType, apiKey?: string | null): Promise<Partial<Task>[]> {
   if (!apiKey) {
-    // Fallback "burro" se não tiver chave, separando por quebras de linha e conectivos
     const lines = rawText.split(/\r?\n/);
     const tasks: Partial<Task>[] = [];
-    
     for (const line of lines) {
       const cleanLine = line.trim().replace(/^-/, '').trim();
       if (cleanLine.length < 3) continue;
-      
-      // Se a linha tem cara de bullet point, não tenta fatiar mais
       if (line.trim().startsWith('-') || line.trim().match(/^\d+\./)) {
         tasks.push(parseTaskInput(cleanLine, defaultContext));
       } else {
@@ -24,7 +63,6 @@ export async function parseMultipleTasks(rawText: string, defaultContext: Contex
         tasks.push(...parts.map(p => parseTaskInput(p.trim(), defaultContext)));
       }
     }
-    
     return tasks;
   }
 
@@ -32,86 +70,74 @@ export async function parseMultipleTasks(rawText: string, defaultContext: Contex
   const tzOffset = now.getTimezoneOffset() * 60000;
   const localISOTime = (new Date(Date.now() - tzOffset)).toISOString().slice(0, -1);
 
-  const systemPrompt = `Você é um extrator de tarefas em português brasileiro. Extraia CADA TAREFA do texto e devolva APENAS JSON com array "tasks". Não pule nenhuma tarefa.
+  // Linhas originais para pós-processamento determinístico
+  const originalLines = rawText.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
 
-━━━ FORMATO DE HORÁRIO BRASILEIRO (CRÍTICO) ━━━
-O formato "HHhMM" significa: número ANTES do h = HORA, número DEPOIS do h = MINUTOS.
-"09h00" → hora 9, minuto 0  → ISO time: T09:00
-"09h05" → hora 9, minuto 5  → ISO time: T09:05
-"09h10" → hora 9, minuto 10 → ISO time: T09:10
-"09h15" → hora 9, minuto 15 → ISO time: T09:15
-"14h30" → hora 14, minuto 30 → ISO time: T14:30
-NUNCA interprete o número após "h" como hora. Ele é sempre MINUTO.
+  // Recorrência do texto inteiro (se todas as tarefas compartilharem o mesmo padrão)
+  const globalRecurrence = extractRecurrenceRule(rawText);
 
-━━━ FUSO HORÁRIO ━━━
-Data/hora LOCAL atual (Brasília, UTC-3): ${localISOTime}
-Para converter local → UTC: ADICIONE 3 horas.
-Exemplos: 09:00 local = 12:00 UTC | 09:05 local = 12:05 UTC | 14:30 local = 17:30 UTC
-due_at deve ser SEMPRE em UTC com sufixo Z.
+  const systemPrompt = `Você é um extrator de tarefas em português brasileiro. Extraia CADA TAREFA e devolva APENAS JSON com array "tasks". Não pule nenhuma.
 
-━━━ RECORRÊNCIAS ━━━
-Se o texto indicar repetição, preencha recurrence_rule com dias em inglês separados por vírgula:
-"segunda a sexta" / "dias úteis" / "todo dia útil" → "monday,tuesday,wednesday,thursday,friday"
-"todo dia" / "diariamente" / "todos os dias"       → "daily"
-"toda semana" / "semanalmente"                      → "weekly"
-"toda segunda"                                      → "monday"
-"toda terça e quinta"                               → "tuesday,thursday"
-Para tarefas recorrentes, due_at = primeira ocorrência futura a partir de agora.
+Para cada tarefa extraia:
+- title: string (limpo, sem datas/horas/bullets)
+- context: "PM"|"Esdra"|"Pessoal"|"Familia"|"CCB"|"Estudo"|"Saude"
+- priority: 0-10 (urgente=10, alta=8, média=5, baixa=2, padrão=0)
+- energy: 0-10 (alta=8, média=5, baixa=2, padrão=0)
+- due_at: ISO 8601 UTC ou null (data/hora local atual: ${localISOTime}, UTC-3)
+- recurrence_rule: "daily"|"weekly"|"monthly"|"monday,tuesday,..."|null
 
-━━━ CAMPOS DE CADA OBJETO ━━━
-- title: string — título limpo sem datas, horas ou bullets
-- context: "PM"|"Esdra"|"Pessoal"|"Familia"|"CCB"|"Estudo"|"Saude" — escolha o mais coerente
-- priority: number 0-10 (urgente=10, alta=8, média=5, baixa=2, padrão=0)
-- energy: number 0-10 (alta=8, média=5, baixa=2, padrão=0)
-- due_at: string ISO 8601 UTC com Z, ou null. Se não houver hora explícita, use 12:00:00Z (= 09:00 local).
-- recurrence_rule: string ou null
-
-Responda APENAS com JSON válido contendo o array "tasks".`;
+Responda APENAS com JSON válido com array "tasks".`;
 
   try {
     const response = await fetch(`${OPENAI_API_URL}/chat/completions`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-      },
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
       body: JSON.stringify({
         model: 'gpt-4o-mini',
         messages: [
           { role: 'system', content: systemPrompt },
           { role: 'user', content: rawText }
         ],
-        response_format: { type: "json_object" },
+        response_format: { type: 'json_object' },
         temperature: 0.1,
       }),
     });
 
-    if (!response.ok) {
-      const errTxt = await response.text();
-      console.error('Falha na API da OpenAI:', errTxt);
-      // forçar erro para cair no catch e usar fallback inteligente
-      throw new Error('API Falhou');
-    }
+    if (!response.ok) throw new Error('API Falhou');
 
     const data = await response.json();
     const content = JSON.parse(data.choices[0].message.content);
-    
+
     if (content.tasks && Array.isArray(content.tasks)) {
-      return content.tasks.map((t: any) => {
-        let finalDueAt = t.due_at;
-        // Tratar caso a IA retorne DD/MM/YYYY HH:MM literalmente em vez de ISO
-        if (finalDueAt && finalDueAt.match(/^\d{2}\/\d{2}\/\d{4}/)) {
-           const [datePart, timePart] = finalDueAt.split(' ');
-           const [d, m, y] = datePart.split('/');
-           const [h, min] = timePart ? timePart.split(':') : ['09', '00'];
-           const parsedD = new Date(Number(y), Number(m)-1, Number(d), Number(h), Number(min));
-           finalDueAt = parsedD.toISOString();
+      return content.tasks.map((t: any, idx: number) => {
+        // Linha original correspondente (melhor esforço: por índice)
+        const originalLine = originalLines[idx] ?? rawText;
+
+        // ── Pós-processamento determinístico de HORÁRIO ──────────────────
+        // A AI erra sistematicamente o formato "09h05". Corrigimos no cliente.
+        const timeFromText = extractBrazilianTime(originalLine) ?? extractBrazilianTime(rawText);
+        let finalDueAt: string | undefined = t.due_at ?? undefined;
+
+        // Normaliza formato DD/MM/YYYY retornado pela AI
+        if (finalDueAt?.match(/^\d{2}\/\d{2}\/\d{4}/)) {
+          const [datePart, timePart] = finalDueAt.split(' ');
+          const [d, m, y] = datePart.split('/');
+          const [h, min] = timePart ? timePart.split(':') : ['09', '00'];
+          finalDueAt = new Date(Number(y), Number(m) - 1, Number(d), Number(h), Number(min)).toISOString();
         }
 
-        if (finalDueAt) {
-          const d = new Date(finalDueAt);
-          if (isNaN(d.getTime())) finalDueAt = undefined;
+        if (finalDueAt && isNaN(new Date(finalDueAt).getTime())) finalDueAt = undefined;
+
+        // Se encontrou horário no texto original, sobrescreve o horário da AI
+        if (timeFromText) {
+          finalDueAt = applyLocalTimeToDate(finalDueAt, timeFromText);
         }
+
+        // ── Pós-processamento determinístico de RECORRÊNCIA ───────────────
+        const recurrence = t.recurrence_rule
+          || extractRecurrenceRule(originalLine)
+          || globalRecurrence
+          || undefined;
 
         return {
           title: String(t.title || rawText),
@@ -119,7 +145,7 @@ Responda APENAS com JSON válido contendo o array "tasks".`;
           priority: Number(t.priority) || 0,
           energy: Number(t.energy) || 0,
           due_at: finalDueAt,
-          recurrence_rule: t.recurrence_rule || undefined
+          recurrence_rule: recurrence,
         };
       });
     }
@@ -127,7 +153,7 @@ Responda APENAS com JSON válido contendo o array "tasks".`;
     console.error('Fallback ativado. Erro no parse:', e);
   }
 
-  // Fallback se a API falhar ou não retornar array válido (reusa lógica de linhas)
+  // Fallback sem API
   const lines = rawText.split(/\r?\n/);
   const tasks: Partial<Task>[] = [];
   for (const line of lines) {
