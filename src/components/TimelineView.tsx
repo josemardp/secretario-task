@@ -20,12 +20,46 @@ interface TimelineBlock {
   task?: Task;
 }
 
+function toLocalDatetimeInput(iso: string | null | undefined): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 export function TimelineView({ tasks }: TimelineViewProps) {
   const { currentEnergy, activeContext } = useContextStore();
   const { updateTask, deleteTask } = useTaskStore();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [dismissedBreaks, setDismissedBreaks] = useState<string[]>([]);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [editForm, setEditForm] = useState({ title: '', due_at: '', estimated_minutes: 30, context: 'Pessoal' as Task['context'], priority: 0, energy: 0 });
+
+  const openEdit = (task: Task) => {
+    setEditingTask(task);
+    setEditForm({
+      title: task.title,
+      due_at: toLocalDatetimeInput(task.due_at),
+      estimated_minutes: task.estimated_minutes || 30,
+      context: task.context,
+      priority: task.priority,
+      energy: task.energy,
+    });
+  };
+
+  const saveEdit = () => {
+    if (!editingTask) return;
+    updateTask(editingTask.id, {
+      title: editForm.title,
+      due_at: editForm.due_at ? new Date(editForm.due_at).toISOString() : null,
+      estimated_minutes: editForm.estimated_minutes,
+      context: editForm.context,
+      priority: editForm.priority,
+      energy: editForm.energy,
+    });
+    setEditingTask(null);
+  };
 
   const handleComplete = (taskId: string) => {
     const task = tasks.find(t => t.id === taskId);
@@ -291,12 +325,20 @@ export function TimelineView({ tasks }: TimelineViewProps) {
                             onPostponeTomorrow={() => handlePostponeTomorrow(block.task!.id)}
                             onPostponeDate={(dateString) => handlePostponeDate(block.task!.id, dateString)}
                           />
-                          <button
-                            onClick={() => deleteTask(block.task!.id)}
-                            className="text-xs text-red-500 hover:text-red-700 font-medium shrink-0"
-                          >
-                            Excluir
-                          </button>
+                          <div className="flex gap-3 items-center shrink-0">
+                            <button
+                              onClick={() => openEdit(block.task!)}
+                              className="text-xs text-indigo-500 hover:text-indigo-700 font-medium"
+                            >
+                              Editar
+                            </button>
+                            <button
+                              onClick={() => deleteTask(block.task!.id)}
+                              className="text-xs text-red-500 hover:text-red-700 font-medium"
+                            >
+                              Excluir
+                            </button>
+                          </div>
                         </div>
                       </>
                     )}
@@ -307,6 +349,106 @@ export function TimelineView({ tasks }: TimelineViewProps) {
           );
         })}
       </div>
+
+      {editingTask && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+          onClick={() => setEditingTask(null)}
+        >
+          <div
+            className="bg-white rounded-xl shadow-xl w-full max-w-md p-5 flex flex-col gap-4"
+            onClick={e => e.stopPropagation()}
+          >
+            <h3 className="text-base font-bold text-gray-800">Editar Tarefa</h3>
+
+            <div>
+              <label className="text-xs font-semibold text-gray-500 mb-1 block">Título</label>
+              <input
+                type="text"
+                value={editForm.title}
+                onChange={e => setEditForm(f => ({ ...f, title: e.target.value }))}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                autoFocus
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-gray-500 mb-1 block">Data e Hora</label>
+              <input
+                type="datetime-local"
+                value={editForm.due_at}
+                onChange={e => setEditForm(f => ({ ...f, due_at: e.target.value }))}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-gray-500 mb-1 block">Duração (min)</label>
+              <input
+                type="number"
+                value={editForm.estimated_minutes}
+                min={5}
+                step={5}
+                onChange={e => setEditForm(f => ({ ...f, estimated_minutes: Number(e.target.value) }))}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              />
+            </div>
+
+            <div>
+              <label className="text-xs font-semibold text-gray-500 mb-1 block">Contexto</label>
+              <select
+                value={editForm.context}
+                onChange={e => setEditForm(f => ({ ...f, context: e.target.value as Task['context'] }))}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              >
+                {CONTEXTS_LIST.map(ctx => (
+                  <option key={ctx} value={ctx}>{ctx}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex gap-3">
+              <div className="flex-1">
+                <label className="text-xs font-semibold text-gray-500 mb-1 block">Prioridade (0–10)</label>
+                <input
+                  type="number"
+                  value={editForm.priority}
+                  min={0}
+                  max={10}
+                  onChange={e => setEditForm(f => ({ ...f, priority: Number(e.target.value) }))}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+              <div className="flex-1">
+                <label className="text-xs font-semibold text-gray-500 mb-1 block">Energia (0–10)</label>
+                <input
+                  type="number"
+                  value={editForm.energy}
+                  min={0}
+                  max={10}
+                  onChange={e => setEditForm(f => ({ ...f, energy: Number(e.target.value) }))}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 pt-1">
+              <button
+                onClick={() => setEditingTask(null)}
+                className="flex-1 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-gray-600 hover:bg-gray-50"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={saveEdit}
+                className="flex-1 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700"
+              >
+                Salvar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
