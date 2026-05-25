@@ -23,7 +23,7 @@ export function MultiTaskConfirmModal({ initialTasks, onConfirm, onCancel }: Mul
   };
 
   // Ajuda na formatação para datetime-local input (YYYY-MM-DDThh:mm)
-  const formatForInput = (isoString?: string) => {
+  const formatForInput = (isoString?: string | null) => {
     if (!isoString) return '';
     const d = new Date(isoString);
     if (isNaN(d.getTime())) return '';
