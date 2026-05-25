@@ -187,7 +187,7 @@ export function TimelineView({ tasks }: TimelineViewProps) {
 
   return (
     <div className="max-w-4xl mx-auto py-6 px-2">
-      <div className="mb-8 flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+      <div className="mb-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <div>
           <h2 className="text-xl font-bold text-gray-800">Agenda do Dia</h2>
           <p className="text-sm text-gray-500 capitalize">
@@ -248,7 +248,7 @@ export function TimelineView({ tasks }: TimelineViewProps) {
                         : 'bg-white border-indigo-100 ring-1 ring-indigo-50'
                     }`}
                   >
-                    <div className="flex justify-between items-start mb-1">
+                    <div className="flex flex-col sm:flex-row sm:justify-between items-start gap-2 mb-2">
                       <span className="text-xs font-bold text-gray-500">
                         {formatTime(block.startTime)} - {formatTime(block.endTime)}
                       </span>
@@ -261,7 +261,7 @@ export function TimelineView({ tasks }: TimelineViewProps) {
                           ✕
                         </button>
                       ) : block.task && (
-                        <div className="flex gap-2 items-center">
+                        <div className="flex gap-2 items-center flex-wrap">
                           {((block.task.due_at && new Date(block.task.due_at) < new Date()) || 
                             (!block.task.due_at && new Date(block.task.created_at).getTime() < new Date().getTime() - 3 * 60 * 60 * 1000 && new Date(block.task.created_at).getDate() === new Date().getDate())
                           ) && (
