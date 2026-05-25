@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useContextStore } from '../stores/contextStore';
 import { useNotifications } from '../hooks/useNotifications';
+import { saveApiKeyToCloud } from '../lib/sync';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -14,8 +15,10 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
   if (!isOpen) return null;
 
-  const handleSave = () => {
-    setAiApiKey(apiKeyInput.trim() || null);
+  const handleSave = async () => {
+    const key = apiKeyInput.trim() || null;
+    setAiApiKey(key);
+    await saveApiKeyToCloud(key);
     onClose();
   };
 
@@ -45,7 +48,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             className="block w-full rounded-md border-0 py-2 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
           />
           <p className="mt-2 text-xs text-gray-500">
-            Sua chave fica salva apenas no seu navegador (localStorage) e é enviada diretamente para a OpenAI para gerar os briefings e buscar tarefas por semântica.
+            Sua chave é salva na nuvem (vinculada à sua conta) e fica disponível em qualquer dispositivo ao fazer login. É enviada diretamente para a OpenAI para gerar briefings e busca semântica.
           </p>
         </div>
 

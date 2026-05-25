@@ -3,7 +3,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { supabase } from './lib/supabase';
 import { useAuthStore } from './stores/authStore';
 import { NetworkStatus } from './components/NetworkStatus';
-import { fetchRemoteTasks, processSyncQueue } from './lib/sync';
+import { fetchRemoteTasks, processSyncQueue, fetchApiKeyFromCloud } from './lib/sync';
+import { useContextStore } from './stores/contextStore';
 import { useNetwork } from './hooks/useNetwork';
 import Login from './pages/Login';
 import Home from './pages/Home';
@@ -45,6 +46,9 @@ function App() {
 
   useEffect(() => {
     if (session && isOnline) {
+      fetchApiKeyFromCloud().then(key => {
+        if (key) useContextStore.getState().setAiApiKey(key);
+      });
       fetchRemoteTasks().then(() => {
         processSyncQueue();
       });
