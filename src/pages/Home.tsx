@@ -8,6 +8,7 @@ import { useAudioRecorder } from '../hooks/useAudioRecorder';
 import { TaskBoard } from '../components/TaskBoard';
 import { TimelineView } from '../components/TimelineView';
 import { DashboardView } from '../components/DashboardView';
+import { BehavioralSuggestion } from '../components/BehavioralSuggestion';
 import { SettingsModal } from '../components/SettingsModal';
 import { InstallPWA } from '../components/InstallPWA';
 import { NotificationEngine } from '../components/NotificationEngine';
@@ -219,6 +220,8 @@ export default function Home() {
               />
             </div>
           </div>
+
+          <BehavioralSuggestion tasks={tasks} onAccept={() => {}} />
 
           {briefingTasks.length > 0 && (
             <div className="mb-8">
