@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTaskStore } from '../stores/taskStore';
 import { useContextStore } from '../stores/contextStore';
-import { useAppStore } from '../stores/appStore';
+
 import { supabase } from '../lib/supabase';
 import { parseMultipleTasks } from '../lib/smartParser';
 import { generateEmbedding, generateSmartBriefing, estimateTaskTime, transcribeAudio } from '../lib/ai';
