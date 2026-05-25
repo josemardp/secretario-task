@@ -45,14 +45,18 @@ function App() {
   }, [setSession, setUser, setIsLoading]);
 
   useEffect(() => {
-    if (session && isOnline) {
-      fetchApiKeyFromCloud().then(key => {
-        if (key) useContextStore.getState().setAiApiKey(key);
-      });
-      fetchRemoteTasks().then(() => {
-        processSyncQueue();
-      });
-    }
+    if (!session || !isOnline) return;
+
+    const runSync = () =>
+      fetchRemoteTasks().then(() => processSyncQueue());
+
+    fetchApiKeyFromCloud().then(key => {
+      if (key) useContextStore.getState().setAiApiKey(key);
+    });
+
+    runSync();
+    const interval = setInterval(runSync, 30000);
+    return () => clearInterval(interval);
   }, [session, isOnline]);
 
   return (
