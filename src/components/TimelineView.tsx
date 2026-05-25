@@ -110,25 +110,42 @@ export function TimelineView({ tasks }: TimelineViewProps) {
       .map(task => ({ ...task, score: calculateTaskScore(task, currentEnergy, activeContext) }))
       .sort((a, b) => b.score - a.score);
 
+    let consecutiveCount = 0;
+
     for (const task of toSequence) {
       const duration = task.estimated_minutes || 30;
       const blockStart = new Date(currentTime);
       const blockEnd = new Date(currentTime.getTime() + duration * 60000);
       timeline.push({ id: task.id, type: 'task', title: task.title, startTime: blockStart, endTime: blockEnd, task });
       currentTime = new Date(blockEnd.getTime());
+      consecutiveCount++;
 
-      let pauseDuration = 0;
-      if (task.energy < 4) pauseDuration = 15;
-      else if (task.energy > 7) pauseDuration = 5;
-      else pauseDuration = 10;
-
-      if (pauseDuration > 0) {
-        const pauseEnd = new Date(currentTime.getTime() + 30 * 60000);
-        const pId = `pause-${task.id}`;
+      // Regra 5: a cada 3 tarefas consecutivas → pausa forçada de 20 min, reseta contador
+      if (consecutiveCount >= 3) {
+        const pId = `pause-streak-${blockStart.getTime()}`;
         if (!dismissedBreaks.includes(pId)) {
-          timeline.push({ id: pId, type: 'break', title: '☕ Pausa Estratégica', startTime: new Date(currentTime.getTime()), endTime: pauseEnd });
+          const pauseEnd = new Date(currentTime.getTime() + 20 * 60000);
+          timeline.push({ id: pId, type: 'break', title: '☕ Pausa Longa', startTime: new Date(currentTime.getTime()), endTime: pauseEnd });
           currentTime = new Date(pauseEnd.getTime());
         }
+        consecutiveCount = 0;
+        continue;
+      }
+
+      // Regra 1: tarefa curta (≤ 15 min) → sem pausa
+      if (duration <= 15) continue;
+
+      // Regras 2-4: pausa baseada em energia da tarefa
+      let pauseDuration: number;
+      if (task.energy <= 3) pauseDuration = 5;
+      else if (task.energy <= 6) pauseDuration = 10;
+      else pauseDuration = 15;
+
+      const pId = `pause-${task.id}`;
+      if (!dismissedBreaks.includes(pId)) {
+        const pauseEnd = new Date(currentTime.getTime() + pauseDuration * 60000);
+        timeline.push({ id: pId, type: 'break', title: '☕ Pausa Estratégica', startTime: new Date(currentTime.getTime()), endTime: pauseEnd });
+        currentTime = new Date(pauseEnd.getTime());
       }
     }
 
