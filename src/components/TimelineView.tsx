@@ -95,18 +95,18 @@ export function TimelineView({ tasks }: TimelineViewProps) {
 
     const timeline: TimelineBlock[] = [];
 
-    // ── Tarefas COM horário FUTURO: respeitam o horário exato ──
-    const futureScheduled = todoTasks.filter(t => t.due_at && new Date(t.due_at) > now);
-    for (const task of futureScheduled) {
+    // ── Tarefas COM horário definido: respeitam o horário exato (passado ou futuro) ──
+    const scheduled = todoTasks.filter(t => t.due_at);
+    for (const task of scheduled) {
       const duration = task.estimated_minutes || 30;
       const blockStart = new Date(task.due_at!);
       const blockEnd = new Date(blockStart.getTime() + duration * 60000);
       timeline.push({ id: task.id, type: 'task', title: task.title, startTime: blockStart, endTime: blockEnd, task });
     }
 
-    // ── Atrasadas + sem horário: agendadas sequencialmente a partir de agora ──
+    // ── Tarefas SEM horário: agendadas sequencialmente a partir de agora ──
     const toSequence = todoTasks
-      .filter(t => !t.due_at || new Date(t.due_at) <= now)
+      .filter(t => !t.due_at)
       .map(task => ({ ...task, score: calculateTaskScore(task, currentEnergy, activeContext) }))
       .sort((a, b) => b.score - a.score);
 
