@@ -138,18 +138,18 @@ export async function processSyncQueue() {
         }
       }
 
-      // Log success in sync_log
-      await supabase.from('sync_log').insert({
+      // Remove da fila imediatamente após sucesso no Supabase
+      store.removeMutation(mutation.id);
+
+      // Log de auditoria — não-bloqueante (falha aqui não desfaz o sync)
+      supabase.from('sync_log').insert({
         user_id: userId,
         entity_type: mutation.entity,
         entity_id: mutation.entityId,
         operation: mutation.operation,
         status: 'synced',
         synced_at: new Date().toISOString()
-      });
-
-      // Remove from local queue
-      store.removeMutation(mutation.id);
+      }).catch(() => {});
 
     } catch (err: any) {
       console.error(`Mutation failed: ${mutation.id}`, err);
