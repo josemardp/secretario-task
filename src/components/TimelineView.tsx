@@ -39,15 +39,17 @@ export function TimelineView({ tasks }: TimelineViewProps) {
   };
 
   const handlePostponeTomorrow = (taskId: string) => {
+    const task = tasks.find(t => t.id === taskId);
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     tomorrow.setHours(23, 59, 59, 999);
-    updateTask(taskId, { due_at: tomorrow.toISOString() });
+    updateTask(taskId, { due_at: tomorrow.toISOString(), postponed_count: (task?.postponed_count || 0) + 1 });
   };
 
   const handlePostponeDate = (taskId: string, dateString: string) => {
+    const task = tasks.find(t => t.id === taskId);
     const selected = new Date(dateString + 'T23:59:59');
-    updateTask(taskId, { due_at: selected.toISOString() });
+    updateTask(taskId, { due_at: selected.toISOString(), postponed_count: (task?.postponed_count || 0) + 1 });
   };
 
   const handleDrop = (e: React.DragEvent, slotDate: Date) => {
@@ -291,6 +293,11 @@ export function TimelineView({ tasks }: TimelineViewProps) {
                     }`}>
                       {block.type === 'task' && block.task?.recurrence_rule && (
                         <span title="Tarefa Recorrente" className="text-indigo-500 text-xs">🔁</span>
+                      )}
+                      {block.type === 'task' && (block.task?.postponed_count ?? 0) > 0 && (
+                        <span title={`${block.task?.postponed_count}x adiada`} className="text-orange-500 text-[10px] font-bold bg-orange-50 px-1 rounded">
+                          🐌 {block.task?.postponed_count}x
+                        </span>
                       )}
                       {block.title}
                     </h3>
