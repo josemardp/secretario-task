@@ -7,6 +7,7 @@ import { parseMultipleTasks } from '../lib/smartParser';
 import { generateEmbedding, generateSmartBriefing, estimateTaskTime, transcribeAudio } from '../lib/ai';
 import { useAudioRecorder } from '../hooks/useAudioRecorder';
 import { Kanban, CalendarDays, BarChart2 } from 'lucide-react';
+import { DndContext, PointerSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { BuildBadge } from '../components/BuildBadge';
 import { TaskBoard } from '../components/TaskBoard';
 import { TimelineView } from '../components/TimelineView';
@@ -32,7 +33,7 @@ export default function Home() {
   const [smartBriefingText, setSmartBriefingText] = useState<string | null>(null);
   const [isGeneratingBriefing, setIsGeneratingBriefing] = useState(false);
 
-  const { tasks, addTask } = useTaskStore();
+  const { tasks, addTask, updateTask } = useTaskStore();
   const { activeContext, setActiveContext, currentEnergy, setCurrentEnergy, aiApiKey } = useContextStore();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
@@ -48,6 +49,28 @@ export default function Home() {
     const day = now.getDate();
     const month = now.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '');
     return `${weekday}, ${day} ${month}`;
+  };
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 }
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 250, tolerance: 5 }
+    })
+  );
+
+  const handleDragEnd = (event: any) => {
+    const { active, over } = event;
+    if (!over) return;
+
+    const taskId = String(active.id);
+    const overId = String(over.id);
+
+    if (overId.startsWith('slot-')) {
+      const slotIso = overId.replace('slot-', '');
+      updateTask(taskId, { due_at: slotIso });
+    }
   };
   
   // Audio Recording State
@@ -452,7 +475,9 @@ export default function Home() {
           {viewMode === 'kanban' ? (
             <TaskBoard tasks={displayedTasks} />
           ) : viewMode === 'timeline' ? (
-            <TimelineView tasks={displayedTasks} />
+            <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+              <TimelineView tasks={displayedTasks} />
+            </DndContext>
           ) : (
             <DashboardView tasks={tasks} />
           )}
