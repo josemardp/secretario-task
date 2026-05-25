@@ -45,6 +45,7 @@ A auditoria de UX Mobile-First e o hardening do Progressive Web App (PWA) foram 
 - [x] Grade de 30min da Agenda otimizada com indicador de "agora" síncrono vermelho e compactação de slots vazios para 24px.
 - [x] Definição de tokens de cores semânticas centralizados in tailwind.config.ts.
 - [x] Substituição do Drag-and-Drop nativo do HTML5 por @dnd-kit em TimelineView.tsx para touch móvel.
+- [x] Adicionado feedback visual linear de drag-and-drop (Estilo C - Trello/Linear) e contraste nos slots inativos na Agenda.
 
 ---
 

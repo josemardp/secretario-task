@@ -36,6 +36,7 @@ export default function Home() {
   const { tasks, addTask, updateTask } = useTaskStore();
   const { activeContext, setActiveContext, currentEnergy, setCurrentEnergy, aiApiKey } = useContextStore();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [overSlotId, setOverSlotId] = useState<string | null>(null);
 
   const handleContextCycle = () => {
     const CONTEXTS: ContextType[] = ['PM', 'Esdra', 'Pessoal', 'Familia', 'CCB', 'Estudo', 'Saude'];
@@ -475,8 +476,16 @@ export default function Home() {
           {viewMode === 'kanban' ? (
             <TaskBoard tasks={displayedTasks} />
           ) : viewMode === 'timeline' ? (
-            <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
-              <TimelineView tasks={displayedTasks} />
+            <DndContext 
+              sensors={sensors} 
+              onDragOver={({ over }) => setOverSlotId(over?.id ? String(over.id) : null)}
+              onDragEnd={(event) => {
+                handleDragEnd(event);
+                setOverSlotId(null);
+              }}
+              onDragCancel={() => setOverSlotId(null)}
+            >
+              <TimelineView tasks={displayedTasks} overSlotId={overSlotId} />
             </DndContext>
           ) : (
             <DashboardView tasks={tasks} />
