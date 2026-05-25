@@ -174,7 +174,7 @@ export default function Home() {
     : tasks.filter(t => searchText ? t.title.toLowerCase().includes(searchText.toLowerCase()) : true);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
+    <div className="min-h-screen bg-gray-50 flex flex-col font-sans w-full overflow-x-hidden">
       {pendingSmartTasks && (
         <MultiTaskConfirmModal 
           initialTasks={pendingSmartTasks}
@@ -211,15 +211,15 @@ export default function Home() {
       <main className="mx-auto max-w-7xl py-6 px-4 sm:px-6 lg:px-8 overflow-x-hidden">
         <div className="py-6 sm:px-0">
           
-          <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-200 pb-4">
-            <div className="flex gap-2 overflow-x-auto pb-2 sm:pb-0">
+          <div className="mb-6 flex flex-col gap-3 border-b border-gray-200 pb-4">
+            <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
               {['PM', 'Esdra', 'Pessoal', 'Familia', 'CCB', 'Estudo', 'Saude'].map(ctx => (
                 <button
                   key={ctx}
                   onClick={() => setActiveContext(ctx as ContextType)}
-                  className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                    activeContext === ctx 
-                      ? 'bg-indigo-600 text-white shadow-sm' 
+                  className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors shrink-0 ${
+                    activeContext === ctx
+                      ? 'bg-indigo-600 text-white shadow-sm'
                       : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
                   }`}
                 >
@@ -228,11 +228,9 @@ export default function Home() {
               ))}
             </div>
 
-            <div className="flex items-center gap-2 sm:gap-3 bg-white px-3 sm:px-4 py-2 rounded-full border border-gray-200 shadow-sm">
-              <label htmlFor="energy" className="text-sm font-medium text-gray-700 whitespace-nowrap">
-                <span className="sm:hidden">Energia: </span>
-                <span className="hidden sm:inline">Minha Energia: </span>
-                <span className={currentEnergy >= 7 ? 'text-green-600' : currentEnergy <= 3 ? 'text-red-600' : 'text-yellow-600'}>{currentEnergy}/10</span>
+            <div className="flex items-center gap-3 bg-white px-4 py-2.5 rounded-xl border border-gray-200 shadow-sm w-full min-w-0">
+              <label htmlFor="energy" className="text-sm font-medium text-gray-700 whitespace-nowrap shrink-0">
+                Energia: <span className={currentEnergy >= 7 ? 'text-green-600 font-bold' : currentEnergy <= 3 ? 'text-red-600 font-bold' : 'text-yellow-600 font-bold'}>{currentEnergy}/10</span>
               </label>
               <input
                 type="range"
@@ -241,7 +239,7 @@ export default function Home() {
                 max="10"
                 value={currentEnergy}
                 onChange={(e) => setCurrentEnergy(parseInt(e.target.value, 10))}
-                className="flex-1 min-w-[56px] sm:w-32 sm:flex-none h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                className="flex-1 min-w-0 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
               />
             </div>
           </div>
@@ -250,21 +248,21 @@ export default function Home() {
 
           {briefingTasks.length > 0 && (
             <div className="mb-8">
-              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-3 gap-2">
-                <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+              <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
+                <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2 shrink-0">
                   <span>🎯</span> Foco do Dia
                 </h2>
                 <button
                   onClick={handleGenerateBriefing}
                   disabled={isGeneratingBriefing || !aiApiKey}
-                  className={`text-sm font-medium px-3 py-1.5 rounded-full transition-colors ${
-                    !aiApiKey 
-                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                  className={`text-xs font-medium px-3 py-1.5 rounded-full transition-colors shrink-0 ${
+                    !aiApiKey
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                       : 'bg-purple-100 text-purple-700 hover:bg-purple-200'
                   }`}
                   title={!aiApiKey ? "Configure sua API Key primeiro" : "Briefing gerado por IA"}
                 >
-                  {isGeneratingBriefing ? 'Pensando...' : '✨ Briefing Inteligente'}
+                  {isGeneratingBriefing ? 'Pensando...' : '✨ Briefing'}
                 </button>
               </div>
 

@@ -107,7 +107,7 @@ export function TaskBoard({ tasks }: TaskBoardProps) {
                     </span>
                   </div>
                   
-                  <div className="flex items-center gap-2 text-xs text-gray-500 mb-3 flex-wrap">
+                  <div className="flex items-center gap-2 text-xs text-gray-500 mb-3 flex-wrap min-w-0">
                     <select
                       value={task.context}
                       onChange={(e) => updateTask(task.id, { context: e.target.value as any })}
@@ -127,16 +127,16 @@ export function TaskBoard({ tasks }: TaskBoardProps) {
                         P{task.priority}
                       </span>
                     )}
-                    <div className="inline-flex items-center text-indigo-600 text-xs mt-1 sm:mt-0">
-                      🗓️ 
-                      <input 
-                        type="datetime-local" 
+                    <div className="inline-flex items-center text-indigo-600 text-xs min-w-0">
+                      🗓️
+                      <input
+                        type="datetime-local"
                         value={task.due_at ? new Date(new Date(task.due_at).getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0, 16) : ''}
                         onChange={(e) => {
                           const val = e.target.value;
                           updateTask(task.id, { due_at: val ? new Date(val).toISOString() : null });
                         }}
-                        className="ml-1 bg-transparent border-none p-0 cursor-pointer text-indigo-600 focus:ring-0 text-[10px] sm:text-xs w-36 sm:w-auto"
+                        className="ml-1 bg-transparent border-none p-0 cursor-pointer text-indigo-600 focus:ring-0 text-[10px] max-w-[9rem]"
                         title="Alterar data/hora"
                       />
                     </div>
