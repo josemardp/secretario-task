@@ -7,11 +7,25 @@ const CONTEXTS = ['PM', 'Esdra', 'Pessoal', 'Familia', 'CCB', 'Estudo', 'Saude']
 
 export async function parseMultipleTasks(rawText: string, defaultContext: ContextType, apiKey?: string | null): Promise<Partial<Task>[]> {
   if (!apiKey) {
-    // Fallback "burro" se não tiver chave, separando por conectivos simples
-    const parts = rawText.split(/(?:,|\be\b|\bdepois\b|\blogo\b)/i).filter(p => p.trim().length > 3);
-    if (parts.length === 0) parts.push(rawText);
+    // Fallback "burro" se não tiver chave, separando por quebras de linha e conectivos
+    const lines = rawText.split(/\r?\n/);
+    const tasks: Partial<Task>[] = [];
     
-    return parts.map(p => parseTaskInput(p.trim(), defaultContext));
+    for (const line of lines) {
+      const cleanLine = line.trim().replace(/^-/, '').trim();
+      if (cleanLine.length < 3) continue;
+      
+      // Se a linha tem cara de bullet point, não tenta fatiar mais
+      if (line.trim().startsWith('-') || line.trim().match(/^\d+\./)) {
+        tasks.push(parseTaskInput(cleanLine, defaultContext));
+      } else {
+        const parts = cleanLine.split(/(?:,|\be\b|\bdepois\b|\blogo\b)/i).filter(p => p.trim().length > 3);
+        if (parts.length === 0) parts.push(cleanLine);
+        tasks.push(...parts.map(p => parseTaskInput(p.trim(), defaultContext)));
+      }
+    }
+    
+    return tasks;
   }
 
   const now = new Date();
@@ -31,36 +45,46 @@ Cada objeto deve ter estritamente:
 
 Responda APENAS com o JSON válido do array "tasks".`;
 
-  const response = await fetch(`${OPENAI_API_URL}/chat/completions`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: 'gpt-4o-mini',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: rawText }
-      ],
-      response_format: { type: "json_object" },
-      temperature: 0.1,
-    }),
-  });
-
-  if (!response.ok) {
-    console.error('Falha na API da OpenAI, usando fallback');
-    return [parseTaskInput(rawText, defaultContext)];
-  }
-
   try {
+    const response = await fetch(`${OPENAI_API_URL}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: rawText }
+        ],
+        response_format: { type: "json_object" },
+        temperature: 0.1,
+      }),
+    });
+
+    if (!response.ok) {
+      const errTxt = await response.text();
+      console.error('Falha na API da OpenAI:', errTxt);
+      // forçar erro para cair no catch e usar fallback inteligente
+      throw new Error('API Falhou');
+    }
+
     const data = await response.json();
     const content = JSON.parse(data.choices[0].message.content);
     
     if (content.tasks && Array.isArray(content.tasks)) {
       return content.tasks.map((t: any) => {
-        // Garantir que a data é parseável (se falhar, cai pra null)
         let finalDueAt = t.due_at;
+        // Tratar caso a IA retorne DD/MM/YYYY HH:MM literalmente em vez de ISO
+        if (finalDueAt && finalDueAt.match(/^\d{2}\/\d{2}\/\d{4}/)) {
+           const [datePart, timePart] = finalDueAt.split(' ');
+           const [d, m, y] = datePart.split('/');
+           const [h, min] = timePart ? timePart.split(':') : ['09', '00'];
+           const parsedD = new Date(Number(y), Number(m)-1, Number(d), Number(h), Number(min));
+           finalDueAt = parsedD.toISOString();
+        }
+
         if (finalDueAt) {
           const d = new Date(finalDueAt);
           if (isNaN(d.getTime())) finalDueAt = undefined;
@@ -77,8 +101,22 @@ Responda APENAS com o JSON válido do array "tasks".`;
       });
     }
   } catch (e) {
-    console.error('Falha no parse do JSON da OpenAI', e);
+    console.error('Fallback ativado. Erro no parse:', e);
   }
 
-  return [parseTaskInput(rawText, defaultContext)];
+  // Fallback se a API falhar ou não retornar array válido (reusa lógica de linhas)
+  const lines = rawText.split(/\r?\n/);
+  const tasks: Partial<Task>[] = [];
+  for (const line of lines) {
+    const cleanLine = line.trim().replace(/^-/, '').trim();
+    if (cleanLine.length < 3) continue;
+    if (line.trim().startsWith('-') || line.trim().match(/^\d+\./)) {
+      tasks.push(parseTaskInput(cleanLine, defaultContext));
+    } else {
+      const parts = cleanLine.split(/(?:,|\be\b|\bdepois\b|\blogo\b)/i).filter(p => p.trim().length > 3);
+      if (parts.length === 0) parts.push(cleanLine);
+      tasks.push(...parts.map(p => parseTaskInput(p.trim(), defaultContext)));
+    }
+  }
+  return tasks;
 }
