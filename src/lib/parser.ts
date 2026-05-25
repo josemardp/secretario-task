@@ -62,6 +62,22 @@ export function parseTaskInput(rawText: string, defaultContext: ContextType): Pa
   let baseDate = new Date();
   let dateFound = false;
 
+  // 5. Tratamento de Datas Explicitas (DD/MM/YYYY HH:MM ou DD/MM/YYYY)
+  const explicitDateMatch = title.match(/(\d{1,2}\/\d{1,2}\/(?:\d{2,4}))(?:\s+(\d{1,2}:\d{2}))?/);
+  if (explicitDateMatch) {
+    const dateStr = explicitDateMatch[1];
+    const timeStr = explicitDateMatch[2] || '09:00';
+    const [d, m, y] = dateStr.split('/');
+    const year = y.length === 2 ? `20${y}` : y;
+    const [h, min] = timeStr.split(':');
+    const parsedDate = new Date(Number(year), Number(m)-1, Number(d), Number(h), Number(min));
+    if (!isNaN(parsedDate.getTime())) {
+      due_at = parsedDate.toISOString();
+      dateFound = true;
+    }
+    title = title.replace(explicitDateMatch[0], '').trim();
+  }
+
   const wordRegex = /(?:^|\s)(hoje|amanhã|amanha|depois\s+de\s+amanhã|depois\s+de\s+amanha|segunda(?:-feira)?|terça(?:-feira)?|terca(?:-feira)?|quarta(?:-feira)?|quinta(?:-feira)?|sexta(?:-feira)?|sábado|sabado|domingo)(?:\s|$)/i;
   const dateMatch = title.match(wordRegex);
   if (dateMatch) {
