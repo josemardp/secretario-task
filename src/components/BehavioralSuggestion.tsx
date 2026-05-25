@@ -27,8 +27,8 @@ export function BehavioralSuggestion({ tasks }: BehavioralSuggestionProps) {
   return (
     <div className={`mb-6 rounded-xl p-4 shadow-sm border ${
       suggestion.type === 'high' 
-        ? 'bg-gradient-to-r from-orange-50 to-amber-50 border-orange-100' 
-        : 'bg-gradient-to-r from-emerald-50 to-teal-50 border-emerald-100'
+        ? 'bg-gradient-to-r from-warning-light to-amber-50 border-orange-100' 
+        : 'bg-gradient-to-r from-success-light to-teal-50 border-emerald-100'
     }`}>
       <div className="flex items-start justify-between">
         <div className="flex gap-3">
@@ -37,12 +37,12 @@ export function BehavioralSuggestion({ tasks }: BehavioralSuggestionProps) {
           </div>
           <div>
             <h3 className={`font-semibold text-sm ${
-              suggestion.type === 'high' ? 'text-orange-900' : 'text-emerald-900'
+              suggestion.type === 'high' ? 'text-warning' : 'text-success'
             }`}>
               Análise Comportamental
             </h3>
             <p className={`text-sm mt-1 leading-relaxed ${
-              suggestion.type === 'high' ? 'text-orange-800' : 'text-emerald-800'
+              suggestion.type === 'high' ? 'text-warning' : 'text-success'
             }`}>
               {suggestion.message}
             </p>
