@@ -124,7 +124,39 @@ export function parseTaskInput(rawText: string, defaultContext: ContextType): Pa
     due_at = baseDate.toISOString();
   }
 
-  // Parse Recurrence
+  // Parse Recurrence Explicit
+  const explicitRecurrenceRegex = /\(Recorrência:\s*([^)]+)\)/i;
+  const explicitRecurrenceMatch = title.match(explicitRecurrenceRegex);
+  if (explicitRecurrenceMatch) {
+    const rawRecurrence = explicitRecurrenceMatch[1].toLowerCase();
+    
+    const dMap: Record<string, string> = { 
+      'dom': 'sunday', 'seg': 'monday', 'ter': 'tuesday', 'qua': 'wednesday', 
+      'qui': 'thursday', 'sex': 'friday', 'sab': 'saturday', 'sáb': 'saturday'
+    };
+    
+    if (rawRecurrence.includes('todos os dias') || rawRecurrence.includes('todo dia')) {
+      recurrence_rule = 'daily';
+    } else {
+      const foundDays: string[] = [];
+      for (const [pt, en] of Object.entries(dMap)) {
+        if (rawRecurrence.includes(pt)) foundDays.push(en);
+      }
+      if (foundDays.length > 0) recurrence_rule = foundDays.join(',');
+    }
+
+    const recTimeMatch = rawRecurrence.match(/(?:às\s+)?([0-9]{1,2})(?::([0-9]{2}))?/i);
+    if (recTimeMatch) {
+      const h = parseInt(recTimeMatch[1], 10);
+      const m = recTimeMatch[2] ? parseInt(recTimeMatch[2], 10) : 0;
+      baseDate.setHours(h, m, 0, 0);
+      dateFound = true;
+    }
+    
+    title = title.replace(explicitRecurrenceMatch[0], '');
+  }
+
+  // Parse Recurrence (antigo fallback em string)
   const recurrenceRegexes = [
     { regex: /\btodos os dias\b|\btodo dia\b/i, rule: 'daily' },
     { regex: /\btoda semana\b/i, rule: 'weekly' },
@@ -138,11 +170,13 @@ export function parseTaskInput(rawText: string, defaultContext: ContextType): Pa
     { regex: /\btodo domingo\b/i, rule: 'sunday' },
   ];
 
-  for (const rec of recurrenceRegexes) {
-    if (rec.regex.test(title)) {
-      recurrence_rule = rec.rule;
-      title = title.replace(rec.regex, '');
-      break;
+  if (!recurrence_rule) {
+    for (const rec of recurrenceRegexes) {
+      if (rec.regex.test(title)) {
+        recurrence_rule = rec.rule;
+        title = title.replace(rec.regex, '');
+        break;
+      }
     }
   }
 
