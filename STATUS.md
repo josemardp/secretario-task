@@ -41,9 +41,10 @@ A auditoria de UX Mobile-First e o hardening do Progressive Web App (PWA) foram 
 - [x] Header super-compacto de 44px com data local e ciclos síncronos de contexto por toque.
 - [x] Tab Bar inferior standalone fixa com safe-areas e ícones Lucide vetoriais (Kanban, Agenda, Stats).
 - [x] Barra de digitação sticky no rodapé acima da Tab Bar e botão de gravação por voz com tap-target de 44x44px.
-- [x] Hierarquia visual do Foco do Dia (Top 1 de 64px em destaque, Top 2/3 de 48px e metadados de tempo/duração).
+- [x] Hierarquia visual do Foco do Dia (Top 1 de 64px in destaque, Top 2/3 de 48px e metadados de tempo/duração).
 - [x] Grade de 30min da Agenda otimizada com indicador de "agora" síncrono vermelho e compactação de slots vazios para 24px.
-- [x] Definição de tokens de cores semânticas centralizados em tailwind.config.ts.
+- [x] Definição de tokens de cores semânticas centralizados in tailwind.config.ts.
+- [x] Substituição do Drag-and-Drop nativo do HTML5 por @dnd-kit em TimelineView.tsx para touch móvel.
 
 ---
 

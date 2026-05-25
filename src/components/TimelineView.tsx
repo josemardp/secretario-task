@@ -1,5 +1,6 @@
-// TODO: substituir HTML5 Drag API por @dnd-kit para suporte touch (drag atual não funciona em mobile)
 import { useMemo, useState, useEffect } from 'react';
+import { useDraggable, useDroppable } from '@dnd-kit/core';
+import { CSS } from '@dnd-kit/utilities';
 import type { Task } from '../types';
 import { CONTEXTS_LIST } from '../types';
 import { calculateTaskScore } from '../lib/ranking';
@@ -26,6 +27,208 @@ function toLocalDatetimeInput(iso: string | null | undefined): string {
   const d = new Date(iso);
   const pad = (n: number) => n.toString().padStart(2, '0');
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+interface DraggableTaskCardProps {
+  block: TimelineBlock;
+  updateTask: (id: string, updates: Partial<Task>) => void;
+  deleteTask: (id: string) => void;
+  openEdit: (task: Task) => void;
+  handleComplete: (id: string) => void;
+  handlePostponeTomorrow: (id: string) => void;
+  handlePostponeDate: (id: string, dateString: string) => void;
+  formatTime: (date: Date) => string;
+}
+
+function DraggableTaskCard({
+  block,
+  updateTask,
+  deleteTask,
+  openEdit,
+  handleComplete,
+  handlePostponeTomorrow,
+  handlePostponeDate,
+  formatTime
+}: DraggableTaskCardProps) {
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: block.id,
+  });
+
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    touchAction: 'none',
+    opacity: isDragging ? 0.6 : undefined,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...listeners}
+      {...attributes}
+      className={`p-3 rounded-lg shadow-sm border cursor-grab active:cursor-grabbing w-full min-w-0 overflow-hidden flex flex-col bg-white border-indigo-100 ring-1 ring-indigo-50 ${
+        isDragging ? 'shadow-lg border-indigo-300 z-10' : ''
+      }`}
+    >
+      <div className="flex flex-col sm:flex-row sm:justify-between items-start gap-2 mb-2">
+        <span className="text-xs font-bold text-gray-500 select-none">
+          {formatTime(block.startTime)} - {formatTime(block.endTime)}
+        </span>
+        {block.task && (
+          <div className="flex gap-2 items-center flex-wrap">
+            {((block.task.due_at && new Date(block.task.due_at) < new Date()) || 
+              (!block.task.due_at && new Date(block.task.created_at).getTime() < new Date().getTime() - 3 * 60 * 60 * 1000 && new Date(block.task.created_at).getDate() === new Date().getDate())
+            ) && (
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-700 border border-red-200 animate-pulse select-none">
+                ⚠️ Atrasada
+              </span>
+            )}
+            <div className="flex items-center bg-gray-50 rounded-md h-[24px]">
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  updateTask(block.task!.id, { estimated_minutes: Math.max(5, (block.task!.estimated_minutes || 30) - 15) });
+                }}
+                className="px-2 text-gray-400 hover:text-indigo-600 border-r border-gray-200 text-xs font-bold"
+              >-</button>
+              <span className="text-xs font-medium text-gray-600 px-2 min-w-[40px] text-center select-none">
+                {block.task.actual_minutes !== undefined && block.task.actual_minutes !== null 
+                  ? `${block.task.actual_minutes}m (real)` 
+                  : `${block.task.estimated_minutes || 30}m`}
+              </span>
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  updateTask(block.task!.id, { estimated_minutes: (block.task!.estimated_minutes || 30) + 15 });
+                }}
+                className="px-2 text-gray-400 hover:text-indigo-600 border-l border-gray-200 text-xs font-bold"
+              >+</button>
+            </div>
+          </div>
+        )}
+      </div>
+      
+      <h3 className="text-sm font-semibold break-words text-gray-900 select-none">
+        {block.task?.recurrence_rule && (
+          <span title="Tarefa Recorrente" className="text-indigo-500 text-xs mr-1 inline-block align-middle">🔁</span>
+        )}
+        {block.task && (block.task.postponed_count ?? 0) > 0 && (
+          <span title={`${block.task.postponed_count}x adiada`} className="text-orange-500 text-[10px] font-bold bg-orange-50 px-1 rounded mr-1 inline-block align-middle">
+            🐌 {block.task.postponed_count}x
+          </span>
+        )}
+        {block.title}
+      </h3>
+      
+      {block.task && (
+        <>
+          <div className="mt-2 flex gap-2 text-[10px] mb-2 flex-wrap items-center">
+            <select
+              value={block.task.context}
+              onChange={(e) => {
+                e.stopPropagation();
+                updateTask(block.task!.id, { context: e.target.value as any });
+              }}
+              onClick={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
+              className="inline-flex items-center rounded bg-gray-50 px-1 py-0.5 font-medium text-gray-600 cursor-pointer outline-none border-none focus:ring-1 focus:ring-indigo-600 appearance-none text-center"
+            >
+              {CONTEXTS_LIST.map((ctx) => (
+                <option key={ctx} value={ctx}>{ctx}</option>
+              ))}
+            </select>
+            <span className="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded select-none">E:{block.task.energy}</span>
+            <span className="bg-red-50 text-red-700 px-1.5 py-0.5 rounded select-none">P:{block.task.priority}</span>
+          </div>
+          <div className="pt-2 border-t border-gray-50 flex items-center justify-between gap-2" onMouseDown={(e) => e.stopPropagation()}>
+            <TaskActions
+              showComplete={true}
+              onComplete={() => handleComplete(block.task!.id)}
+              onPostponeTomorrow={() => handlePostponeTomorrow(block.task!.id)}
+              onPostponeDate={(dateString) => handlePostponeDate(block.task!.id, dateString)}
+            />
+            <div className="flex gap-3 items-center shrink-0">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  openEdit(block.task!);
+                }}
+                className="text-xs text-indigo-500 hover:text-indigo-700 font-medium"
+              >
+                Editar
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  deleteTask(block.task!.id);
+                }}
+                className="text-xs text-red-500 hover:text-red-700 font-medium"
+              >
+                Excluir
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+interface TimelineSlotProps {
+  slot: { timeString: string; dateObj: Date };
+  isTargetSlot: boolean;
+  isCurrentSlot: boolean;
+  topPercent: number;
+  now: Date;
+  slotBlocksCount: number;
+  children: React.ReactNode;
+}
+
+function TimelineSlot({
+  slot,
+  isTargetSlot,
+  isCurrentSlot,
+  topPercent,
+  now,
+  slotBlocksCount,
+  children
+}: TimelineSlotProps) {
+  const { isOver, setNodeRef } = useDroppable({
+    id: `slot-${slot.dateObj.toISOString()}`,
+  });
+
+  return (
+    <div
+      ref={setNodeRef}
+      id={isTargetSlot ? 'current-time-slot' : undefined}
+      className={`flex border-b border-gray-100 relative ${
+        slotBlocksCount === 0 ? 'min-h-[24px]' : 'min-h-[80px]'
+      } ${isOver ? 'bg-indigo-50/50 transition-colors' : ''}`}
+    >
+      {/* Linha vermelha de "Agora" */}
+      {isCurrentSlot && (
+        <div
+          className="absolute left-0 right-0 z-10 flex items-center pointer-events-none w-full"
+          style={{ top: `${topPercent}%`, transform: 'translateY(-50%)' }}
+        >
+          <span className="w-16 pr-2 text-right text-[11px] font-bold text-red-600 bg-white/90 z-20 select-none">
+            {now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </span>
+          <div className="flex-1 h-[2px] bg-red-600"></div>
+        </div>
+      )}
+
+      {/* Horário (Coluna Esquerda) */}
+      <div className={`w-16 flex-shrink-0 border-r border-gray-50 bg-gray-50/50 text-right shrink-0 flex items-center justify-end pr-2 ${slotBlocksCount === 0 ? 'py-0.5' : 'py-2'}`}>
+        <span className="text-xs font-semibold text-gray-400 leading-none select-none">{slot.timeString}</span>
+      </div>
+
+      {/* Espaço das Tarefas (Coluna Direita) */}
+      <div className={`flex-1 min-w-0 flex flex-col gap-2 relative ${slotBlocksCount === 0 ? 'p-0' : 'p-2'}`}>
+        {children}
+      </div>
+    </div>
+  );
 }
 
 export function TimelineView({ tasks }: TimelineViewProps) {
@@ -92,14 +295,6 @@ export function TimelineView({ tasks }: TimelineViewProps) {
     const task = tasks.find(t => t.id === taskId);
     const selected = new Date(dateString + 'T23:59:59');
     updateTask(taskId, { due_at: selected.toISOString(), postponed_count: (task?.postponed_count || 0) + 1 });
-  };
-
-  const handleDrop = (e: React.DragEvent, slotDate: Date) => {
-    e.preventDefault();
-    const taskId = e.dataTransfer.getData('taskId');
-    if (taskId && !taskId.startsWith('pause-')) {
-      updateTask(taskId, { due_at: slotDate.toISOString() });
-    }
   };
 
   const blocks = useMemo(() => {
@@ -245,53 +440,26 @@ export function TimelineView({ tasks }: TimelineViewProps) {
           const topPercent = (minutesOffset / 30) * 100;
 
           return (
-            <div 
-              key={slot.timeString} 
-              id={isTargetSlot ? 'current-time-slot' : undefined}
-              className={`flex border-b border-gray-100 relative ${slotBlocks.length === 0 ? 'min-h-[24px]' : 'min-h-[80px]'}`}
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={(e) => handleDrop(e, slot.dateObj)}
+            <TimelineSlot
+              key={slot.timeString}
+              slot={slot}
+              isTargetSlot={isTargetSlot}
+              isCurrentSlot={isCurrentSlot}
+              topPercent={topPercent}
+              now={now}
+              slotBlocksCount={slotBlocks.length}
             >
-              {/* Linha vermelha de "Agora" */}
-              {isCurrentSlot && (
-                <div 
-                  className="absolute left-0 right-0 z-10 flex items-center pointer-events-none w-full"
-                  style={{ top: `${topPercent}%`, transform: 'translateY(-50%)' }}
-                >
-                  <span className="w-16 pr-2 text-right text-[11px] font-bold text-red-600 bg-white/90 z-20 select-none">
-                    {now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                  </span>
-                  <div className="flex-1 h-[2px] bg-red-600"></div>
-                </div>
-              )}
-
-              {/* Horário (Coluna Esquerda) */}
-              <div className={`w-16 flex-shrink-0 border-r border-gray-50 bg-gray-50/50 text-right shrink-0 flex items-center justify-end pr-2 ${slotBlocks.length === 0 ? 'py-0.5' : 'py-2'}`}>
-                <span className="text-xs font-semibold text-gray-400 leading-none">{slot.timeString}</span>
-              </div>
-              
-              {/* Espaço das Tarefas (Coluna Direita) */}
-              <div className={`flex-1 min-w-0 flex flex-col gap-2 relative ${slotBlocks.length === 0 ? 'p-0' : 'p-2'}`}>
-                {slotBlocks.map((block) => (
-                  <div 
-                    key={`${block.id}-${slot.timeString}`}
-                    draggable={block.type === 'task'}
-                    onDragStart={(e) => {
-                      if (block.type === 'task') {
-                        e.dataTransfer.setData('taskId', block.id);
-                      }
-                    }}
-                    className={`p-3 rounded-lg shadow-sm border cursor-grab active:cursor-grabbing w-full min-w-0 overflow-hidden flex flex-col ${
-                      block.type === 'break' 
-                        ? 'bg-orange-50 border-orange-100' 
-                        : 'bg-white border-indigo-100 ring-1 ring-indigo-50'
-                    }`}
-                  >
-                    <div className="flex flex-col sm:flex-row sm:justify-between items-start gap-2 mb-2">
-                      <span className="text-xs font-bold text-gray-500">
-                        {formatTime(block.startTime)} - {formatTime(block.endTime)}
-                      </span>
-                      {block.type === 'break' ? (
+              {slotBlocks.map((block) => {
+                if (block.type === 'break') {
+                  return (
+                    <div 
+                      key={`${block.id}-${slot.timeString}`}
+                      className="p-3 rounded-lg shadow-sm border w-full min-w-0 overflow-hidden flex flex-col bg-orange-50 border-orange-100"
+                    >
+                      <div className="flex flex-col sm:flex-row sm:justify-between items-start gap-2 mb-2">
+                        <span className="text-xs font-bold text-gray-500 select-none">
+                          {formatTime(block.startTime)} - {formatTime(block.endTime)}
+                        </span>
                         <button 
                           onClick={() => setDismissedBreaks([...dismissedBreaks, block.id])}
                           className="text-orange-400 hover:text-orange-600 font-bold px-2 rounded hover:bg-orange-100"
@@ -299,91 +467,29 @@ export function TimelineView({ tasks }: TimelineViewProps) {
                         >
                           ✕
                         </button>
-                      ) : block.task && (
-                        <div className="flex gap-2 items-center flex-wrap">
-                          {((block.task.due_at && new Date(block.task.due_at) < new Date()) || 
-                            (!block.task.due_at && new Date(block.task.created_at).getTime() < new Date().getTime() - 3 * 60 * 60 * 1000 && new Date(block.task.created_at).getDate() === new Date().getDate())
-                          ) && (
-                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-700 border border-red-200 animate-pulse">
-                              ⚠️ Atrasada
-                            </span>
-                          )}
-                          <div className="flex items-center bg-gray-50 rounded-md h-[24px]">
-                            <button 
-                              onClick={() => updateTask(block.task!.id, { estimated_minutes: Math.max(5, (block.task!.estimated_minutes || 30) - 15) })}
-                              className="px-2 text-gray-400 hover:text-indigo-600 border-r border-gray-200 text-xs font-bold"
-                            >-</button>
-                            <span className="text-xs font-medium text-gray-600 px-2 min-w-[40px] text-center">
-                              {block.task.actual_minutes !== undefined && block.task.actual_minutes !== null 
-                                ? `${block.task.actual_minutes}m (real)` 
-                                : `${block.task.estimated_minutes || 30}m`}
-                            </span>
-                            <button 
-                              onClick={() => updateTask(block.task!.id, { estimated_minutes: (block.task!.estimated_minutes || 30) + 15 })}
-                              className="px-2 text-gray-400 hover:text-indigo-600 border-l border-gray-200 text-xs font-bold"
-                            >+</button>
-                          </div>
-                        </div>
-                      )}
+                      </div>
+                      <h3 className="text-sm font-semibold break-words text-orange-700 select-none">
+                        {block.title}
+                      </h3>
                     </div>
-                    
-                    <h3 className={`text-sm font-semibold break-words ${
-                      block.type === 'break' ? 'text-orange-700' : 'text-gray-900'
-                    }`}>
-                      {block.type === 'task' && block.task?.recurrence_rule && (
-                        <span title="Tarefa Recorrente" className="text-indigo-500 text-xs mr-1 inline-block align-middle">🔁</span>
-                      )}
-                      {block.type === 'task' && (block.task?.postponed_count ?? 0) > 0 && (
-                        <span title={`${block.task?.postponed_count}x adiada`} className="text-orange-500 text-[10px] font-bold bg-orange-50 px-1 rounded mr-1 inline-block align-middle">
-                          🐌 {block.task?.postponed_count}x
-                        </span>
-                      )}
-                      {block.title}
-                    </h3>
-                    
-                    {block.type === 'task' && block.task && (
-                      <>
-                        <div className="mt-2 flex gap-2 text-[10px] mb-2 flex-wrap items-center">
-                          <select
-                            value={block.task.context}
-                            onChange={(e) => updateTask(block.task!.id, { context: e.target.value as any })}
-                            className="inline-flex items-center rounded bg-gray-50 px-1 py-0.5 font-medium text-gray-600 cursor-pointer outline-none border-none focus:ring-1 focus:ring-indigo-600 appearance-none text-center"
-                          >
-                            {CONTEXTS_LIST.map((ctx) => (
-                              <option key={ctx} value={ctx}>{ctx}</option>
-                            ))}
-                          </select>
-                          <span className="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded">E:{block.task.energy}</span>
-                          <span className="bg-red-50 text-red-700 px-1.5 py-0.5 rounded">P:{block.task.priority}</span>
-                        </div>
-                        <div className="pt-2 border-t border-gray-50 flex items-center justify-between gap-2">
-                          <TaskActions
-                            showComplete={true}
-                            onComplete={() => handleComplete(block.task!.id)}
-                            onPostponeTomorrow={() => handlePostponeTomorrow(block.task!.id)}
-                            onPostponeDate={(dateString) => handlePostponeDate(block.task!.id, dateString)}
-                          />
-                          <div className="flex gap-3 items-center shrink-0">
-                            <button
-                              onClick={() => openEdit(block.task!)}
-                              className="text-xs text-indigo-500 hover:text-indigo-700 font-medium"
-                            >
-                              Editar
-                            </button>
-                            <button
-                              onClick={() => deleteTask(block.task!.id)}
-                              className="text-xs text-red-500 hover:text-red-700 font-medium"
-                            >
-                              Excluir
-                            </button>
-                          </div>
-                        </div>
-                      </>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
+                  );
+                }
+
+                return (
+                  <DraggableTaskCard
+                    key={`${block.id}-${slot.timeString}`}
+                    block={block}
+                    updateTask={updateTask}
+                    deleteTask={deleteTask}
+                    openEdit={openEdit}
+                    handleComplete={handleComplete}
+                    handlePostponeTomorrow={handlePostponeTomorrow}
+                    handlePostponeDate={handlePostponeDate}
+                    formatTime={formatTime}
+                  />
+                );
+              })}
+            </TimelineSlot>
           );
         })}
       </div>

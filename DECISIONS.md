@@ -236,3 +236,11 @@ Decisão: O throttling dos eventos diários `viewed` usa um dicionário local `R
 Motivo: Evita complexidade de lidar com timestamps, expirações ou banco de dados para uma trava efêmera. Atende perfeitamente ao requisito "1 por dia por tarefa".
 Alternativas descartadas: Consultar o Zustand para contar quantos eventos já foram despachados hoje — descartado por ser ineficiente e propenso a falhas no re-render.
 Contexto: Sprint 4.
+
+## 2026-05-25 — Substituição de HTML5 Drag-and-Drop por @dnd-kit para suporte touch móvel na Agenda
+Decisão: Substituir a API de Drag-and-Drop nativa do HTML5 no componente `TimelineView.tsx` por `@dnd-kit/core`. Os slots do grid e os cards de tarefa foram divididos em componentes funcionais auxiliares internos (`TimelineSlot` e `DraggableTaskCard`) para seguir as regras de Hooks do React e aplicar comportamentos de Toque de forma determinística e suave.
+Motivo: A API nativa do HTML5 Drag-and-Drop não é compatível com dispositivos de toque (iOS/Android) sem polyfills complexos de terceiros. O `@dnd-kit` fornece suporte nativo a eventos de ponteiro (PointerEvents) e toque com atraso ajustável, fornecendo a melhor experiência móvel de Agenda. A divisão em subcomponentes foi necessária pois Hooks do React não podem ser chamados em loops (`map`).
+Alternativas descartadas:
+- HTML5 Drag-and-Drop com Polyfill móvel (mobile-drag-drop) — descartada por inflar dependências secundárias de inicialização e adicionar complexidade na interceptação de cliques e rolagem da página.
+- Não oferecer drag-and-drop no móvel — descartada por violar as diretrizes de experiência de uso mobile-first da auditoria UX de 2026-05-25.
+Contexto: Hardening pós-auditoria de UX Mobile-First e melhorias críticas de usabilidade móvel.
