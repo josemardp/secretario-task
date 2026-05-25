@@ -3,14 +3,7 @@
 @tailwind utilities;
 
 /* Regras para transformar o comportamento web em nativo (PWA) */
-html {
-  overflow-x: hidden;
-  max-width: 100%;
-}
-
 body {
-  max-width: 100%;
-  overflow-x: hidden;
   overscroll-behavior-y: none;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
