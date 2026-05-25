@@ -6,7 +6,7 @@ import { supabase } from '../lib/supabase';
 import { parseMultipleTasks } from '../lib/smartParser';
 import { generateEmbedding, generateSmartBriefing, estimateTaskTime, transcribeAudio } from '../lib/ai';
 import { useAudioRecorder } from '../hooks/useAudioRecorder';
-import { LayoutKanban, CalendarDays, BarChart2 } from 'lucide-react';
+import { Kanban, CalendarDays, BarChart2 } from 'lucide-react';
 import { BuildBadge } from '../components/BuildBadge';
 import { TaskBoard } from '../components/TaskBoard';
 import { TimelineView } from '../components/TimelineView';
@@ -375,7 +375,7 @@ export default function Home() {
               onClick={() => setViewMode('kanban')}
               className="flex-1 flex flex-col items-center justify-center min-h-[44px] transition-colors gap-1 focus:outline-none"
             >
-              <LayoutKanban 
+              <Kanban 
                 size={20} 
                 color={viewMode === 'kanban' ? '#6366f1' : '#9ca3af'} 
               />
