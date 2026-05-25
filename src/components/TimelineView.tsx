@@ -12,6 +12,7 @@ import { CalendarWidget } from './CalendarWidget';
 interface TimelineViewProps {
   tasks: Task[];
   overSlotId: string | null;
+  dragStartTime: Date | null;
 }
 
 interface TimelineBlock {
@@ -183,6 +184,8 @@ interface TimelineSlotProps {
   now: Date;
   slotBlocksCount: number;
   isDropTarget: boolean;
+  dragStartTime: Date | null;
+  selectedDate: Date;
   children: React.ReactNode;
 }
 
@@ -194,10 +197,16 @@ function TimelineSlot({
   now,
   slotBlocksCount,
   isDropTarget,
+  dragStartTime,
+  selectedDate,
   children
 }: TimelineSlotProps) {
+  const isToday = selectedDate.toDateString() === new Date().toDateString();
+  const isPast = isToday && dragStartTime !== null && slot.dateObj.getTime() < dragStartTime.getTime();
+
   const { setNodeRef } = useDroppable({
     id: `slot-${slot.dateObj.toISOString()}`,
+    disabled: isPast,
   });
 
   const [isDragging, setIsDragging] = useState(false);
@@ -214,15 +223,19 @@ function TimelineSlot({
       className={`flex border-b border-gray-100 relative ${
         slotBlocksCount === 0 ? 'min-h-[24px]' : 'min-h-[80px]'
       } ${
-        isDropTarget 
+        isDropTarget && !isPast
           ? 'bg-brand/5 transition-colors duration-150' 
-          : isDragging 
+          : isDragging && !isPast
             ? 'bg-gray-50/60 transition-colors duration-150' 
             : ''
       }`}
+      style={{
+        opacity: isPast && isDragging ? 0.35 : undefined,
+        transition: 'opacity 150ms ease, background-color 150ms ease'
+      }}
     >
       {/* Linha horizontal destacada no topo (Estilo C) */}
-      {isDropTarget && (
+      {isDropTarget && !isPast && (
         <div className="absolute top-0 left-0 right-0 h-[3px] bg-brand rounded-[2px] z-10 pointer-events-none">
           <div className="absolute top-[-10px] left-2 text-[11px] font-semibold text-brand bg-white px-1.5 py-0.5 rounded border border-brand z-20 whitespace-nowrap select-none">
             {slot.timeString}
@@ -231,7 +244,7 @@ function TimelineSlot({
       )}
 
       {/* Linha vermelha de "Agora" */}
-      {isCurrentSlot && !isDropTarget && (
+      {isCurrentSlot && !isDropTarget && !isPast && (
         <div
           className="absolute left-0 right-0 z-10 flex items-center pointer-events-none w-full"
           style={{ top: `${topPercent}%`, transform: 'translateY(-50%)' }}
@@ -256,7 +269,7 @@ function TimelineSlot({
   );
 }
 
-export function TimelineView({ tasks, overSlotId }: TimelineViewProps) {
+export function TimelineView({ tasks, overSlotId, dragStartTime }: TimelineViewProps) {
   const { currentEnergy, activeContext } = useContextStore();
   const { updateTask, deleteTask } = useTaskStore();
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -476,6 +489,8 @@ export function TimelineView({ tasks, overSlotId }: TimelineViewProps) {
               now={now}
               slotBlocksCount={slotBlocks.length}
               isDropTarget={isDropTarget}
+              dragStartTime={dragStartTime}
+              selectedDate={selectedDate}
             >
               {slotBlocks.map((block) => {
                 if (block.type === 'break') {

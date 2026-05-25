@@ -37,6 +37,7 @@ export default function Home() {
   const { activeContext, setActiveContext, currentEnergy, setCurrentEnergy, aiApiKey } = useContextStore();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [overSlotId, setOverSlotId] = useState<string | null>(null);
+  const [dragStartTime, setDragStartTime] = useState<Date | null>(null);
 
   const handleContextCycle = () => {
     const CONTEXTS: ContextType[] = ['PM', 'Esdra', 'Pessoal', 'Familia', 'CCB', 'Estudo', 'Saude'];
@@ -478,14 +479,19 @@ export default function Home() {
           ) : viewMode === 'timeline' ? (
             <DndContext 
               sensors={sensors} 
+              onDragStart={() => setDragStartTime(new Date())}
               onDragOver={({ over }) => setOverSlotId(over?.id ? String(over.id) : null)}
               onDragEnd={(event) => {
                 handleDragEnd(event);
                 setOverSlotId(null);
+                setDragStartTime(null);
               }}
-              onDragCancel={() => setOverSlotId(null)}
+              onDragCancel={() => {
+                setOverSlotId(null);
+                setDragStartTime(null);
+              }}
             >
-              <TimelineView tasks={displayedTasks} overSlotId={overSlotId} />
+              <TimelineView tasks={displayedTasks} overSlotId={overSlotId} dragStartTime={dragStartTime} />
             </DndContext>
           ) : (
             <DashboardView tasks={tasks} />

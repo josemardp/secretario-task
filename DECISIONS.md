@@ -252,3 +252,11 @@ Alternativas descartadas:
 - Estilo A (Borda Pontilhada) e Estilo B (Fundo Completo) — descartadas pois a linha horizontal no topo de inserção (Estilo C) é muito mais precisa e resolve melhor o problema de oclusão do dedo durante interações por toque no mobile.
 - Colocar o estado de `isDragging` no componente pai — descartada por causar re-renderizações desnecessárias de todo o grid do dia durante as interações de drag.
 Contexto: Hardening pós-auditoria de UX Mobile-First e melhorias críticas de usabilidade móvel.
+
+## 2026-05-25 — Bloqueio de reagendamento em horários passados na Agenda
+Decisão: Bloquear de forma síncrona o reagendamento de tarefas para slots que já venceram no dia de hoje, desabilitando o droppable nativamente no `@dnd-kit/core` (`useDroppable({ id, disabled: isPast })`). O horário de referência é capturado apenas uma vez no `onDragStart` (Zustand/local `dragStartTime` em `Home.tsx`) para garantir que os estados dos slots permaneçam estáveis durante o arrasto.
+Motivo: Evitar erros de usabilidade onde o usuário acidentalmente agenda tarefas no passado histórico. O uso da propriedade `disabled` no `useDroppable` garante que o `@dnd-kit` nem sequer registre eventos de hover ou drop sob o slot vencido, forçando o card a retornar à origem ao soltá-lo. Capturar o tempo no início do drag impede re-avaliações dinâmicas e inconsistências visuais enquanto a tarefa está no ar.
+Alternativas descartadas:
+- Validar apenas no `handleDragEnd` final — descartada por não fornecer feedback estético prévio (o usuário continuaria visualizando a linha azul em slots passados, dando a entender que o drop seria aceito, para só depois receber um aviso ou ter a ação barrada).
+- Recalcular a data a cada segundo (com `setInterval`) — descartada por causar re-renderizações e flutuações de estados de slots perto do limiar atual enquanto o usuário arrasta o card.
+Contexto: Hardening pós-auditoria de UX Mobile-First e melhorias críticas de usabilidade móvel.
