@@ -175,10 +175,6 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans" style={{ width: '100%', maxWidth: '100vw', overflowX: 'hidden' }}>
-      {/* DEBUG: remover após diagnosticar */}
-      <div style={{ position: 'fixed', bottom: 4, left: 4, background: '#1e1b4b', color: '#c7d2fe', fontSize: 10, padding: '2px 6px', borderRadius: 4, zIndex: 9999, pointerEvents: 'none' }}>
-        vw:{typeof window !== 'undefined' ? window.innerWidth : '?'} sw:{typeof window !== 'undefined' ? document.documentElement.scrollWidth : '?'}
-      </div>
       {pendingSmartTasks && (
         <MultiTaskConfirmModal 
           initialTasks={pendingSmartTasks}
