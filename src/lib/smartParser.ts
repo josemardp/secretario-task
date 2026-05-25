@@ -32,18 +32,41 @@ export async function parseMultipleTasks(rawText: string, defaultContext: Contex
   const tzOffset = now.getTimezoneOffset() * 60000;
   const localISOTime = (new Date(Date.now() - tzOffset)).toISOString().slice(0, -1);
 
-  const systemPrompt = `Você é um extrator de tarefas estruturadas. 
-O usuário vai enviar um texto que pode conter uma, VÁRIAS ou DEZENAS de tarefas misturadas em linguagem natural ou em lista (bullet points).
-Sua missão é extrair CADA TAREFA isoladamente, SEM PULAR NENHUMA (se houver 30 itens, devolva 30 objetos), e devolver um JSON com um array chamado "tasks". 
-Cada objeto deve ter estritamente:
-- title: string (o que fazer, limpo de datas e horas e bullets)
-- context: string (Deve ser OBRIGATORIAMENTE um destes: 'PM', 'Esdra', 'Pessoal', 'Familia', 'CCB', 'Estudo', ou 'Saude'. Escolha o mais coerente).
-- priority: number (0 a 10. Alta/urgente=10, media=5, baixa=2. Padrão 0).
-- energy: number (0 a 10. Alta=8, media=5, baixa=2. Padrão 0).
-- due_at: string ou null (Formato ISO 8601 UTC exato. A data local de HOJE AGORA é ${localISOTime}. Se a tarefa incluir uma data explicita como "(25/05/2026 08:30)", converta EXATAMENTE para esse horário ISO. Converta termos relativos. Se não disser hora, use 09:00:00. Para tarefas com recorrência e horário, calcule a data da PRIMEIRA ocorrência válida a partir de agora).
-- recurrence_rule: string ou null (Padrões simples: 'daily', 'weekly', 'monthly'. Para dias específicos, escreva em INGLÊS separados por vírgula. Ex: 'monday,tuesday,wednesday,thursday,friday' para dias úteis, ou 'sunday,tuesday,thursday' etc).
+  const systemPrompt = `Você é um extrator de tarefas em português brasileiro. Extraia CADA TAREFA do texto e devolva APENAS JSON com array "tasks". Não pule nenhuma tarefa.
 
-Responda APENAS com o JSON válido do array "tasks".`;
+━━━ FORMATO DE HORÁRIO BRASILEIRO (CRÍTICO) ━━━
+O formato "HHhMM" significa: número ANTES do h = HORA, número DEPOIS do h = MINUTOS.
+"09h00" → hora 9, minuto 0  → ISO time: T09:00
+"09h05" → hora 9, minuto 5  → ISO time: T09:05
+"09h10" → hora 9, minuto 10 → ISO time: T09:10
+"09h15" → hora 9, minuto 15 → ISO time: T09:15
+"14h30" → hora 14, minuto 30 → ISO time: T14:30
+NUNCA interprete o número após "h" como hora. Ele é sempre MINUTO.
+
+━━━ FUSO HORÁRIO ━━━
+Data/hora LOCAL atual (Brasília, UTC-3): ${localISOTime}
+Para converter local → UTC: ADICIONE 3 horas.
+Exemplos: 09:00 local = 12:00 UTC | 09:05 local = 12:05 UTC | 14:30 local = 17:30 UTC
+due_at deve ser SEMPRE em UTC com sufixo Z.
+
+━━━ RECORRÊNCIAS ━━━
+Se o texto indicar repetição, preencha recurrence_rule com dias em inglês separados por vírgula:
+"segunda a sexta" / "dias úteis" / "todo dia útil" → "monday,tuesday,wednesday,thursday,friday"
+"todo dia" / "diariamente" / "todos os dias"       → "daily"
+"toda semana" / "semanalmente"                      → "weekly"
+"toda segunda"                                      → "monday"
+"toda terça e quinta"                               → "tuesday,thursday"
+Para tarefas recorrentes, due_at = primeira ocorrência futura a partir de agora.
+
+━━━ CAMPOS DE CADA OBJETO ━━━
+- title: string — título limpo sem datas, horas ou bullets
+- context: "PM"|"Esdra"|"Pessoal"|"Familia"|"CCB"|"Estudo"|"Saude" — escolha o mais coerente
+- priority: number 0-10 (urgente=10, alta=8, média=5, baixa=2, padrão=0)
+- energy: number 0-10 (alta=8, média=5, baixa=2, padrão=0)
+- due_at: string ISO 8601 UTC com Z, ou null. Se não houver hora explícita, use 12:00:00Z (= 09:00 local).
+- recurrence_rule: string ou null
+
+Responda APENAS com JSON válido contendo o array "tasks".`;
 
   try {
     const response = await fetch(`${OPENAI_API_URL}/chat/completions`, {
