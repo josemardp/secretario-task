@@ -157,7 +157,7 @@ export function DashboardView({ tasks }: DashboardViewProps) {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={peakHourData}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                <XAxis dataKey="hora" tick={{fontSize: 12}} />
+                <XAxis dataKey="hora" tick={{fontSize: 10}} interval="preserveStartEnd" tickFormatter={(v) => v.replace('h', '')} />
                 <YAxis />
                 <Tooltip cursor={{fill: '#fdf2f8'}} />
                 <Bar dataKey="concluídas" name="Tarefas Finalizadas" fill="#f59e0b" radius={[4, 4, 0, 0]} />

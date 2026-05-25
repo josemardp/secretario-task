@@ -70,7 +70,7 @@ export function TaskBoard({ tasks }: TaskBoardProps) {
   };
 
   return (
-    <div className="flex gap-4 overflow-x-auto pb-4">
+    <div className="flex flex-col gap-4 sm:flex-row sm:overflow-x-auto pb-4">
       {COLUMNS.map(column => {
         // Obter as tarefas não excluídas desta coluna
         const columnTasks = tasks.filter(t => t.status === column.id && !t.deleted_at);
@@ -85,13 +85,13 @@ export function TaskBoard({ tasks }: TaskBoardProps) {
         tasksWithScore.sort((a, b) => b.score - a.score);
         
         return (
-          <div key={column.id} className="flex-1 min-w-[300px] bg-gray-50 rounded-lg p-4">
+          <div key={column.id} className="w-full sm:flex-1 sm:min-w-[280px] bg-gray-50 rounded-lg p-4">
             <h2 className="text-sm font-semibold text-gray-700 mb-4">{column.title} ({columnTasks.length})</h2>
             <div className="space-y-3">
               {tasksWithScore.map(task => (
                 <div key={task.id} className="bg-white p-3 rounded-md shadow-sm border border-gray-200 w-full min-w-0 overflow-hidden flex flex-col">
                   <div className="flex justify-between items-start mb-2 gap-2">
-                    <h4 className="font-semibold text-gray-900 flex items-center gap-1 flex-wrap">
+                    <h4 className="font-semibold text-gray-900 flex items-center gap-1 flex-wrap break-words min-w-0">
                       {task.recurrence_rule && (
                         <span title="Tarefa Recorrente" className="text-indigo-500 text-xs">🔁</span>
                       )}
@@ -136,7 +136,7 @@ export function TaskBoard({ tasks }: TaskBoardProps) {
                           const val = e.target.value;
                           updateTask(task.id, { due_at: val ? new Date(val).toISOString() : null });
                         }}
-                        className="ml-1 bg-transparent border-none p-0 cursor-pointer text-indigo-600 focus:ring-0 w-32 sm:w-auto"
+                        className="ml-1 bg-transparent border-none p-0 cursor-pointer text-indigo-600 focus:ring-0 text-[10px] sm:text-xs w-36 sm:w-auto"
                         title="Alterar data/hora"
                       />
                     </div>
