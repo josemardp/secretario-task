@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase';
 import { parseMultipleTasks } from '../lib/smartParser';
 import { generateEmbedding, generateSmartBriefing, estimateTaskTime, transcribeAudio } from '../lib/ai';
 import { useAudioRecorder } from '../hooks/useAudioRecorder';
+import { BuildBadge } from '../components/BuildBadge';
 import { TaskBoard } from '../components/TaskBoard';
 import { TimelineView } from '../components/TimelineView';
 import { DashboardView } from '../components/DashboardView';
@@ -175,9 +176,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans" style={{ width: '100%', maxWidth: '100vw', overflowX: 'clip' }}>
-      <div style={{ position: 'fixed', bottom: 4, left: 4, background: '#1e1b4b', color: '#c7d2fe', fontSize: 10, padding: '2px 6px', borderRadius: 4, zIndex: 9999, pointerEvents: 'none' }}>
-        vw:{typeof window !== 'undefined' ? window.innerWidth : '?'} sw:{typeof window !== 'undefined' ? document.documentElement.scrollWidth : '?'}
-      </div>
+      <BuildBadge />
       {pendingSmartTasks && (
         <MultiTaskConfirmModal 
           initialTasks={pendingSmartTasks}
