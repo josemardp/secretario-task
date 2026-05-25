@@ -1,3 +1,17 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Regras para transformar o comportamento web em nativo (PWA) */
+body {
+  overscroll-behavior-y: none; /* Impede puxar para atualizar estilo web */
+  -webkit-tap-highlight-color: transparent; /* Remove quadrados azuis ao clicar em botões */
+  user-select: none; /* Impede a seleção de texto acidental ao arrastar o dedo */
+  -webkit-user-select: none;
+}
+
+/* Permitir seleção de texto apenas em campos onde faz sentido (inputs e textareas) */
+input, textarea, [contenteditable] {
+  user-select: auto;
+  -webkit-user-select: auto;
+}
