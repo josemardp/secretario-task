@@ -51,7 +51,7 @@ export function CalendarWidget({ selectedDate, onSelectDate, onClose, tasks }: C
 
     // Empty slots for previous month
     for (let i = 0; i < firstDayOfMonth; i++) {
-      days.push(<div key={`empty-${i}`} className="h-10 w-10"></div>);
+      days.push(<div key={`empty-${i}`} className="h-11 w-11"></div>);
     }
 
     // Days of the month
@@ -76,7 +76,7 @@ export function CalendarWidget({ selectedDate, onSelectDate, onClose, tasks }: C
             onSelectDate(dateStr);
             onClose();
           }}
-          className={`h-10 w-10 rounded-full flex flex-col items-center justify-center relative transition-colors ${
+          className={`h-11 w-11 rounded-full flex flex-col items-center justify-center relative transition-colors ${
             isSelected 
               ? 'bg-indigo-600 text-white font-bold' 
               : isToday

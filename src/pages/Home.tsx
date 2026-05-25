@@ -208,8 +208,8 @@ export default function Home() {
       
       <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
       
-      <main className="mx-auto max-w-7xl py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
+      <main className="mx-auto max-w-7xl py-6 px-4 sm:px-6 lg:px-8 overflow-x-hidden">
+        <div className="py-6 sm:px-0">
           
           <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-200 pb-4">
             <div className="flex gap-2 overflow-x-auto pb-2 sm:pb-0">
@@ -228,18 +228,20 @@ export default function Home() {
               ))}
             </div>
 
-            <div className="flex items-center gap-3 bg-white px-4 py-2 rounded-full border border-gray-200 shadow-sm">
+            <div className="flex items-center gap-2 sm:gap-3 bg-white px-3 sm:px-4 py-2 rounded-full border border-gray-200 shadow-sm">
               <label htmlFor="energy" className="text-sm font-medium text-gray-700 whitespace-nowrap">
-                Minha Energia: <span className={currentEnergy >= 7 ? 'text-green-600' : currentEnergy <= 3 ? 'text-red-600' : 'text-yellow-600'}>{currentEnergy}/10</span>
+                <span className="sm:hidden">Energia: </span>
+                <span className="hidden sm:inline">Minha Energia: </span>
+                <span className={currentEnergy >= 7 ? 'text-green-600' : currentEnergy <= 3 ? 'text-red-600' : 'text-yellow-600'}>{currentEnergy}/10</span>
               </label>
-              <input 
-                type="range" 
-                id="energy" 
-                min="0" 
-                max="10" 
-                value={currentEnergy} 
+              <input
+                type="range"
+                id="energy"
+                min="0"
+                max="10"
+                value={currentEnergy}
                 onChange={(e) => setCurrentEnergy(parseInt(e.target.value, 10))}
-                className="w-24 sm:w-32 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
+                className="flex-1 min-w-[56px] sm:w-32 sm:flex-none h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-indigo-600"
               />
             </div>
           </div>
@@ -312,10 +314,10 @@ export default function Home() {
                 }
               }}
               disabled={isAddingTask || isTranscribing}
-              className="w-full rounded-md border-0 py-3 px-3 sm:px-4 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 text-sm sm:leading-6 disabled:opacity-50 resize-none"
+              className="min-w-0 flex-1 rounded-md border-0 py-3 px-3 sm:px-4 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 text-sm sm:leading-6 disabled:opacity-50 resize-none"
               autoFocus
             />
-            
+
             <button
               type="button"
               onMouseDown={startRecording}
@@ -325,8 +327,8 @@ export default function Home() {
               onTouchEnd={stopRecording}
               disabled={isAddingTask || isTranscribing}
               className={`p-3 shrink-0 rounded-md transition-colors flex items-center justify-center ${
-                isRecording 
-                  ? 'bg-red-500 hover:bg-red-600 text-white animate-pulse ring-2 ring-red-500 ring-offset-2' 
+                isRecording
+                  ? 'bg-red-500 hover:bg-red-600 text-white animate-pulse ring-2 ring-red-500 ring-offset-2'
                   : 'bg-gray-100 hover:bg-gray-200 text-gray-600 ring-1 ring-inset ring-gray-300'
               } disabled:opacity-50`}
               title="Segure para falar"
@@ -337,43 +339,47 @@ export default function Home() {
             <button
               type="submit"
               disabled={isAddingTask || !taskText.trim() || isTranscribing}
-              className="bg-indigo-600 text-white px-4 sm:px-6 py-3 shrink-0 rounded-md font-semibold text-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="bg-indigo-600 text-white px-3 sm:px-6 py-3 shrink-0 rounded-md font-semibold text-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {isAddingTask ? 'Add...' : 'Adicionar'}
+              <span className="sm:hidden">{isAddingTask ? '...' : 'Add'}</span>
+              <span className="hidden sm:inline">{isAddingTask ? 'Add...' : 'Adicionar'}</span>
             </button>
           </form>
 
           {/* Controle de Abas */}
-          <div className="flex border-b border-gray-200 mb-6 overflow-x-auto pb-2 sm:pb-0">
+          <div className="flex border-b border-gray-200 mb-6">
             <button
               onClick={() => setViewMode('kanban')}
-              className={`py-2 px-4 text-sm font-medium border-b-2 transition-colors ${
-                viewMode === 'kanban' 
-                  ? 'border-indigo-600 text-indigo-600' 
+              className={`py-2 px-3 sm:px-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                viewMode === 'kanban'
+                  ? 'border-indigo-600 text-indigo-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
-              📊 Quadros (Kanban)
+              <span className="sm:hidden">📊 Kanban</span>
+              <span className="hidden sm:inline">📊 Quadros (Kanban)</span>
             </button>
             <button
               onClick={() => setViewMode('timeline')}
-              className={`py-2 px-4 text-sm font-medium border-b-2 transition-colors ${
-                viewMode === 'timeline' 
-                  ? 'border-indigo-600 text-indigo-600' 
+              className={`py-2 px-3 sm:px-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                viewMode === 'timeline'
+                  ? 'border-indigo-600 text-indigo-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
-              ⏳ Linha do Tempo
+              <span className="sm:hidden">⏳ Agenda</span>
+              <span className="hidden sm:inline">⏳ Linha do Tempo</span>
             </button>
             <button
               onClick={() => setViewMode('dashboard')}
-              className={`py-2 px-4 text-sm font-medium border-b-2 transition-colors ${
-                viewMode === 'dashboard' 
-                  ? 'border-indigo-600 text-indigo-600' 
+              className={`py-2 px-3 sm:px-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                viewMode === 'dashboard'
+                  ? 'border-indigo-600 text-indigo-600'
                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
               }`}
             >
-              📈 Estatísticas
+              <span className="sm:hidden">📈 Stats</span>
+              <span className="hidden sm:inline">📈 Estatísticas</span>
             </button>
           </div>
 
