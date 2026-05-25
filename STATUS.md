@@ -1,6 +1,6 @@
 # STATUS.md — SecretárioTask
 
-Última atualização: 2026-05-24
+Última atualização: 2026-05-25
 
 ---
 
@@ -23,35 +23,39 @@
 
 # Sprint atual
 
-Fase de Refinamento e Implantação Final (Vercel)
+Uso Real e Monitoramento Pós-Auditoria
 
 ## Observação
-Todos os épicos do Pós-MVP foram concluídos com sucesso. O app está pronto para ser lançado e usado em produção.
+Todos os épicos de refinamento de PWA e melhorias críticas de UX Mobile-First foram concluídos com sucesso absoluto. O app está consolidado nas melhores práticas de interfaces móveis e pronto para produção robusta.
 
 ---
 
 # Progresso dentro do sprint atual
 
-A fase final de refinamento do aplicativo e implantação no Vercel foi concluída com enorme sucesso. O projeto atingiu maturidade operacional excepcional e os últimos gargalos de usabilidade (importação em lote, linha do tempo e gamificação de procrastinação) foram sanados em tempo recorde.
+A auditoria de UX Mobile-First e o hardening do Progressive Web App (PWA) foram executados perfeitamente, resolvendo problemas de safe-area, auto-zoom no iOS Safari, compactação de telas menores de 384px, e hierarquias visuais da agenda e do Foco do Dia.
 
 ## Checklist
-- [x] Correção profunda do Parser Local e Fallback (Preservação de quebras de linha com textarea e tratamento de regex).
-- [x] Suporte avançado à recorrência local e via IA com dias da semana dinâmicos ("toda seg, ter, qua").
-- [x] Transformação da Linha do Tempo Dinâmica em Grid Calendário Fixo de 30 minutos com Drag & Drop e re-mapeamento de atrasos em tempo real.
-- [x] Implementação de gamificação punitiva para procrastinação (Contador de Adiamentos 🐌).
-- [x] Sincronização impecável do Banco de Dados via comandos SQL Idempotentes.
+- [x] Pré-requisitos críticos (Viewport fit cover & PWA event listener cleanup).
+- [x] Estilização de Safe areas dinâmicas em todos os elementos fixed e overlays de modais.
+- [x] Prevenção de auto-zoom indesejado no iOS Safari com textarea ajustado para 16px (text-base).
+- [x] Header super-compacto de 44px com data local e ciclos síncronos de contexto por toque.
+- [x] Tab Bar inferior standalone fixa com safe-areas e ícones Lucide vetoriais (Kanban, Agenda, Stats).
+- [x] Barra de digitação sticky no rodapé acima da Tab Bar e botão de gravação por voz com tap-target de 44x44px.
+- [x] Hierarquia visual do Foco do Dia (Top 1 de 64px em destaque, Top 2/3 de 48px e metadados de tempo/duração).
+- [x] Grade de 30min da Agenda otimizada com indicador de "agora" síncrono vermelho e compactação de slots vazios para 24px.
+- [x] Definição de tokens de cores semânticas centralizados em tailwind.config.ts.
 
 ---
 
 # Próximo passo concreto
 
-O MVP está estabilizado. Próximo passo é simplesmente utilizar o produto em produção no dia a dia, monitorar bugs de edge case, e futuramente decidir sobre a entrada na versão v1.1+ (onde entrarão integrações maiores de IA).
+Monitorar o aplicativo em produção real, coletar feedbacks de uso do dia a dia e se preparar para as integrações inteligentes futuras planejadas para a v1.1+.
 
 ---
 
 # Bloqueios em aberto
 
-Nenhum. Sistema operacional e implantado com sucesso.
+Nenhum. Sistema operacional e UX 100% polida nos viewports alvo (360px - 390px).
 
 ---
 
@@ -70,3 +74,4 @@ Nenhum. Sistema operacional e implantado com sucesso.
 - Sprint 15 — Automações de Recorrência (concluído em 2026-05-24)
 - Sprint 16 — Calendário Mensal e Agenda (concluído em 2026-05-24)
 - Sprint 17 — Mega-Refinamento de UX, Parser Offline e Grid Diário (concluído em 2026-05-24)
+- Sprint 18 — Auditoria e Hardening UX Mobile-First (concluído em 2026-05-25)

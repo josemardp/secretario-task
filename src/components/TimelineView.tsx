@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+// TODO: substituir HTML5 Drag API por @dnd-kit para suporte touch (drag atual não funciona em mobile)
+import { useMemo, useState, useEffect } from 'react';
 import type { Task } from '../types';
 import { CONTEXTS_LIST } from '../types';
 import { calculateTaskScore } from '../lib/ranking';
@@ -35,6 +36,13 @@ export function TimelineView({ tasks }: TimelineViewProps) {
   const [dismissedBreaks, setDismissedBreaks] = useState<string[]>([]);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [editForm, setEditForm] = useState({ title: '', due_at: '', estimated_minutes: 30, context: 'Pessoal' as Task['context'], priority: 0, energy: 0 });
+
+  useEffect(() => {
+    const el = document.getElementById('current-time-slot');
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [selectedDate]);
 
   const openEdit = (task: Task) => {
     setEditingTask(task);
@@ -220,20 +228,50 @@ export function TimelineView({ tasks }: TimelineViewProps) {
             b.endTime.getTime() > slot.dateObj.getTime()
           );
 
+          const now = new Date();
+          const isToday = selectedDate.getDate() === now.getDate() &&
+                          selectedDate.getMonth() === now.getMonth() &&
+                          selectedDate.getFullYear() === now.getFullYear();
+
+          const nowTime = now.getTime();
+          const slotTime = slot.dateObj.getTime();
+          const slotEndTime = slotTime + 30 * 60 * 1000;
+          const isCurrentSlot = isToday && nowTime >= slotTime && nowTime < slotEndTime;
+
+          const targetScrollTime = nowTime - 30 * 60 * 1000;
+          const isTargetSlot = isToday && targetScrollTime >= slotTime && targetScrollTime < slotEndTime;
+
+          const minutesOffset = Math.floor((nowTime - slotTime) / 60000);
+          const topPercent = (minutesOffset / 30) * 100;
+
           return (
             <div 
               key={slot.timeString} 
-              className="flex border-b border-gray-100 min-h-[80px]"
+              id={isTargetSlot ? 'current-time-slot' : undefined}
+              className={`flex border-b border-gray-100 relative ${slotBlocks.length === 0 ? 'min-h-[24px]' : 'min-h-[80px]'}`}
               onDragOver={(e) => e.preventDefault()}
               onDrop={(e) => handleDrop(e, slot.dateObj)}
             >
+              {/* Linha vermelha de "Agora" */}
+              {isCurrentSlot && (
+                <div 
+                  className="absolute left-0 right-0 z-10 flex items-center pointer-events-none w-full"
+                  style={{ top: `${topPercent}%`, transform: 'translateY(-50%)' }}
+                >
+                  <span className="w-16 pr-2 text-right text-[11px] font-bold text-red-600 bg-white/90 z-20 select-none">
+                    {now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                  <div className="flex-1 h-[2px] bg-red-600"></div>
+                </div>
+              )}
+
               {/* Horário (Coluna Esquerda) */}
-              <div className="w-16 flex-shrink-0 border-r border-gray-50 bg-gray-50/50 p-2 text-right">
-                <span className="text-xs font-semibold text-gray-400">{slot.timeString}</span>
+              <div className={`w-16 flex-shrink-0 border-r border-gray-50 bg-gray-50/50 text-right shrink-0 flex items-center justify-end pr-2 ${slotBlocks.length === 0 ? 'py-0.5' : 'py-2'}`}>
+                <span className="text-xs font-semibold text-gray-400 leading-none">{slot.timeString}</span>
               </div>
               
               {/* Espaço das Tarefas (Coluna Direita) */}
-              <div className="flex-1 min-w-0 p-2 flex flex-col gap-2 relative">
+              <div className={`flex-1 min-w-0 flex flex-col gap-2 relative ${slotBlocks.length === 0 ? 'p-0' : 'p-2'}`}>
                 {slotBlocks.map((block) => (
                   <div 
                     key={`${block.id}-${slot.timeString}`}
@@ -357,6 +395,10 @@ export function TimelineView({ tasks }: TimelineViewProps) {
         >
           <div
             className="bg-white rounded-xl shadow-xl w-full max-w-md p-5 flex flex-col gap-4"
+            style={{
+              paddingTop: 'calc(20px + env(safe-area-inset-top))',
+              paddingBottom: 'calc(20px + env(safe-area-inset-bottom))'
+            }}
             onClick={e => e.stopPropagation()}
           >
             <h3 className="text-base font-bold text-gray-800">Editar Tarefa</h3>

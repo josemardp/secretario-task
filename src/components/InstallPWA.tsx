@@ -27,7 +27,7 @@ export function InstallPWA() {
       setSupportsPWA(false);
     }
 
-    return () => window.removeEventListener("transitionend", handler);
+    return () => window.removeEventListener("beforeinstallprompt", handler);
   }, []);
 
   const onClick = async (evt: React.MouseEvent<HTMLButtonElement>) => {

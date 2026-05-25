@@ -42,7 +42,13 @@ export function MultiTaskConfirmModal({ initialTasks, onConfirm, onCancel }: Mul
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm overflow-y-auto">
-      <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-full flex flex-col">
+      <div 
+        className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-full flex flex-col"
+        style={{
+          paddingTop: 'env(safe-area-inset-top)',
+          paddingBottom: 'env(safe-area-inset-bottom)'
+        }}
+      >
         <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-indigo-50 rounded-t-xl">
           <h2 className="text-xl font-bold text-indigo-900">✨ Confirmação Inteligente</h2>
           <button onClick={onCancel} className="text-gray-400 hover:text-gray-600">✕</button>

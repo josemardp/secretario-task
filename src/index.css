@@ -15,3 +15,8 @@ input, textarea, [contenteditable] {
   user-select: auto;
   -webkit-user-select: auto;
 }
+
+@supports (padding: env(safe-area-inset-bottom)) {
+  .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+  .safe-top    { padding-top:    env(safe-area-inset-top);    }
+}
