@@ -62,6 +62,27 @@ export async function fetchRemoteTasks() {
   setTasks(finalTasks);
 }
 
+export async function fetchApiKeyFromCloud(): Promise<string | null> {
+  const { data: sessionData } = await supabase.auth.getSession();
+  if (!sessionData.session) return null;
+  const { data } = await supabase
+    .from('profiles')
+    .select('openai_api_key')
+    .eq('id', sessionData.session.user.id)
+    .single();
+  return (data as any)?.openai_api_key ?? null;
+}
+
+export async function saveApiKeyToCloud(apiKey: string | null): Promise<void> {
+  const { data: sessionData } = await supabase.auth.getSession();
+  if (!sessionData.session) return;
+  await supabase.from('profiles').upsert({
+    id: sessionData.session.user.id,
+    openai_api_key: apiKey,
+    updated_at: new Date().toISOString()
+  });
+}
+
 export async function processSyncQueue() {
   if (!navigator.onLine) return;
 
