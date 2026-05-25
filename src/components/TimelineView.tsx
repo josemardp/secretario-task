@@ -242,7 +242,7 @@ export function TimelineView({ tasks }: TimelineViewProps) {
                         e.dataTransfer.setData('taskId', block.id);
                       }
                     }}
-                    className={`p-3 rounded-lg shadow-sm border cursor-grab active:cursor-grabbing ${
+                    className={`p-3 rounded-lg shadow-sm border cursor-grab active:cursor-grabbing w-full min-w-0 overflow-hidden flex flex-col ${
                       block.type === 'break' 
                         ? 'bg-orange-50 border-orange-100' 
                         : 'bg-white border-indigo-100 ring-1 ring-indigo-50'
