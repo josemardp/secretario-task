@@ -300,13 +300,19 @@ export default function Home() {
           )}
 
           <form onSubmit={handleTaskSubmit} className="flex gap-2 mb-6">
-            <input
-              type="text"
+            <textarea
               value={taskText}
               onChange={(e) => setTaskText(e.target.value)}
-              placeholder={isTranscribing ? "Transcrevendo voz..." : "ex: Amanhã apresentação pro Esdra urgência alta"}
+              placeholder="Despeje suas tarefas aqui... (use Enter para pular linha)"
+              rows={1}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleTaskSubmit(e);
+                }
+              }}
               disabled={isAddingTask || isTranscribing}
-              className="flex-1 min-w-0 rounded-md border-0 py-3 px-3 sm:px-4 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 text-sm sm:leading-6 disabled:opacity-50"
+              className="w-full rounded-md border-0 py-3 px-3 sm:px-4 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 text-sm sm:leading-6 disabled:opacity-50 resize-none"
               autoFocus
             />
             
