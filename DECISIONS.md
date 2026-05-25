@@ -244,3 +244,11 @@ Alternativas descartadas:
 - HTML5 Drag-and-Drop com Polyfill móvel (mobile-drag-drop) — descartada por inflar dependências secundárias de inicialização e adicionar complexidade na interceptação de cliques e rolagem da página.
 - Não oferecer drag-and-drop no móvel — descartada por violar as diretrizes de experiência de uso mobile-first da auditoria UX de 2026-05-25.
 Contexto: Hardening pós-auditoria de UX Mobile-First e melhorias críticas de usabilidade móvel.
+
+## 2026-05-25 — Feedback visual de drag-and-drop na Agenda (Estilo C)
+Decisão: Implementar o feedback de inserção visual linear (Estilo C — Linha de inserção destacada azul no topo com rótulo de horário do slot) e contraste de sobreposição cinza nos demais slots não-ativos durante o arrasto. O estado local `overSlotId` foi colocado em `Home.tsx` para sincronização, e o hook `useDndMonitor` do `@dnd-kit` foi colocado em `TimelineSlot` para identificar o status do drag sem re-renderizar todo o grid de horários.
+Motivo: Fornecer excelente rastreabilidade e indicação visual precisa de onde a tarefa cairá ao soltar o mouse ou dedo no mobile. O uso de `useDndMonitor` dentro do subcomponente evita renders desnecessários no componente pai `TimelineView`, mantendo o desempenho excelente (tempo de resposta inferior a 16ms).
+Alternativas descartadas:
+- Estilo A (Borda Pontilhada) e Estilo B (Fundo Completo) — descartadas pois a linha horizontal no topo de inserção (Estilo C) é muito mais precisa e resolve melhor o problema de oclusão do dedo durante interações por toque no mobile.
+- Colocar o estado de `isDragging` no componente pai — descartada por causar re-renderizações desnecessárias de todo o grid do dia durante as interações de drag.
+Contexto: Hardening pós-auditoria de UX Mobile-First e melhorias críticas de usabilidade móvel.

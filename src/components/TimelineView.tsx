@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
-import { useDraggable, useDroppable } from '@dnd-kit/core';
+import { useDraggable, useDroppable, useDndMonitor } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import type { Task } from '../types';
 import { CONTEXTS_LIST } from '../types';
@@ -11,6 +11,7 @@ import { CalendarWidget } from './CalendarWidget';
 
 interface TimelineViewProps {
   tasks: Task[];
+  overSlotId: string | null;
 }
 
 interface TimelineBlock {
@@ -181,6 +182,7 @@ interface TimelineSlotProps {
   topPercent: number;
   now: Date;
   slotBlocksCount: number;
+  isDropTarget: boolean;
   children: React.ReactNode;
 }
 
@@ -191,10 +193,18 @@ function TimelineSlot({
   topPercent,
   now,
   slotBlocksCount,
+  isDropTarget,
   children
 }: TimelineSlotProps) {
-  const { isOver, setNodeRef } = useDroppable({
+  const { setNodeRef } = useDroppable({
     id: `slot-${slot.dateObj.toISOString()}`,
+  });
+
+  const [isDragging, setIsDragging] = useState(false);
+  useDndMonitor({
+    onDragStart: () => setIsDragging(true),
+    onDragEnd: () => setIsDragging(false),
+    onDragCancel: () => setIsDragging(false),
   });
 
   return (
@@ -203,10 +213,25 @@ function TimelineSlot({
       id={isTargetSlot ? 'current-time-slot' : undefined}
       className={`flex border-b border-gray-100 relative ${
         slotBlocksCount === 0 ? 'min-h-[24px]' : 'min-h-[80px]'
-      } ${isOver ? 'bg-indigo-50/50 transition-colors' : ''}`}
+      } ${
+        isDropTarget 
+          ? 'bg-brand/5 transition-colors duration-150' 
+          : isDragging 
+            ? 'bg-gray-50/60 transition-colors duration-150' 
+            : ''
+      }`}
     >
+      {/* Linha horizontal destacada no topo (Estilo C) */}
+      {isDropTarget && (
+        <div className="absolute top-0 left-0 right-0 h-[3px] bg-brand rounded-[2px] z-10 pointer-events-none">
+          <div className="absolute top-[-10px] left-2 text-[11px] font-semibold text-brand bg-white px-1.5 py-0.5 rounded border border-brand z-20 whitespace-nowrap select-none">
+            {slot.timeString}
+          </div>
+        </div>
+      )}
+
       {/* Linha vermelha de "Agora" */}
-      {isCurrentSlot && (
+      {isCurrentSlot && !isDropTarget && (
         <div
           className="absolute left-0 right-0 z-10 flex items-center pointer-events-none w-full"
           style={{ top: `${topPercent}%`, transform: 'translateY(-50%)' }}
@@ -231,7 +256,7 @@ function TimelineSlot({
   );
 }
 
-export function TimelineView({ tasks }: TimelineViewProps) {
+export function TimelineView({ tasks, overSlotId }: TimelineViewProps) {
   const { currentEnergy, activeContext } = useContextStore();
   const { updateTask, deleteTask } = useTaskStore();
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -439,6 +464,8 @@ export function TimelineView({ tasks }: TimelineViewProps) {
           const minutesOffset = Math.floor((nowTime - slotTime) / 60000);
           const topPercent = (minutesOffset / 30) * 100;
 
+          const isDropTarget = overSlotId === `slot-${slot.dateObj.toISOString()}`;
+
           return (
             <TimelineSlot
               key={slot.timeString}
@@ -448,6 +475,7 @@ export function TimelineView({ tasks }: TimelineViewProps) {
               topPercent={topPercent}
               now={now}
               slotBlocksCount={slotBlocks.length}
+              isDropTarget={isDropTarget}
             >
               {slotBlocks.map((block) => {
                 if (block.type === 'break') {
