@@ -174,7 +174,7 @@ export default function Home() {
     : tasks.filter(t => searchText ? t.title.toLowerCase().includes(searchText.toLowerCase()) : true);
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans" style={{ width: '100%', maxWidth: '100vw', overflowX: 'hidden' }}>
+    <div className="min-h-screen bg-gray-50 font-sans" style={{ width: '100%', maxWidth: '100vw', overflowX: 'clip' }}>
       {pendingSmartTasks && (
         <MultiTaskConfirmModal 
           initialTasks={pendingSmartTasks}
