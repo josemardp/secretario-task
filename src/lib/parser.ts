@@ -72,7 +72,7 @@ export function parseTaskInput(rawText: string, defaultContext: ContextType): Pa
     const [h, min] = timeStr.split(':');
     const parsedDate = new Date(Number(year), Number(m)-1, Number(d), Number(h), Number(min));
     if (!isNaN(parsedDate.getTime())) {
-      due_at = parsedDate.toISOString();
+      baseDate = parsedDate;
       dateFound = true;
     }
     title = title.replace(explicitDateMatch[0], '').trim();
@@ -80,7 +80,7 @@ export function parseTaskInput(rawText: string, defaultContext: ContextType): Pa
 
   const wordRegex = /(?:^|\s)(hoje|amanhã|amanha|depois\s+de\s+amanhã|depois\s+de\s+amanha|segunda(?:-feira)?|terça(?:-feira)?|terca(?:-feira)?|quarta(?:-feira)?|quinta(?:-feira)?|sexta(?:-feira)?|sábado|sabado|domingo)(?:\s|$)/i;
   const dateMatch = title.match(wordRegex);
-  if (dateMatch) {
+  if (dateMatch && !dateFound) {
     dateFound = true;
     const word = dateMatch[1].toLowerCase();
     title = title.replace(new RegExp(`(?:^|\\s)${word}(?:\\s|$)`, 'i'), ' ');
@@ -103,11 +103,11 @@ export function parseTaskInput(rawText: string, defaultContext: ContextType): Pa
     }
   }
 
-  // Parse Time
+  // Parse Time (apenas se nao for data explicita que ja tem hora, ou se for mas a hora for padrao)
   const timeRegex = /(?:às\s+)?([0-9]{1,2})(?::([0-9]{2}))?h?\b/i;
   const timeMatch = title.match(timeRegex);
   
-  if (timeMatch) {
+  if (timeMatch && (!explicitDateMatch || !explicitDateMatch[2])) {
     const hours = parseInt(timeMatch[1], 10);
     const minutes = timeMatch[2] ? parseInt(timeMatch[2], 10) : 0;
     
@@ -116,7 +116,7 @@ export function parseTaskInput(rawText: string, defaultContext: ContextType): Pa
       title = title.replace(timeMatch[0], '');
       dateFound = true;
     }
-  } else if (dateFound) {
+  } else if (dateFound && !explicitDateMatch) {
     baseDate.setHours(23, 59, 59, 999);
   }
 
