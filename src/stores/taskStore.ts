@@ -4,25 +4,35 @@ import type { Task, PendingMutation } from '../types';
 
 function getNextOccurrence(baseDateStr: string | null, rule: string): string {
   const d = baseDateStr ? new Date(baseDateStr) : new Date();
-  // Ensure we don't accidentally schedule for the past if they're very late
   const now = new Date();
   
   do {
-    switch (rule) {
-      case 'daily':
-        d.setDate(d.getDate() + 1);
-        break;
-      case 'weekly':
+    if (rule === 'daily') {
+      d.setDate(d.getDate() + 1);
+    } else if (rule === 'weekly') {
+      d.setDate(d.getDate() + 7);
+    } else if (rule === 'monthly') {
+      d.setMonth(d.getMonth() + 1);
+    } else {
+      // rule pode ser "monday,tuesday" ou apenas "monday"
+      const daysMap: Record<string, number> = { sunday: 0, monday: 1, tuesday: 2, wednesday: 3, thursday: 4, friday: 5, saturday: 6 };
+      const validDays = rule.toLowerCase().split(',').map(r => daysMap[r.trim()]).filter(n => n !== undefined);
+      
+      if (validDays.length > 0) {
+        let added = false;
+        for (let i = 1; i <= 7; i++) {
+          d.setDate(d.getDate() + 1);
+          if (validDays.includes(d.getDay())) {
+            added = true;
+            break;
+          }
+        }
+        if (!added) d.setDate(d.getDate() + 7); // fallback absurdo
+      } else {
         d.setDate(d.getDate() + 7);
-        break;
-      case 'monthly':
-        d.setMonth(d.getMonth() + 1);
-        break;
-      default: // monday, tuesday, etc.
-        d.setDate(d.getDate() + 7);
-        break;
+      }
     }
-  } while (d < now && rule !== 'monthly'); // For monthly we don't auto-skip multiple months to be safe
+  } while (d < now && rule !== 'monthly'); 
   
   return d.toISOString();
 }

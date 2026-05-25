@@ -40,8 +40,8 @@ Cada objeto deve ter estritamente:
 - context: string (Deve ser OBRIGATORIAMENTE um destes: 'PM', 'Esdra', 'Pessoal', 'Familia', 'CCB', 'Estudo', ou 'Saude'. Escolha o mais coerente).
 - priority: number (0 a 10. Alta/urgente=10, media=5, baixa=2. Padrão 0).
 - energy: number (0 a 10. Alta=8, media=5, baixa=2. Padrão 0).
-- due_at: string ou null (Formato ISO 8601 UTC exato. A data local de HOJE AGORA é ${localISOTime}. Se a tarefa incluir uma data explicita como "(25/05/2026 08:30)", converta EXATAMENTE para esse horário ISO. Converta termos relativos como "amanhã" também. Se não disser hora, use 09:00:00).
-- recurrence_rule: string ou null ('daily', 'weekly', 'monthly', etc).
+- due_at: string ou null (Formato ISO 8601 UTC exato. A data local de HOJE AGORA é ${localISOTime}. Se a tarefa incluir uma data explicita como "(25/05/2026 08:30)", converta EXATAMENTE para esse horário ISO. Converta termos relativos. Se não disser hora, use 09:00:00. Para tarefas com recorrência e horário, calcule a data da PRIMEIRA ocorrência válida a partir de agora).
+- recurrence_rule: string ou null (Padrões simples: 'daily', 'weekly', 'monthly'. Para dias específicos, escreva em INGLÊS separados por vírgula. Ex: 'monday,tuesday,wednesday,thursday,friday' para dias úteis, ou 'sunday,tuesday,thursday' etc).
 
 Responda APENAS com o JSON válido do array "tasks".`;
 
