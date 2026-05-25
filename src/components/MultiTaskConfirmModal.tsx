@@ -66,7 +66,14 @@ export function MultiTaskConfirmModal({ initialTasks, onConfirm, onCancel }: Mul
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="sm:col-span-2">
-                    <label className="block text-xs font-medium text-gray-500 mb-1">Título da Tarefa</label>
+                    <label className="block text-xs font-medium text-gray-500 mb-1 flex justify-between items-center">
+                      <span>Título da Tarefa</span>
+                      {task.recurrence_rule && (
+                        <span className="text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded flex items-center gap-1" title={`Regra: ${task.recurrence_rule}`}>
+                          🔁 <span className="hidden sm:inline">Recorrente</span>
+                        </span>
+                      )}
+                    </label>
                     <input 
                       type="text" 
                       value={task.title} 
