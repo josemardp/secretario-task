@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useContextStore } from '../stores/contextStore';
 import { useNotifications } from '../hooks/useNotifications';
 import { saveApiKeyToCloud } from '../lib/sync';
+import { supabase } from '../lib/supabase';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -24,7 +25,13 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 m-4">
+      <div 
+        className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 m-4"
+        style={{
+          paddingTop: 'calc(24px + env(safe-area-inset-top))',
+          paddingBottom: 'calc(24px + env(safe-area-inset-bottom))'
+        }}
+      >
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold text-gray-900">Configurações</h2>
           <button 
@@ -80,19 +87,31 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           </div>
         </div>
 
-        <div className="mt-6 flex justify-end gap-3">
+        <div className="mt-6 flex justify-between items-center border-t border-gray-100 pt-4 flex-wrap gap-3">
           <button
-            onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 border border-gray-300 rounded-md transition-colors"
+            onClick={async () => {
+              await supabase.auth.signOut();
+              onClose();
+            }}
+            className="text-red-500 hover:text-red-700 text-xs font-semibold min-h-[44px] px-3 flex items-center justify-center transition-colors"
           >
-            Cancelar
+            Sair da conta
           </button>
-          <button
-            onClick={handleSave}
-            className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md transition-colors"
-          >
-            Salvar
-          </button>
+          
+          <div className="flex gap-2">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 border border-gray-300 rounded-md transition-colors min-h-[44px]"
+            >
+              Cancelar
+            </button>
+            <button
+              onClick={handleSave}
+              className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md transition-colors min-h-[44px]"
+            >
+              Salvar
+            </button>
+          </div>
         </div>
       </div>
     </div>

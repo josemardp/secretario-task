@@ -6,6 +6,7 @@ import { supabase } from '../lib/supabase';
 import { parseMultipleTasks } from '../lib/smartParser';
 import { generateEmbedding, generateSmartBriefing, estimateTaskTime, transcribeAudio } from '../lib/ai';
 import { useAudioRecorder } from '../hooks/useAudioRecorder';
+import { LayoutKanban, CalendarDays, BarChart2 } from 'lucide-react';
 import { BuildBadge } from '../components/BuildBadge';
 import { TaskBoard } from '../components/TaskBoard';
 import { TimelineView } from '../components/TimelineView';
@@ -34,6 +35,20 @@ export default function Home() {
   const { tasks, addTask } = useTaskStore();
   const { activeContext, setActiveContext, currentEnergy, setCurrentEnergy, aiApiKey } = useContextStore();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+  const handleContextCycle = () => {
+    const CONTEXTS: ContextType[] = ['PM', 'Esdra', 'Pessoal', 'Familia', 'CCB', 'Estudo', 'Saude'];
+    const nextIdx = (CONTEXTS.indexOf(activeContext) + 1) % CONTEXTS.length;
+    setActiveContext(CONTEXTS[nextIdx]);
+  };
+
+  const getHeaderFormattedDate = () => {
+    const now = new Date();
+    const weekday = now.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '');
+    const day = now.getDate();
+    const month = now.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '');
+    return `${weekday}, ${day} ${month}`;
+  };
   
   // Audio Recording State
   const { isRecording, audioBlob, startRecording, stopRecording, clearAudio } = useAudioRecorder();
@@ -113,10 +128,6 @@ export default function Home() {
     }
   };
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-  };
-
   const handleSemanticSearch = async () => {
     if (!searchText.trim() || !aiApiKey) {
       setSemanticResults(null);
@@ -186,20 +197,58 @@ export default function Home() {
       )}
       
       <NotificationEngine />
-      <header className="bg-white shadow" style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
-        <div style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
-          <h1 className="text-2xl font-bold tracking-tight text-gray-900">SecretárioTask</h1>
-          <div className="flex items-center gap-3 shrink-0">
+      <header 
+        className="bg-white shadow-sm border-b border-gray-100 sticky top-0 z-30" 
+        style={{ 
+          height: 'calc(44px + env(safe-area-inset-top))', 
+          paddingTop: 'env(safe-area-inset-top)',
+          width: '100%', 
+          maxWidth: '100%', 
+          boxSizing: 'border-box' 
+        }}
+      >
+        <div className="flex justify-between items-center h-11 px-4 gap-2 w-full max-w-full box-sizing-border-box">
+          {/* Esquerda: Chip do contexto ativo */}
+          <button 
+            onClick={handleContextCycle}
+            className="bg-indigo-600 text-white rounded-full text-xs font-bold uppercase tracking-wider min-h-[32px] px-3.5 flex items-center justify-center transition-colors shadow-sm"
+            title="Clique para alternar o contexto"
+            style={{ minWidth: '44px', minHeight: '44px', margin: '-6px 0' }} // Estende tap target via padding/margin
+          >
+            {activeContext}
+          </button>
+          
+          {/* Centro: Data formatada */}
+          <span className="text-xs text-gray-500 font-semibold capitalize tracking-wide select-none">
+            {getHeaderFormattedDate()}
+          </span>
+          
+          {/* Direita: Configurações */}
+          <div className="flex items-center gap-1">
             <InstallPWA />
-            <button onClick={() => setIsSettingsOpen(true)} className="text-gray-600" title="Configurações">⚙️</button>
-            <button onClick={handleLogout} className="text-sm text-gray-600">Sair</button>
+            <button 
+              onClick={() => setIsSettingsOpen(true)}
+              className="text-gray-600 text-lg flex items-center justify-center hover:bg-gray-50 rounded-full transition-colors"
+              title="Configurações"
+              style={{ minWidth: '44px', minHeight: '44px' }}
+            >
+              ⚙️
+            </button>
           </div>
         </div>
       </header>
       
       <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
       
-      <main style={{ width: '100%', maxWidth: '100%', overflowX: 'hidden', boxSizing: 'border-box', padding: '24px 16px' }}>
+      <main 
+        style={{ 
+          width: '100%', 
+          maxWidth: '100%', 
+          overflowX: 'hidden', 
+          boxSizing: 'border-box', 
+          padding: '24px 16px calc(56px + env(safe-area-inset-bottom) + 52px) 16px' 
+        }}
+      >
         <div>
           
           <div className="mb-6 flex flex-col gap-3 border-b border-gray-200 pb-4">
@@ -263,112 +312,111 @@ export default function Home() {
                 </div>
               )}
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {briefingTasks.map((task, idx) => (
-                  <div key={task.id} className="bg-gradient-to-br from-indigo-50 to-white p-4 rounded-xl shadow-sm border border-indigo-100 flex flex-col justify-between w-full min-w-0 overflow-hidden">
-                    <div>
-                      <div className="flex justify-between items-start mb-2 gap-2">
-                        <span className="text-xs font-bold text-indigo-800 bg-indigo-100 px-2 py-1 rounded-full shrink-0">Top {idx + 1}</span>
-                        {task.due_at && (
-                          <span className="text-xs text-indigo-600 font-medium whitespace-nowrap">
-                            {new Date(task.due_at).toLocaleDateString('pt-BR')}
+              <div className="flex flex-col gap-3">
+                {briefingTasks.map((task, idx) => {
+                  const isTop1 = idx === 0;
+                  const durationText = task.estimated_minutes ? `${task.estimated_minutes}min` : '30min';
+                  const timeText = task.due_at 
+                    ? `${new Date(task.due_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} · ${durationText}` 
+                    : `Sem horário · ${durationText}`;
+
+                  return (
+                    <div 
+                      key={task.id} 
+                      className={`flex flex-col justify-center w-full shadow-sm rounded-xl overflow-hidden min-w-0 transition-all ${
+                        isTop1 
+                          ? 'p-4 bg-[#eef2ff] border-l-4 border-l-[#6366f1] min-h-[64px]' 
+                          : 'py-[10px] px-4 bg-white border border-[#e5e7eb] min-h-[48px]'
+                      }`}
+                    >
+                      <div className="flex justify-between items-center gap-3">
+                        <div className="min-w-0 flex-1">
+                          <h3 
+                            className={`text-gray-900 truncate tracking-tight ${
+                              isTop1 ? 'text-lg font-bold' : 'text-sm font-medium'
+                            }`}
+                            title={task.title}
+                          >
+                            <span className="text-indigo-600 font-bold mr-1.5">Top {idx + 1}</span>
+                            {task.title}
+                          </h3>
+                          <p className="text-xs text-gray-500 mt-0.5 leading-none">
+                            {timeText}
+                          </p>
+                        </div>
+                        
+                        {task.priority > 0 && (
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md shrink-0 select-none ${
+                            task.priority >= 8 
+                              ? 'bg-red-50 text-red-600 border border-red-100' 
+                              : 'bg-yellow-50 text-yellow-700 border border-yellow-100'
+                          }`}>
+                            P{task.priority}
                           </span>
                         )}
                       </div>
-                      <h3 className="font-semibold text-gray-900 leading-snug break-words">{task.title}</h3>
                     </div>
-                    {task.priority > 0 && (
-                      <div className="mt-3">
-                        <span className="text-xs font-medium text-red-600 bg-red-50 px-2 py-0.5 rounded border border-red-100">
-                          Prioridade Alta (P{task.priority})
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
 
-          <form onSubmit={handleTaskSubmit} className="flex gap-2 mb-6">
-            <textarea
-              value={taskText}
-              onChange={(e) => setTaskText(e.target.value)}
-              placeholder="Despeje suas tarefas aqui... (use Enter para pular linha)"
-              rows={1}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleTaskSubmit(e);
-                }
-              }}
-              disabled={isAddingTask || isTranscribing}
-              className="min-w-0 flex-1 rounded-md border-0 py-3 px-3 sm:px-4 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 text-sm sm:leading-6 disabled:opacity-50 resize-none"
-              autoFocus
-            />
-
-            <button
-              type="button"
-              onMouseDown={startRecording}
-              onMouseUp={stopRecording}
-              onMouseLeave={stopRecording}
-              onTouchStart={startRecording}
-              onTouchEnd={stopRecording}
-              disabled={isAddingTask || isTranscribing}
-              className={`p-3 shrink-0 rounded-md transition-colors flex items-center justify-center ${
-                isRecording
-                  ? 'bg-red-500 hover:bg-red-600 text-white animate-pulse ring-2 ring-red-500 ring-offset-2'
-                  : 'bg-gray-100 hover:bg-gray-200 text-gray-600 ring-1 ring-inset ring-gray-300'
-              } disabled:opacity-50`}
-              title="Segure para falar"
-            >
-              {isRecording ? '🎙️' : '🎤'}
-            </button>
-
-            <button
-              type="submit"
-              disabled={isAddingTask || !taskText.trim() || isTranscribing}
-              className="bg-indigo-600 text-white px-3 sm:px-6 py-3 shrink-0 rounded-md font-semibold text-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-            >
-              <span className="sm:hidden">{isAddingTask ? '...' : 'Add'}</span>
-              <span className="hidden sm:inline">{isAddingTask ? 'Add...' : 'Adicionar'}</span>
-            </button>
-          </form>
-
-          {/* Controle de Abas */}
-          <div className="flex border-b border-gray-200 mb-6">
+          {/* Controle de Abas (Tab Bar Inferior Fixo) */}
+          <div 
+            className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-20 flex select-none" 
+            style={{ 
+              height: 'calc(56px + env(safe-area-inset-bottom))', 
+              paddingBottom: 'env(safe-area-inset-bottom)',
+              borderTopWidth: '0.5px'
+            }}
+          >
             <button
               onClick={() => setViewMode('kanban')}
-              className={`py-2 px-3 sm:px-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-                viewMode === 'kanban'
-                  ? 'border-indigo-600 text-indigo-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
+              className="flex-1 flex flex-col items-center justify-center min-h-[44px] transition-colors gap-1 focus:outline-none"
             >
-              <span className="sm:hidden">📊 Kanban</span>
-              <span className="hidden sm:inline">📊 Quadros (Kanban)</span>
+              <LayoutKanban 
+                size={20} 
+                color={viewMode === 'kanban' ? '#6366f1' : '#9ca3af'} 
+              />
+              <span 
+                className="text-[10px] font-bold tracking-wide"
+                style={{ color: viewMode === 'kanban' ? '#6366f1' : '#9ca3af' }}
+              >
+                Kanban
+              </span>
             </button>
+            
             <button
               onClick={() => setViewMode('timeline')}
-              className={`py-2 px-3 sm:px-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-                viewMode === 'timeline'
-                  ? 'border-indigo-600 text-indigo-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
+              className="flex-1 flex flex-col items-center justify-center min-h-[44px] transition-colors gap-1 focus:outline-none"
             >
-              <span className="sm:hidden">⏳ Agenda</span>
-              <span className="hidden sm:inline">⏳ Linha do Tempo</span>
+              <CalendarDays 
+                size={20} 
+                color={viewMode === 'timeline' ? '#6366f1' : '#9ca3af'} 
+              />
+              <span 
+                className="text-[10px] font-bold tracking-wide"
+                style={{ color: viewMode === 'timeline' ? '#6366f1' : '#9ca3af' }}
+              >
+                Agenda
+              </span>
             </button>
+            
             <button
               onClick={() => setViewMode('dashboard')}
-              className={`py-2 px-3 sm:px-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-                viewMode === 'dashboard'
-                  ? 'border-indigo-600 text-indigo-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
+              className="flex-1 flex flex-col items-center justify-center min-h-[44px] transition-colors gap-1 focus:outline-none"
             >
-              <span className="sm:hidden">📈 Stats</span>
-              <span className="hidden sm:inline">📈 Estatísticas</span>
+              <BarChart2 
+                size={20} 
+                color={viewMode === 'dashboard' ? '#6366f1' : '#9ca3af'} 
+              />
+              <span 
+                className="text-[10px] font-bold tracking-wide"
+                style={{ color: viewMode === 'dashboard' ? '#6366f1' : '#9ca3af' }}
+              >
+                Stats
+              </span>
             </button>
           </div>
 
@@ -408,6 +456,67 @@ export default function Home() {
           ) : (
             <DashboardView tasks={tasks} />
           )}
+
+          {/* Barra de Captura Sticky */}
+          <form 
+            onSubmit={handleTaskSubmit} 
+            className="sticky bg-white border-t border-gray-200 p-3 z-10 flex items-center gap-2 select-none"
+            style={{ 
+              bottom: 'calc(56px + env(safe-area-inset-bottom))',
+              borderTopWidth: '0.5px',
+              padding: '8px 16px'
+            }}
+          >
+            {/* Input de Texto */}
+            <textarea
+              value={taskText}
+              onChange={(e) => setTaskText(e.target.value)}
+              placeholder="Nova tarefa..."
+              rows={1}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleTaskSubmit(e);
+                }
+              }}
+              disabled={isAddingTask || isTranscribing}
+              className="min-w-0 flex-1 rounded-lg border border-gray-300 py-1.5 px-3 text-gray-900 shadow-sm placeholder:text-gray-400 focus:ring-2 focus:ring-indigo-600 text-base resize-none focus:outline-none h-9"
+              style={{ fontSize: '16px', height: '36px' }}
+              autoFocus
+            />
+
+            {/* Digitação por Voz (Microfone) com Wrapper Tap Target */}
+            <div className="min-w-[44px] min-h-[44px] flex items-center justify-center shrink-0">
+              <button
+                type="button"
+                onMouseDown={startRecording}
+                onMouseUp={stopRecording}
+                onMouseLeave={stopRecording}
+                onTouchStart={startRecording}
+                onTouchEnd={stopRecording}
+                disabled={isAddingTask || isTranscribing}
+                className={`p-2 shrink-0 rounded-lg transition-colors flex items-center justify-center ${
+                  isRecording
+                    ? 'bg-red-500 hover:bg-red-600 text-white animate-pulse ring-2 ring-red-500 ring-offset-2'
+                    : 'bg-gray-100 hover:bg-gray-200 text-gray-600 ring-1 ring-inset ring-gray-300'
+                } disabled:opacity-50 focus:outline-none`}
+                style={{ width: '36px', height: '36px' }}
+                title="Segure para falar"
+              >
+                {isRecording ? '🎙️' : '🎤'}
+              </button>
+            </div>
+
+            {/* Botão Adicionar */}
+            <button
+              type="submit"
+              disabled={isAddingTask || !taskText.trim() || isTranscribing}
+              className={`bg-indigo-600 text-white rounded-lg font-semibold text-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50 disabled:pointer-events-none transition-all flex items-center justify-center shrink-0 focus:outline-none`}
+              style={{ minHeight: '36px', minWidth: '56px', height: '36px' }}
+            >
+              {isAddingTask ? '...' : 'Add'}
+            </button>
+          </form>
         </div>
       </main>
     </div>

@@ -7,12 +7,15 @@ export function BuildBadge() {
     <div
       style={{
         position: 'fixed',
-        bottom: 4,
+        bottom: 'calc(4px + env(safe-area-inset-bottom))',
         left: 4,
         background: 'rgba(30,27,75,0.75)',
         color: '#c7d2fe',
         fontSize: 9,
-        padding: '2px 5px',
+        paddingTop: 2,
+        paddingLeft: 5,
+        paddingRight: 5,
+        paddingBottom: 'calc(2px + env(safe-area-inset-bottom))',
         borderRadius: 4,
         zIndex: 9999,
         pointerEvents: 'none',
