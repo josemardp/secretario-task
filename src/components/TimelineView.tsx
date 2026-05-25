@@ -62,26 +62,21 @@ export function TimelineView({ tasks }: TimelineViewProps) {
 
   const blocks = useMemo(() => {
     const now = new Date();
-    const isToday = selectedDate.getDate() === now.getDate() && 
-                    selectedDate.getMonth() === now.getMonth() && 
+    const isToday = selectedDate.getDate() === now.getDate() &&
+                    selectedDate.getMonth() === now.getMonth() &&
                     selectedDate.getFullYear() === now.getFullYear();
-
-    const limitNormal = new Date(selectedDate.getTime());
-    limitNormal.setHours(17, 0, 0, 0);
-    const limitUrgent = new Date(selectedDate.getTime());
-    limitUrgent.setHours(22, 0, 0, 0);
 
     const startOfDay = new Date(selectedDate.getTime());
     startOfDay.setHours(8, 30, 0, 0);
-    
-    // Calcula current time e arredonda para o próximo slot de 30m
+
+    // currentTime só é usado para tarefas SEM due_at
     let currentTime = new Date(isToday ? Math.max(now.getTime(), startOfDay.getTime()) : startOfDay.getTime());
     const m = currentTime.getMinutes();
     if (m > 0 && m <= 30) currentTime.setMinutes(30, 0, 0);
     else if (m > 30) currentTime.setHours(currentTime.getHours() + 1, 0, 0, 0);
-    
+
     let todoTasks = tasks.filter(t => t.status === 'todo' && !t.deleted_at);
-    
+
     if (isToday) {
       todoTasks = todoTasks.filter(t => {
         if (!t.due_at) return true;
@@ -92,80 +87,52 @@ export function TimelineView({ tasks }: TimelineViewProps) {
       todoTasks = todoTasks.filter(t => {
         if (!t.due_at) return false;
         const due = new Date(t.due_at);
-        return due.getDate() === selectedDate.getDate() && 
-               due.getMonth() === selectedDate.getMonth() && 
+        return due.getDate() === selectedDate.getDate() &&
+               due.getMonth() === selectedDate.getMonth() &&
                due.getFullYear() === selectedDate.getFullYear();
       });
     }
-    
-    // Ordenar por due_at ascendente, depois por score
-    const sortedTasks = todoTasks
-      .map(task => ({
-        ...task,
-        score: calculateTaskScore(task, currentEnergy, activeContext)
-      }))
-      .sort((a, b) => {
-        const da = a.due_at ? new Date(a.due_at).getTime() : 0;
-        const db = b.due_at ? new Date(b.due_at).getTime() : 0;
-        if (da !== db) return da - db;
-        return b.score - a.score;
-      });
 
     const timeline: TimelineBlock[] = [];
 
-    for (const task of sortedTasks) {
+    // ── Tarefas COM horário definido: respeitam o horário exato, sem arredondar ──
+    const scheduled = todoTasks.filter(t => t.due_at);
+    for (const task of scheduled) {
       const duration = task.estimated_minutes || 30;
-      
-      let intendedStart = task.due_at ? new Date(task.due_at) : new Date(currentTime);
-      const intM = intendedStart.getMinutes();
-      if (intM > 0 && intM <= 30) intendedStart.setMinutes(30, 0, 0);
-      else if (intM > 30) intendedStart.setHours(intendedStart.getHours() + 1, 0, 0, 0);
+      const blockStart = new Date(task.due_at!);
+      const blockEnd = new Date(blockStart.getTime() + duration * 60000);
+      timeline.push({ id: task.id, type: 'task', title: task.title, startTime: blockStart, endTime: blockEnd, task });
+    }
 
-      // Tarefas atrasadas são empurradas para o tempo disponível (currentTime)
-      if (intendedStart.getTime() < currentTime.getTime()) {
-        intendedStart = new Date(currentTime);
-      } else {
-        // Se houver um gap, avançamos o currentTime para o inicio da tarefa
-        currentTime = new Date(intendedStart);
-      }
+    // ── Tarefas SEM horário: agendadas sequencialmente com pausas ──
+    const unscheduled = todoTasks
+      .filter(t => !t.due_at)
+      .map(task => ({ ...task, score: calculateTaskScore(task, currentEnergy, activeContext) }))
+      .sort((a, b) => b.score - a.score);
 
-      const blockStart = new Date(currentTime.getTime());
+    for (const task of unscheduled) {
+      const duration = task.estimated_minutes || 30;
+      const blockStart = new Date(currentTime);
       const blockEnd = new Date(currentTime.getTime() + duration * 60000);
-      
-      timeline.push({
-        id: task.id,
-        type: 'task',
-        title: task.title,
-        startTime: blockStart,
-        endTime: blockEnd,
-        task: task
-      });
-      
+      timeline.push({ id: task.id, type: 'task', title: task.title, startTime: blockStart, endTime: blockEnd, task });
       currentTime = new Date(blockEnd.getTime());
 
-      // Pausas Neurodivergentes automáticas
       let pauseDuration = 0;
       if (task.energy < 4) pauseDuration = 15;
       else if (task.energy > 7) pauseDuration = 5;
       else pauseDuration = 10;
 
-      // Arredonda a pausa para ocupar 1 slot de 30m para encaixar no grid visual se for maior que 0
       if (pauseDuration > 0) {
         const pauseEnd = new Date(currentTime.getTime() + 30 * 60000);
         const pId = `pause-${task.id}`;
         if (!dismissedBreaks.includes(pId)) {
-          timeline.push({
-            id: pId,
-            type: 'break',
-            title: '☕ Pausa Estratégica',
-            startTime: new Date(currentTime.getTime()),
-            endTime: pauseEnd
-          });
+          timeline.push({ id: pId, type: 'break', title: '☕ Pausa Estratégica', startTime: new Date(currentTime.getTime()), endTime: pauseEnd });
           currentTime = new Date(pauseEnd.getTime());
         }
       }
     }
 
+    timeline.sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
     return timeline;
   }, [tasks, currentEnergy, activeContext, selectedDate, dismissedBreaks]);
 
@@ -214,8 +181,8 @@ export function TimelineView({ tasks }: TimelineViewProps) {
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
         {timeGrid.map((slot) => {
           // Filtrar os blocos que cobrem este slot de 30 min
-          const slotBlocks = blocks.filter(b => 
-            b.startTime.getTime() <= slot.dateObj.getTime() && 
+          const slotBlocks = blocks.filter(b =>
+            b.startTime.getTime() < slot.dateObj.getTime() + 30 * 60 * 1000 &&
             b.endTime.getTime() > slot.dateObj.getTime()
           );
 
