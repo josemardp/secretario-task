@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import type { Task } from '../types';
 import { CONTEXTS_LIST } from '../types';
 import { calculateTaskScore } from '../lib/ranking';
@@ -6,7 +6,6 @@ import { useContextStore } from '../stores/contextStore';
 import { useTaskStore } from '../stores/taskStore';
 import { TaskActions } from './TaskActions';
 import { CalendarWidget } from './CalendarWidget';
-import { useState } from 'react';
 
 interface TimelineViewProps {
   tasks: Task[];
@@ -26,6 +25,7 @@ export function TimelineView({ tasks }: TimelineViewProps) {
   const { updateTask } = useTaskStore();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+  const [dismissedBreaks, setDismissedBreaks] = useState<string[]>([]);
 
   const handleComplete = (taskId: string) => {
     const task = tasks.find(t => t.id === taskId);
@@ -50,6 +50,14 @@ export function TimelineView({ tasks }: TimelineViewProps) {
     updateTask(taskId, { due_at: selected.toISOString() });
   };
 
+  const handleDrop = (e: React.DragEvent, slotDate: Date) => {
+    e.preventDefault();
+    const taskId = e.dataTransfer.getData('taskId');
+    if (taskId && !taskId.startsWith('pause-')) {
+      updateTask(taskId, { due_at: slotDate.toISOString() });
+    }
+  };
+
   const blocks = useMemo(() => {
     const now = new Date();
     const isToday = selectedDate.getDate() === now.getDate() && 
@@ -59,15 +67,17 @@ export function TimelineView({ tasks }: TimelineViewProps) {
     const limitNormal = new Date(selectedDate.getTime());
     limitNormal.setHours(17, 0, 0, 0);
     const limitUrgent = new Date(selectedDate.getTime());
-    limitUrgent.setHours(21, 0, 0, 0);
+    limitUrgent.setHours(22, 0, 0, 0);
 
     const startOfDay = new Date(selectedDate.getTime());
     startOfDay.setHours(8, 30, 0, 0);
     
-    // O início da linha do tempo
+    // Calcula current time e arredonda para o próximo slot de 30m
     let currentTime = new Date(isToday ? Math.max(now.getTime(), startOfDay.getTime()) : startOfDay.getTime());
+    const m = currentTime.getMinutes();
+    if (m > 0 && m <= 30) currentTime.setMinutes(30, 0, 0);
+    else if (m > 30) currentTime.setHours(currentTime.getHours() + 1, 0, 0, 0);
     
-    // Pegar apenas tarefas "A Fazer" (todo)
     let todoTasks = tasks.filter(t => t.status === 'todo' && !t.deleted_at);
     
     if (isToday) {
@@ -86,27 +96,35 @@ export function TimelineView({ tasks }: TimelineViewProps) {
       });
     }
     
-    // Ordenar pelo ranking de prioridade (as mais urgentes/melhor score vêm primeiro)
+    // Ordenar por due_at ascendente, depois por score
     const sortedTasks = todoTasks
       .map(task => ({
         ...task,
         score: calculateTaskScore(task, currentEnergy, activeContext)
       }))
-      .sort((a, b) => b.score - a.score);
+      .sort((a, b) => {
+        const da = a.due_at ? new Date(a.due_at).getTime() : 0;
+        const db = b.due_at ? new Date(b.due_at).getTime() : 0;
+        if (da !== db) return da - db;
+        return b.score - a.score;
+      });
 
     const timeline: TimelineBlock[] = [];
 
     for (const task of sortedTasks) {
       const duration = task.estimated_minutes || 30;
       
-      // Se passar das 17h e não for urgente (priority < 8), para de agendar
-      if (currentTime >= limitNormal && task.priority < 8) {
-        continue;
-      }
-      
-      // Se passar das 21h, para tudo
-      if (currentTime >= limitUrgent) {
-        break;
+      let intendedStart = task.due_at ? new Date(task.due_at) : new Date(currentTime);
+      const intM = intendedStart.getMinutes();
+      if (intM > 0 && intM <= 30) intendedStart.setMinutes(30, 0, 0);
+      else if (intM > 30) intendedStart.setHours(intendedStart.getHours() + 1, 0, 0, 0);
+
+      // Tarefas atrasadas são empurradas para o tempo disponível (currentTime)
+      if (intendedStart.getTime() < currentTime.getTime()) {
+        intendedStart = new Date(currentTime);
+      } else {
+        // Se houver um gap, avançamos o currentTime para o inicio da tarefa
+        currentTime = new Date(intendedStart);
       }
 
       const blockStart = new Date(currentTime.getTime());
@@ -123,48 +141,53 @@ export function TimelineView({ tasks }: TimelineViewProps) {
       
       currentTime = new Date(blockEnd.getTime());
 
-      // Lógica de Pausa Inteligente (Neurodivergente)
-      // Tarefas chatas (baixa energia, prioridade menor) ganham pausa depois.
-      // Tarefas de hiperfoco (alta energia) ganham menos pausas.
+      // Pausas Neurodivergentes automáticas
       let pauseDuration = 0;
-      if (task.energy < 4) {
-        pauseDuration = 15; // Tarefas maçantes exigem pausa maior
-      } else if (task.energy > 7) {
-        pauseDuration = 5; // Tarefas de hiperfoco não quebram o fluxo, apenas respiro rápido
-      } else {
-        pauseDuration = 10;
-      }
+      if (task.energy < 4) pauseDuration = 15;
+      else if (task.energy > 7) pauseDuration = 5;
+      else pauseDuration = 10;
 
-      const pauseEnd = new Date(currentTime.getTime() + pauseDuration * 60000);
-      
-      if (pauseEnd < limitUrgent) {
-        timeline.push({
-          id: `pause-${task.id}`,
-          type: 'break',
-          title: '☕ Pausa Estratégica',
-          startTime: new Date(currentTime.getTime()),
-          endTime: pauseEnd
-        });
-        currentTime = new Date(pauseEnd.getTime());
+      // Arredonda a pausa para ocupar 1 slot de 30m para encaixar no grid visual se for maior que 0
+      if (pauseDuration > 0) {
+        const pauseEnd = new Date(currentTime.getTime() + 30 * 60000);
+        const pId = `pause-${task.id}`;
+        if (!dismissedBreaks.includes(pId)) {
+          timeline.push({
+            id: pId,
+            type: 'break',
+            title: '☕ Pausa Estratégica',
+            startTime: new Date(currentTime.getTime()),
+            endTime: pauseEnd
+          });
+          currentTime = new Date(pauseEnd.getTime());
+        }
       }
     }
 
     return timeline;
-  }, [tasks, currentEnergy, activeContext, selectedDate]);
+  }, [tasks, currentEnergy, activeContext, selectedDate, dismissedBreaks]);
 
-  const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-  };
+  // Gerar grid de horários 08:30 até 22:00
+  const timeGrid: { timeString: string; dateObj: Date }[] = [];
+  for (let h = 8; h <= 21; h++) {
+    if (h === 8) {
+      const d = new Date(selectedDate); d.setHours(8, 30, 0, 0);
+      timeGrid.push({ timeString: '08:30', dateObj: d });
+    } else {
+      const d1 = new Date(selectedDate); d1.setHours(h, 0, 0, 0);
+      timeGrid.push({ timeString: `${h.toString().padStart(2, '0')}:00`, dateObj: d1 });
+      const d2 = new Date(selectedDate); d2.setHours(h, 30, 0, 0);
+      timeGrid.push({ timeString: `${h.toString().padStart(2, '0')}:30`, dateObj: d2 });
+    }
+  }
+
+  const formatTime = (date: Date) => date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
   return (
-    <div className="max-w-3xl mx-auto py-6">
-      
-      {/* Calendar Header */}
+    <div className="max-w-4xl mx-auto py-6 px-2">
       <div className="mb-8 flex items-center justify-between bg-white p-4 rounded-xl shadow-sm border border-gray-100">
         <div>
-          <h2 className="text-xl font-bold text-gray-800">
-            Agenda do Dia
-          </h2>
+          <h2 className="text-xl font-bold text-gray-800">Agenda do Dia</h2>
           <p className="text-sm text-gray-500 capitalize">
             {selectedDate.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' })}
           </p>
@@ -186,122 +209,124 @@ export function TimelineView({ tasks }: TimelineViewProps) {
         />
       )}
 
-      {blocks.length === 0 ? (
-        <div className="text-center py-12 text-gray-500 bg-white rounded-xl border border-dashed border-gray-300">
-          Nenhuma tarefa programada para este dia.
-        </div>
-      ) : (
-        <div className="relative border-l-2 border-indigo-200 ml-4">
-          {blocks.map((block, idx) => (
-          <div key={block.id} className="mb-6 ml-6 relative">
-            <span className={`absolute -left-[35px] flex items-center justify-center w-6 h-6 rounded-full ring-4 ring-white ${
-              block.type === 'break' ? 'bg-orange-100 text-orange-500 text-xs' : 'bg-indigo-600 text-white text-xs font-bold'
-            }`}>
-              {block.type === 'break' ? '☕' : idx / 2 + 1}
-            </span>
-            
-            <div className={`p-4 rounded-lg shadow-sm border ${
-              block.type === 'break' 
-                ? 'bg-orange-50 border-orange-100' 
-                : 'bg-white border-gray-200'
-            }`}>
-              <div className="flex justify-between items-start mb-1">
-                <span className="text-sm font-bold text-gray-500">
-                  {formatTime(block.startTime)} - {formatTime(block.endTime)}
-                </span>
-                {block.type === 'task' && block.task && (
-                  <div className="flex gap-2 items-center">
-                    {/* Lógica de Tarefa Atrasada */}
-                    {((block.task.due_at && new Date(block.task.due_at) < new Date()) || 
-                      (!block.task.due_at && new Date(block.task.created_at).getTime() < new Date().getTime() - 3 * 60 * 60 * 1000 && new Date(block.task.created_at).getDate() === new Date().getDate())
-                    ) && (
-                      <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-700 border border-red-200 animate-pulse">
-                        ⚠️ Atrasada
-                      </span>
-                    )}
-                    <div className="flex items-center bg-gray-100 rounded-md h-[24px]">
-                      <button 
-                        onClick={() => updateTask(block.task!.id, { estimated_minutes: Math.max(5, (block.task!.estimated_minutes || 30) - 15) })}
-                        className="px-2 text-gray-500 hover:text-indigo-600 border-r border-gray-200 text-xs font-bold"
-                        title="Diminuir 15m"
-                      >
-                        -
-                      </button>
-                      <span className="text-xs font-medium text-gray-600 px-2 min-w-[40px] text-center">
-                        {block.task.actual_minutes !== undefined && block.task.actual_minutes !== null 
-                          ? `${block.task.actual_minutes}m (real)` 
-                          : `${block.task.estimated_minutes || 30}m`}
-                      </span>
-                      <button 
-                        onClick={() => updateTask(block.task!.id, { estimated_minutes: (block.task!.estimated_minutes || 30) + 15 })}
-                        className="px-2 text-gray-500 hover:text-indigo-600 border-l border-gray-200 text-xs font-bold"
-                        title="Adicionar 15m"
-                      >
-                        +
-                      </button>
-                    </div>
-                  </div>
-                )}
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
+        {timeGrid.map((slot) => {
+          // Filtrar os blocos que cobrem este slot de 30 min
+          const slotBlocks = blocks.filter(b => 
+            b.startTime.getTime() <= slot.dateObj.getTime() && 
+            b.endTime.getTime() > slot.dateObj.getTime()
+          );
+
+          return (
+            <div 
+              key={slot.timeString} 
+              className="flex border-b border-gray-100 min-h-[80px]"
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => handleDrop(e, slot.dateObj)}
+            >
+              {/* Horário (Coluna Esquerda) */}
+              <div className="w-16 flex-shrink-0 border-r border-gray-50 bg-gray-50/50 p-2 text-right">
+                <span className="text-xs font-semibold text-gray-400">{slot.timeString}</span>
               </div>
               
-              <h3 className={`text-base font-semibold flex items-center gap-1 ${
-                block.type === 'break' ? 'text-orange-700' : 'text-gray-900'
-              }`}>
-                {block.type === 'task' && block.task?.recurrence_rule && (
-                  <span title="Tarefa Recorrente" className="text-indigo-500 text-xs">🔁</span>
-                )}
-                {block.title}
-              </h3>
-              
-              {block.type === 'task' && block.task && (
-                <>
-                  <div className="mt-2 flex gap-2 text-xs mb-3 flex-wrap items-center">
-                    <select
-                      value={block.task.context}
-                      onChange={(e) => updateTask(block.task!.id, { context: e.target.value as any })}
-                      className="inline-flex items-center rounded-md bg-gray-50 px-2 py-0.5 font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10 cursor-pointer outline-none border-0 focus:ring-2 focus:ring-indigo-600 appearance-none text-center"
-                      title="Clique para alterar o contexto"
-                    >
-                      {CONTEXTS_LIST.map((ctx) => (
-                        <option key={ctx} value={ctx}>{ctx}</option>
-                      ))}
-                    </select>
-                    <div className="inline-flex items-center text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
-                      🗓️
-                      <input 
-                        type="datetime-local" 
-                        value={block.task.due_at ? new Date(new Date(block.task.due_at).getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0, 16) : ''}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          updateTask(block.task!.id, { due_at: val ? new Date(val).toISOString() : null });
-                        }}
-                        className="ml-1 bg-transparent border-none p-0 text-xs cursor-pointer text-indigo-600 focus:ring-0 w-32"
-                        title="Alterar data/hora"
-                      />
+              {/* Espaço das Tarefas (Coluna Direita) */}
+              <div className="flex-1 p-2 flex flex-col gap-2 relative">
+                {slotBlocks.map((block) => (
+                  <div 
+                    key={`${block.id}-${slot.timeString}`}
+                    draggable={block.type === 'task'}
+                    onDragStart={(e) => {
+                      if (block.type === 'task') {
+                        e.dataTransfer.setData('taskId', block.id);
+                      }
+                    }}
+                    className={`p-3 rounded-lg shadow-sm border cursor-grab active:cursor-grabbing ${
+                      block.type === 'break' 
+                        ? 'bg-orange-50 border-orange-100' 
+                        : 'bg-white border-indigo-100 ring-1 ring-indigo-50'
+                    }`}
+                  >
+                    <div className="flex justify-between items-start mb-1">
+                      <span className="text-xs font-bold text-gray-500">
+                        {formatTime(block.startTime)} - {formatTime(block.endTime)}
+                      </span>
+                      {block.type === 'break' ? (
+                        <button 
+                          onClick={() => setDismissedBreaks([...dismissedBreaks, block.id])}
+                          className="text-orange-400 hover:text-orange-600 font-bold px-2 rounded hover:bg-orange-100"
+                          title="Ignorar Pausa"
+                        >
+                          ✕
+                        </button>
+                      ) : block.task && (
+                        <div className="flex gap-2 items-center">
+                          {((block.task.due_at && new Date(block.task.due_at) < new Date()) || 
+                            (!block.task.due_at && new Date(block.task.created_at).getTime() < new Date().getTime() - 3 * 60 * 60 * 1000 && new Date(block.task.created_at).getDate() === new Date().getDate())
+                          ) && (
+                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-red-100 text-red-700 border border-red-200 animate-pulse">
+                              ⚠️ Atrasada
+                            </span>
+                          )}
+                          <div className="flex items-center bg-gray-50 rounded-md h-[24px]">
+                            <button 
+                              onClick={() => updateTask(block.task!.id, { estimated_minutes: Math.max(5, (block.task!.estimated_minutes || 30) - 15) })}
+                              className="px-2 text-gray-400 hover:text-indigo-600 border-r border-gray-200 text-xs font-bold"
+                            >-</button>
+                            <span className="text-xs font-medium text-gray-600 px-2 min-w-[40px] text-center">
+                              {block.task.actual_minutes !== undefined && block.task.actual_minutes !== null 
+                                ? `${block.task.actual_minutes}m (real)` 
+                                : `${block.task.estimated_minutes || 30}m`}
+                            </span>
+                            <button 
+                              onClick={() => updateTask(block.task!.id, { estimated_minutes: (block.task!.estimated_minutes || 30) + 15 })}
+                              className="px-2 text-gray-400 hover:text-indigo-600 border-l border-gray-200 text-xs font-bold"
+                            >+</button>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                    <span className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded">
-                      Energia: {block.task.energy}
-                    </span>
-                    <span className="bg-red-50 text-red-700 px-2 py-0.5 rounded">
-                      Prioridade: {block.task.priority}
-                    </span>
+                    
+                    <h3 className={`text-sm font-semibold flex items-center gap-1 ${
+                      block.type === 'break' ? 'text-orange-700' : 'text-gray-900'
+                    }`}>
+                      {block.type === 'task' && block.task?.recurrence_rule && (
+                        <span title="Tarefa Recorrente" className="text-indigo-500 text-xs">🔁</span>
+                      )}
+                      {block.title}
+                    </h3>
+                    
+                    {block.type === 'task' && block.task && (
+                      <>
+                        <div className="mt-2 flex gap-2 text-[10px] mb-2 flex-wrap items-center">
+                          <select
+                            value={block.task.context}
+                            onChange={(e) => updateTask(block.task!.id, { context: e.target.value as any })}
+                            className="inline-flex items-center rounded bg-gray-50 px-1 py-0.5 font-medium text-gray-600 cursor-pointer outline-none border-none focus:ring-1 focus:ring-indigo-600 appearance-none text-center"
+                          >
+                            {CONTEXTS_LIST.map((ctx) => (
+                              <option key={ctx} value={ctx}>{ctx}</option>
+                            ))}
+                          </select>
+                          <span className="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded">E:{block.task.energy}</span>
+                          <span className="bg-red-50 text-red-700 px-1.5 py-0.5 rounded">P:{block.task.priority}</span>
+                        </div>
+                        <div className="pt-2 border-t border-gray-50">
+                          <TaskActions 
+                            showComplete={true}
+                            onComplete={() => handleComplete(block.task!.id)}
+                            onPostponeTomorrow={() => handlePostponeTomorrow(block.task!.id)}
+                            onPostponeDate={(dateString) => handlePostponeDate(block.task!.id, dateString)}
+                          />
+                        </div>
+                      </>
+                    )}
                   </div>
-                  
-                  <div className="pt-2 border-t border-gray-100">
-                    <TaskActions 
-                      showComplete={true}
-                      onComplete={() => handleComplete(block.task!.id)}
-                      onPostponeTomorrow={() => handlePostponeTomorrow(block.task!.id)}
-                      onPostponeDate={(dateString) => handlePostponeDate(block.task!.id, dateString)}
-                    />
-                  </div>
-                </>
-              )}
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
-    )}
     </div>
   );
 }
