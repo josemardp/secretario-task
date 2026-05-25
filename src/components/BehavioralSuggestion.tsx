@@ -1,13 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Task } from '../types';
+import type { Task } from '../types';
 import { getSuggestion } from '../lib/behaviorEngine';
 
 interface BehavioralSuggestionProps {
   tasks: Task[];
-  onAccept: (taskId: string) => void;
 }
 
-export function BehavioralSuggestion({ tasks, onAccept }: BehavioralSuggestionProps) {
+export function BehavioralSuggestion({ tasks }: BehavioralSuggestionProps) {
   const [suggestion, setSuggestion] = useState<{ message: string; suggestedTaskId: string | null; type: 'high' | 'low' } | null>(null);
 
   useEffect(() => {

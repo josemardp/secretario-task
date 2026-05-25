@@ -221,7 +221,7 @@ export default function Home() {
             </div>
           </div>
 
-          <BehavioralSuggestion tasks={tasks} onAccept={() => {}} />
+          <BehavioralSuggestion tasks={tasks} />
 
           {briefingTasks.length > 0 && (
             <div className="mb-8">
