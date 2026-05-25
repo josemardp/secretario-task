@@ -22,7 +22,7 @@ interface TimelineBlock {
 
 export function TimelineView({ tasks }: TimelineViewProps) {
   const { currentEnergy, activeContext } = useContextStore();
-  const { updateTask } = useTaskStore();
+  const { updateTask, deleteTask } = useTaskStore();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [dismissedBreaks, setDismissedBreaks] = useState<string[]>([]);
@@ -317,13 +317,19 @@ export function TimelineView({ tasks }: TimelineViewProps) {
                           <span className="bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded">E:{block.task.energy}</span>
                           <span className="bg-red-50 text-red-700 px-1.5 py-0.5 rounded">P:{block.task.priority}</span>
                         </div>
-                        <div className="pt-2 border-t border-gray-50">
-                          <TaskActions 
+                        <div className="pt-2 border-t border-gray-50 flex items-center justify-between gap-2">
+                          <TaskActions
                             showComplete={true}
                             onComplete={() => handleComplete(block.task!.id)}
                             onPostponeTomorrow={() => handlePostponeTomorrow(block.task!.id)}
                             onPostponeDate={(dateString) => handlePostponeDate(block.task!.id, dateString)}
                           />
+                          <button
+                            onClick={() => deleteTask(block.task!.id)}
+                            className="text-xs text-red-500 hover:text-red-700 font-medium shrink-0"
+                          >
+                            Excluir
+                          </button>
                         </div>
                       </>
                     )}
