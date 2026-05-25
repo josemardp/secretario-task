@@ -185,9 +185,9 @@ export default function Home() {
       
       <NotificationEngine />
       <header className="bg-white shadow">
-        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 flex justify-between items-center">
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900">SecretárioTask</h1>
-          <div className="flex items-center gap-4">
+        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 flex flex-col sm:flex-row sm:justify-between items-start sm:items-center gap-4">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900 truncate max-w-full">SecretárioTask</h1>
+          <div className="flex items-center gap-4 flex-wrap">
             <InstallPWA />
             <button 
               onClick={() => setIsSettingsOpen(true)}
@@ -248,7 +248,7 @@ export default function Home() {
 
           {briefingTasks.length > 0 && (
             <div className="mb-8">
-              <div className="flex justify-between items-center mb-3">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-3 gap-2">
                 <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                   <span>🎯</span> Foco do Dia
                 </h2>
@@ -274,17 +274,17 @@ export default function Home() {
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {briefingTasks.map((task, idx) => (
-                  <div key={task.id} className="bg-gradient-to-br from-indigo-50 to-white p-4 rounded-xl shadow-sm border border-indigo-100 flex flex-col justify-between">
+                  <div key={task.id} className="bg-gradient-to-br from-indigo-50 to-white p-4 rounded-xl shadow-sm border border-indigo-100 flex flex-col justify-between w-full min-w-0 overflow-hidden">
                     <div>
-                      <div className="flex justify-between items-start mb-2">
-                        <span className="text-xs font-bold text-indigo-800 bg-indigo-100 px-2 py-1 rounded-full">Top {idx + 1}</span>
+                      <div className="flex justify-between items-start mb-2 gap-2">
+                        <span className="text-xs font-bold text-indigo-800 bg-indigo-100 px-2 py-1 rounded-full shrink-0">Top {idx + 1}</span>
                         {task.due_at && (
-                          <span className="text-xs text-indigo-600 font-medium">
+                          <span className="text-xs text-indigo-600 font-medium whitespace-nowrap">
                             {new Date(task.due_at).toLocaleDateString('pt-BR')}
                           </span>
                         )}
                       </div>
-                      <h3 className="font-semibold text-gray-900 leading-snug">{task.title}</h3>
+                      <h3 className="font-semibold text-gray-900 leading-snug break-words">{task.title}</h3>
                     </div>
                     {task.priority > 0 && (
                       <div className="mt-3">
@@ -344,7 +344,7 @@ export default function Home() {
           </form>
 
           {/* Controle de Abas */}
-          <div className="flex border-b border-gray-200 mb-6">
+          <div className="flex border-b border-gray-200 mb-6 overflow-x-auto pb-2 sm:pb-0">
             <button
               onClick={() => setViewMode('kanban')}
               className={`py-2 px-4 text-sm font-medium border-b-2 transition-colors ${
@@ -379,18 +379,20 @@ export default function Home() {
 
           {/* Barra de Busca (Apenas Kanban) */}
           {viewMode === 'kanban' && (
-            <div className="mb-8 flex gap-2">
-              <input
-                type="text"
-                className="block w-full rounded-md border-0 py-2.5 px-4 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                placeholder="Buscar tarefas (texto ou semântica)..."
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSemanticSearch()}
-              />
-              {searchText && (
-                <button onClick={clearSearch} className="px-3 py-2 text-gray-500 hover:text-gray-700">✕</button>
-              )}
+            <div className="mb-8 flex flex-col sm:flex-row gap-2">
+              <div className="flex flex-1 gap-2 relative">
+                <input
+                  type="text"
+                  className="block w-full rounded-md border-0 py-2.5 px-4 pr-10 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                  placeholder="Buscar tarefas..."
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSemanticSearch()}
+                />
+                {searchText && (
+                  <button onClick={clearSearch} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1">✕</button>
+                )}
+              </div>
               <button
                 onClick={handleSemanticSearch}
                 disabled={isSearching || !searchText.trim() || !aiApiKey}
