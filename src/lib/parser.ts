@@ -116,8 +116,15 @@ export function parseTaskInput(rawText: string, defaultContext: ContextType): Pa
       title = title.replace(timeMatch[0], '');
       dateFound = true;
     }
-  } else if (dateFound && !explicitDateMatch) {
+  } else if (dateFound && !explicitDateMatch && !timeMatch) {
     baseDate.setHours(23, 59, 59, 999);
+  }
+
+  // Se nao encontrou data NENHUMA, o padrao do sistema e "Amanha as 14:00"
+  if (!dateFound) {
+    baseDate.setDate(today.getDate() + 1);
+    baseDate.setHours(14, 0, 0, 0);
+    dateFound = true;
   }
 
   if (dateFound) {
