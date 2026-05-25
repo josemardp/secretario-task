@@ -174,7 +174,11 @@ export default function Home() {
     : tasks.filter(t => searchText ? t.title.toLowerCase().includes(searchText.toLowerCase()) : true);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col font-sans w-full overflow-x-hidden">
+    <div className="min-h-screen bg-gray-50 font-sans" style={{ width: '100%', maxWidth: '100vw', overflowX: 'hidden' }}>
+      {/* DEBUG: remover após diagnosticar */}
+      <div style={{ position: 'fixed', bottom: 4, left: 4, background: '#1e1b4b', color: '#c7d2fe', fontSize: 10, padding: '2px 6px', borderRadius: 4, zIndex: 9999, pointerEvents: 'none' }}>
+        vw:{typeof window !== 'undefined' ? window.innerWidth : '?'} sw:{typeof window !== 'undefined' ? document.documentElement.scrollWidth : '?'}
+      </div>
       {pendingSmartTasks && (
         <MultiTaskConfirmModal 
           initialTasks={pendingSmartTasks}
@@ -184,32 +188,21 @@ export default function Home() {
       )}
       
       <NotificationEngine />
-      <header className="bg-white shadow">
-        <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 flex flex-col sm:flex-row sm:justify-between items-start sm:items-center gap-4">
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-gray-900 truncate max-w-full">SecretárioTask</h1>
-          <div className="flex items-center gap-4 flex-wrap">
+      <header className="bg-white shadow" style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
+        <div style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box', padding: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900">SecretárioTask</h1>
+          <div className="flex items-center gap-3 shrink-0">
             <InstallPWA />
-            <button 
-              onClick={() => setIsSettingsOpen(true)}
-              className="text-sm text-gray-600 hover:text-gray-900"
-              title="Configurações"
-            >
-              ⚙️
-            </button>
-            <button 
-              onClick={handleLogout}
-              className="text-sm text-gray-600 hover:text-gray-900"
-            >
-              Sair
-            </button>
+            <button onClick={() => setIsSettingsOpen(true)} className="text-gray-600" title="Configurações">⚙️</button>
+            <button onClick={handleLogout} className="text-sm text-gray-600">Sair</button>
           </div>
         </div>
       </header>
       
       <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
       
-      <main className="mx-auto max-w-7xl py-6 px-4 sm:px-6 lg:px-8 overflow-x-hidden">
-        <div className="py-6 sm:px-0">
+      <main style={{ width: '100%', maxWidth: '100%', overflowX: 'hidden', boxSizing: 'border-box', padding: '24px 16px' }}>
+        <div>
           
           <div className="mb-6 flex flex-col gap-3 border-b border-gray-200 pb-4">
             <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
