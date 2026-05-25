@@ -219,9 +219,27 @@ export function TimelineView({ tasks }: TimelineViewProps) {
                         ⚠️ Atrasada
                       </span>
                     )}
-                    <span className="text-xs font-medium px-2 py-1 rounded bg-gray-100 text-gray-600">
-                      {block.task.estimated_minutes || 30} min
-                    </span>
+                    <div className="flex items-center bg-gray-100 rounded-md h-[24px]">
+                      <button 
+                        onClick={() => updateTask(block.task!.id, { estimated_minutes: Math.max(5, (block.task!.estimated_minutes || 30) - 15) })}
+                        className="px-2 text-gray-500 hover:text-indigo-600 border-r border-gray-200 text-xs font-bold"
+                        title="Diminuir 15m"
+                      >
+                        -
+                      </button>
+                      <span className="text-xs font-medium text-gray-600 px-2 min-w-[40px] text-center">
+                        {block.task.actual_minutes !== undefined && block.task.actual_minutes !== null 
+                          ? `${block.task.actual_minutes}m (real)` 
+                          : `${block.task.estimated_minutes || 30}m`}
+                      </span>
+                      <button 
+                        onClick={() => updateTask(block.task!.id, { estimated_minutes: (block.task!.estimated_minutes || 30) + 15 })}
+                        className="px-2 text-gray-500 hover:text-indigo-600 border-l border-gray-200 text-xs font-bold"
+                        title="Adicionar 15m"
+                      >
+                        +
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
