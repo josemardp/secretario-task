@@ -19,15 +19,15 @@ export async function parseMultipleTasks(rawText: string, defaultContext: Contex
   const localISOTime = (new Date(Date.now() - tzOffset)).toISOString().slice(0, -1);
 
   const systemPrompt = `Você é um extrator de tarefas estruturadas. 
-O usuário vai enviar um texto que pode conter uma ou VÁRIAS tarefas misturadas em linguagem natural.
-Sua missão é extrair cada tarefa isoladamente e devolver um JSON com um array chamado "tasks". 
+O usuário vai enviar um texto que pode conter uma, VÁRIAS ou DEZENAS de tarefas misturadas em linguagem natural ou em lista (bullet points).
+Sua missão é extrair CADA TAREFA isoladamente, SEM PULAR NENHUMA (se houver 30 itens, devolva 30 objetos), e devolver um JSON com um array chamado "tasks". 
 Cada objeto deve ter estritamente:
-- title: string (o que fazer, limpo de datas e horas)
-- context: string (Deve ser OBRIGATORIAMENTE um destes: 'PM', 'Esdra', 'Pessoal', 'Familia', 'CCB', 'Estudo', ou 'Saude'. Escolha o mais coerente se não estiver claro).
+- title: string (o que fazer, limpo de datas e horas e bullets)
+- context: string (Deve ser OBRIGATORIAMENTE um destes: 'PM', 'Esdra', 'Pessoal', 'Familia', 'CCB', 'Estudo', ou 'Saude'. Escolha o mais coerente).
 - priority: number (0 a 10. Alta/urgente=10, media=5, baixa=2. Padrão 0).
 - energy: number (0 a 10. Alta=8, media=5, baixa=2. Padrão 0).
-- due_at: string ou null (Formato ISO 8601 UTC exato. A data local de HOJE AGORA é ${localISOTime}. Converta termos relativos como "amanhã às 15h" para o datetime correspondente. Se o usuário não disser hora, use 09:00:00 do dia em questão).
-- recurrence_rule: string ou null ('daily', 'weekly', 'monthly', 'monday', etc).
+- due_at: string ou null (Formato ISO 8601 UTC exato. A data local de HOJE AGORA é ${localISOTime}. Se a tarefa incluir uma data explicita como "(25/05/2026 08:30)", converta EXATAMENTE para esse horário ISO. Converta termos relativos como "amanhã" também. Se não disser hora, use 09:00:00).
+- recurrence_rule: string ou null ('daily', 'weekly', 'monthly', etc).
 
 Responda APENAS com o JSON válido do array "tasks".`;
 
