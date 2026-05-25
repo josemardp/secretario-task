@@ -91,7 +91,7 @@ export function TaskBoard({ tasks }: TaskBoardProps) {
               {tasksWithScore.map(task => (
                 <div key={task.id} className="bg-white p-3 rounded-md shadow-sm border border-gray-200">
                   <div className="flex justify-between items-start mb-2">
-                    <h4 className="font-semibold text-gray-900 flex items-center gap-1">
+                    <h4 className="font-semibold text-gray-900 flex items-center gap-1 flex-wrap">
                       {task.recurrence_rule && (
                         <span title="Tarefa Recorrente" className="text-indigo-500 text-xs">🔁</span>
                       )}
