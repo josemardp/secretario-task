@@ -280,7 +280,7 @@ export default function Home() {
               onChange={(e) => setTaskText(e.target.value)}
               placeholder={isTranscribing ? "Transcrevendo voz..." : "ex: Amanhã apresentação pro Esdra urgência alta"}
               disabled={isAddingTask || isTranscribing}
-              className="flex-1 rounded-md border-0 py-3 px-4 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 disabled:opacity-50"
+              className="flex-1 min-w-0 rounded-md border-0 py-3 px-3 sm:px-4 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 text-sm sm:leading-6 disabled:opacity-50"
               autoFocus
             />
             
@@ -292,7 +292,7 @@ export default function Home() {
               onTouchStart={startRecording}
               onTouchEnd={stopRecording}
               disabled={isAddingTask || isTranscribing}
-              className={`p-3 rounded-md transition-colors flex items-center justify-center ${
+              className={`p-3 shrink-0 rounded-md transition-colors flex items-center justify-center ${
                 isRecording 
                   ? 'bg-red-500 hover:bg-red-600 text-white animate-pulse ring-2 ring-red-500 ring-offset-2' 
                   : 'bg-gray-100 hover:bg-gray-200 text-gray-600 ring-1 ring-inset ring-gray-300'
@@ -305,9 +305,9 @@ export default function Home() {
             <button
               type="submit"
               disabled={isAddingTask || !taskText.trim() || isTranscribing}
-              className="bg-indigo-600 text-white px-6 py-3 rounded-md font-semibold hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              className="bg-indigo-600 text-white px-4 sm:px-6 py-3 shrink-0 rounded-md font-semibold text-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {isAddingTask ? 'Adicionando...' : 'Adicionar'}
+              {isAddingTask ? 'Add...' : 'Adicionar'}
             </button>
           </form>
 
