@@ -153,7 +153,12 @@ CREATE TABLE tasks (
   due_at TIMESTAMPTZ,
   deleted_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
+  updated_at TIMESTAMPTZ DEFAULT now(),
+  estimated_minutes INTEGER,
+  actual_minutes INTEGER,
+  started_at TIMESTAMPTZ,
+  recurrence_rule TEXT,
+  postponed_count INTEGER DEFAULT 0
 );
 ```
 

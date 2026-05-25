@@ -56,16 +56,17 @@ export function TaskBoard({ tasks }: TaskBoardProps) {
   };
 
   const handlePostponeTomorrow = (taskId: string) => {
+    const task = tasks.find(t => t.id === taskId);
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
     tomorrow.setHours(23, 59, 59, 999);
-    updateTask(taskId, { due_at: tomorrow.toISOString() });
+    updateTask(taskId, { due_at: tomorrow.toISOString(), postponed_count: (task?.postponed_count || 0) + 1 });
   };
 
   const handlePostponeDate = (taskId: string, dateString: string) => {
-    // dateString vem no formato "YYYY-MM-DD"
+    const task = tasks.find(t => t.id === taskId);
     const selected = new Date(dateString + 'T23:59:59');
-    updateTask(taskId, { due_at: selected.toISOString() });
+    updateTask(taskId, { due_at: selected.toISOString(), postponed_count: (task?.postponed_count || 0) + 1 });
   };
 
   return (
@@ -90,10 +91,17 @@ export function TaskBoard({ tasks }: TaskBoardProps) {
               {tasksWithScore.map(task => (
                 <div key={task.id} className="bg-white p-3 rounded-md shadow-sm border border-gray-200">
                   <div className="flex justify-between items-start mb-2">
-                    <h3 className="text-sm font-medium text-gray-900 flex items-center gap-1">
-                      {task.recurrence_rule && <span title="Tarefa Recorrente" className="text-indigo-500 text-xs">🔁</span>}
+                    <h4 className="font-semibold text-gray-900 flex items-center gap-1">
+                      {task.recurrence_rule && (
+                        <span title="Tarefa Recorrente" className="text-indigo-500 text-xs">🔁</span>
+                      )}
+                      {(task.postponed_count ?? 0) > 0 && (
+                        <span title={`${task.postponed_count}x adiada`} className="text-orange-500 text-[10px] font-bold bg-orange-50 px-1 rounded">
+                          🐌 {task.postponed_count}x
+                        </span>
+                      )}
                       {task.title}
-                    </h3>
+                    </h4>
                     <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-sm bg-purple-100 text-purple-800" title="Score do Ranking">
                       ★ {task.score.toFixed(2)}
                     </span>
