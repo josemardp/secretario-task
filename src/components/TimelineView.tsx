@@ -248,6 +248,19 @@ export function TimelineView({ tasks }: TimelineViewProps) {
                         <option key={ctx} value={ctx}>{ctx}</option>
                       ))}
                     </select>
+                    <div className="inline-flex items-center text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded">
+                      🗓️
+                      <input 
+                        type="datetime-local" 
+                        value={block.task.due_at ? new Date(new Date(block.task.due_at).getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0, 16) : ''}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          updateTask(block.task!.id, { due_at: val ? new Date(val).toISOString() : null });
+                        }}
+                        className="ml-1 bg-transparent border-none p-0 text-xs cursor-pointer text-indigo-600 focus:ring-0 w-32"
+                        title="Alterar data/hora"
+                      />
+                    </div>
                     <span className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded">
                       Energia: {block.task.energy}
                     </span>

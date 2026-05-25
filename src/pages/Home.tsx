@@ -1,19 +1,21 @@
 import { useState, useEffect } from 'react';
 import { useTaskStore } from '../stores/taskStore';
 import { useContextStore } from '../stores/contextStore';
+import { useAppStore } from '../stores/appStore';
 import { supabase } from '../lib/supabase';
-import { parseTaskInput } from '../lib/parser';
+import { parseMultipleTasks } from '../lib/smartParser';
 import { generateEmbedding, generateSmartBriefing, estimateTaskTime, transcribeAudio } from '../lib/ai';
 import { useAudioRecorder } from '../hooks/useAudioRecorder';
 import { TaskBoard } from '../components/TaskBoard';
 import { TimelineView } from '../components/TimelineView';
 import { DashboardView } from '../components/DashboardView';
 import { BehavioralSuggestion } from '../components/BehavioralSuggestion';
+import { MultiTaskConfirmModal } from '../components/MultiTaskConfirmModal';
 import { SettingsModal } from '../components/SettingsModal';
 import { InstallPWA } from '../components/InstallPWA';
 import { NotificationEngine } from '../components/NotificationEngine';
 import { getDailyBriefing } from '../lib/briefing';
-import type { ContextType } from '../types';
+import type { ContextType, Task } from '../types';
 
 export default function Home() {
   const [taskText, setTaskText] = useState('');
@@ -22,6 +24,8 @@ export default function Home() {
   const [isAddingTask, setIsAddingTask] = useState(false);
   const [viewMode, setViewMode] = useState<'kanban' | 'timeline' | 'dashboard'>('kanban');
   const [semanticResults, setSemanticResults] = useState<{id: string, similarity: number}[] | null>(null);
+  
+  const [pendingSmartTasks, setPendingSmartTasks] = useState<Partial<Task>[] | null>(null);
 
   const [smartBriefingText, setSmartBriefingText] = useState<string | null>(null);
   const [isGeneratingBriefing, setIsGeneratingBriefing] = useState(false);
@@ -60,38 +64,49 @@ export default function Home() {
 
   const handleTaskSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!taskText.trim()) return;
+    if (!taskText.trim() || isAddingTask) return;
 
     setIsAddingTask(true);
-    
     try {
-      const parsed = parseTaskInput(taskText, activeContext);
-      let estimatedTime = 30; // default
-      
-      if (aiApiKey) {
-        // Estima o tempo baseado na IA e no histórico
-        const recentTasks = tasks.filter(t => t.status === 'done' && !t.deleted_at);
-        estimatedTime = await estimateTaskTime(parsed.title || 'Nova Tarefa', recentTasks, aiApiKey);
+      const parsedTasks = await parseMultipleTasks(taskText, activeContext, aiApiKey);
+      setPendingSmartTasks(parsedTasks);
+    } catch (error) {
+      console.error('Erro ao interpretar tarefa:', error);
+      alert('Erro ao processar a tarefa. Tente novamente.');
+    } finally {
+      setIsAddingTask(false);
+    }
+  };
+
+  const handleConfirmMultiTasks = async (finalTasks: Partial<Task>[]) => {
+    try {
+      setIsAddingTask(true);
+      for (const t of finalTasks) {
+        let estimatedTime = 30; // default
+        if (aiApiKey) {
+          const recentTasks = tasks.filter(x => x.status === 'done' && !x.deleted_at);
+          estimatedTime = await estimateTaskTime(t.title || 'Nova Tarefa', recentTasks, aiApiKey);
+        }
+
+        addTask({
+          user_id: '',
+          title: t.title || 'Nova Tarefa',
+          description: null,
+          context: t.context || activeContext,
+          priority: t.priority || 0,
+          energy: t.energy || 0,
+          status: 'todo',
+          due_at: t.due_at || null,
+          deleted_at: null,
+          estimated_minutes: estimatedTime,
+          recurrence_rule: t.recurrence_rule || null
+        });
       }
-      
-      addTask({
-        user_id: '',
-        title: parsed.title || 'Nova Tarefa',
-        description: null,
-        context: parsed.context || activeContext,
-        priority: parsed.priority || 0,
-        energy: parsed.energy || 0,
-        status: 'todo',
-        due_at: parsed.due_at || null,
-        deleted_at: null,
-        estimated_minutes: estimatedTime,
-        recurrence_rule: parsed.recurrence_rule || null
-      });
-      
       setTaskText('');
-    } catch (err) {
-      console.error("Erro ao adicionar tarefa:", err);
-      alert("Falha ao adicionar a tarefa.");
+      setPendingSmartTasks(null);
+    } catch (error) {
+      console.error('Erro ao adicionar tarefas:', error);
+      alert('Erro ao adicionar. Verifique sua conexão.');
     } finally {
       setIsAddingTask(false);
     }
@@ -159,7 +174,15 @@ export default function Home() {
     : tasks.filter(t => searchText ? t.title.toLowerCase().includes(searchText.toLowerCase()) : true);
 
   return (
-    <div className="min-h-screen bg-gray-100">
+    <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
+      {pendingSmartTasks && (
+        <MultiTaskConfirmModal 
+          initialTasks={pendingSmartTasks}
+          onConfirm={handleConfirmMultiTasks}
+          onCancel={() => setPendingSmartTasks(null)}
+        />
+      )}
+      
       <NotificationEngine />
       <header className="bg-white shadow">
         <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 flex justify-between items-center">

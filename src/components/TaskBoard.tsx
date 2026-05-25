@@ -119,11 +119,19 @@ export function TaskBoard({ tasks }: TaskBoardProps) {
                         P{task.priority}
                       </span>
                     )}
-                    {task.due_at && (
-                      <span className="inline-flex items-center text-indigo-600">
-                        🗓️ {new Date(task.due_at).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}
-                      </span>
-                    )}
+                    <div className="inline-flex items-center text-indigo-600 text-xs mt-1 sm:mt-0">
+                      🗓️ 
+                      <input 
+                        type="datetime-local" 
+                        value={task.due_at ? new Date(new Date(task.due_at).getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0, 16) : ''}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          updateTask(task.id, { due_at: val ? new Date(val).toISOString() : null });
+                        }}
+                        className="ml-1 bg-transparent border-none p-0 cursor-pointer text-indigo-600 focus:ring-0 w-32 sm:w-auto"
+                        title="Alterar data/hora"
+                      />
+                    </div>
                   </div>
 
                   {/* Controle de Tempo (Sprint 9) */}
