@@ -232,7 +232,7 @@ export function TimelineView({ tasks }: TimelineViewProps) {
               </div>
               
               {/* Espaço das Tarefas (Coluna Direita) */}
-              <div className="flex-1 p-2 flex flex-col gap-2 relative">
+              <div className="flex-1 min-w-0 p-2 flex flex-col gap-2 relative">
                 {slotBlocks.map((block) => (
                   <div 
                     key={`${block.id}-${slot.timeString}`}
@@ -288,14 +288,14 @@ export function TimelineView({ tasks }: TimelineViewProps) {
                       )}
                     </div>
                     
-                    <h3 className={`text-sm font-semibold flex items-center gap-1 ${
+                    <h3 className={`text-sm font-semibold break-words ${
                       block.type === 'break' ? 'text-orange-700' : 'text-gray-900'
                     }`}>
                       {block.type === 'task' && block.task?.recurrence_rule && (
-                        <span title="Tarefa Recorrente" className="text-indigo-500 text-xs">🔁</span>
+                        <span title="Tarefa Recorrente" className="text-indigo-500 text-xs mr-1 inline-block align-middle">🔁</span>
                       )}
                       {block.type === 'task' && (block.task?.postponed_count ?? 0) > 0 && (
-                        <span title={`${block.task?.postponed_count}x adiada`} className="text-orange-500 text-[10px] font-bold bg-orange-50 px-1 rounded">
+                        <span title={`${block.task?.postponed_count}x adiada`} className="text-orange-500 text-[10px] font-bold bg-orange-50 px-1 rounded mr-1 inline-block align-middle">
                           🐌 {block.task?.postponed_count}x
                         </span>
                       )}
