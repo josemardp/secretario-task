@@ -22,7 +22,7 @@ import { InstallPWA } from '../components/InstallPWA';
 import { NotificationEngine } from '../components/NotificationEngine';
 import { FocoSheet } from '../components/FocoSheet';
 import { getDailyBriefing } from '../lib/briefing';
-import type { ContextType, Task } from '../types';
+import type { Task } from '../types';
 
 function getGreeting(): string {
   const h = new Date().getHours();

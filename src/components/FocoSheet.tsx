@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Target, Sparkles, Clock, Flag, ArrowRight, X } from 'lucide-react';
+import { Sparkles, Clock, Flag, ArrowRight, X } from 'lucide-react';
 import type { Task, ContextType } from '../types';
 import { useContextStore } from '../stores/contextStore';
 import { generateSmartBriefing } from '../lib/ai';
