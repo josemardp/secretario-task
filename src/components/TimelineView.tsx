@@ -465,11 +465,16 @@ export function TimelineView({ tasks, overSlotId, dragStartTime }: TimelineViewP
 
       {/* Timeline grid */}
       <div className="bg-paper rounded-2xl border border-line overflow-hidden flex flex-col">
-        {timeGrid.map((slot) => {
-          const slotBlocks = blocks.filter(b =>
-            b.startTime.getTime() < slot.dateObj.getTime() + 30 * 60 * 1000 &&
-            b.endTime.getTime() > slot.dateObj.getTime()
-          );
+        {timeGrid.map((slot, idx) => {
+          const slotBlocks = blocks.filter(b => {
+            const start = b.startTime.getTime();
+            const slotStart = slot.dateObj.getTime();
+            const slotEnd = slotStart + 30 * 60 * 1000;
+            if (idx === 0) {
+              return start < slotEnd;
+            }
+            return start >= slotStart && start < slotEnd;
+          });
 
           const now = new Date();
           const isToday = selectedDate.getDate() === now.getDate() &&
