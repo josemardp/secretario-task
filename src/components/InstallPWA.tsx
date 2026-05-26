@@ -1,11 +1,9 @@
 import { useState, useEffect } from 'react';
+import { Download } from 'lucide-react';
 
 interface BeforeInstallPromptEvent extends Event {
   readonly platforms: Array<string>;
-  readonly userChoice: Promise<{
-    outcome: 'accepted' | 'dismissed',
-    platform: string
-  }>;
+  readonly userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
   prompt(): Promise<void>;
 }
 
@@ -19,40 +17,29 @@ export function InstallPWA() {
       setSupportsPWA(true);
       setPromptInstall(e as BeforeInstallPromptEvent);
     };
-    
-    window.addEventListener("beforeinstallprompt", handler);
-    
-    // Check if already installed (standalone mode)
-    if (window.matchMedia('(display-mode: standalone)').matches) {
-      setSupportsPWA(false);
-    }
-
-    return () => window.removeEventListener("beforeinstallprompt", handler);
+    window.addEventListener('beforeinstallprompt', handler);
+    if (window.matchMedia('(display-mode: standalone)').matches) setSupportsPWA(false);
+    return () => window.removeEventListener('beforeinstallprompt', handler);
   }, []);
 
   const onClick = async (evt: React.MouseEvent<HTMLButtonElement>) => {
     evt.preventDefault();
     if (!promptInstall) return;
-    
     await promptInstall.prompt();
     const { outcome } = await promptInstall.userChoice;
-    
-    if (outcome === 'accepted') {
-      setSupportsPWA(false);
-    }
+    if (outcome === 'accepted') setSupportsPWA(false);
   };
 
-  if (!supportsPWA) {
-    return null;
-  }
+  if (!supportsPWA) return null;
 
   return (
     <button
-      className="ml-auto flex items-center gap-1 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-md transition-all transform hover:scale-105"
       onClick={onClick}
+      className="inline-flex items-center gap-1.5 bg-ink text-white px-3 h-9 rounded-xl text-[11px] font-extrabold shrink-0"
       title="Instalar aplicativo"
     >
-      📱 Instalar App
+      <Download size={13} strokeWidth={2.4} />
+      Instalar
     </button>
   );
 }

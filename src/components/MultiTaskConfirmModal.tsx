@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import type { Task } from '../types';
+import { X, Sparkles, Repeat, Trash2, Flag } from 'lucide-react';
+import type { Task, ContextType } from '../types';
+import { CONTEXTS_LIST } from '../types';
 
 interface MultiTaskConfirmModalProps {
   initialTasks: Partial<Task>[];
@@ -7,154 +9,207 @@ interface MultiTaskConfirmModalProps {
   onCancel: () => void;
 }
 
-export function MultiTaskConfirmModal({ initialTasks, onConfirm, onCancel }: MultiTaskConfirmModalProps) {
+const PRIORITY_OPTIONS = [
+  { value: 0,  label: 'Normal',  swatch: '#A09B91' },
+  { value: 5,  label: 'Média',   swatch: '#C16A2A' },
+  { value: 8,  label: 'Alta',    swatch: '#B83838' },
+  { value: 10, label: 'Urgente', swatch: '#1A1814' },
+];
+
+const CTX_BAR: Record<ContextType, string> = {
+  PM: 'border-l-ctxPM',
+  Esdra: 'border-l-ctxEsdra',
+  Pessoal: 'border-l-ctxPessoal',
+  Familia: 'border-l-ctxFamilia',
+  CCB: 'border-l-ctxCCB',
+  Estudo: 'border-l-ctxEstudo',
+  Saude: 'border-l-ctxSaude',
+};
+
+function formatForInput(isoString?: string | null) {
+  if (!isoString) return '';
+  const d = new Date(isoString);
+  if (isNaN(d.getTime())) return '';
+  const tzOffset = d.getTimezoneOffset() * 60000;
+  return new Date(d.getTime() - tzOffset).toISOString().slice(0, 16);
+}
+function parseFromInput(local: string) {
+  if (!local) return undefined;
+  const d = new Date(local);
+  return isNaN(d.getTime()) ? undefined : d.toISOString();
+}
+
+export function MultiTaskConfirmModal({
+  initialTasks, onConfirm, onCancel,
+}: MultiTaskConfirmModalProps) {
   const [tasks, setTasks] = useState<Partial<Task>[]>(initialTasks);
 
-  const updateTask = (index: number, updates: Partial<Task>) => {
-    const newTasks = [...tasks];
-    newTasks[index] = { ...newTasks[index], ...updates };
-    setTasks(newTasks);
+  const updateTask = (idx: number, updates: Partial<Task>) => {
+    const next = [...tasks];
+    next[idx] = { ...next[idx], ...updates };
+    setTasks(next);
   };
 
-  const removeTask = (index: number) => {
-    const newTasks = [...tasks];
-    newTasks.splice(index, 1);
-    setTasks(newTasks);
-  };
-
-  // Ajuda na formatação para datetime-local input (YYYY-MM-DDThh:mm)
-  const formatForInput = (isoString?: string | null) => {
-    if (!isoString) return '';
-    const d = new Date(isoString);
-    if (isNaN(d.getTime())) return '';
-    
-    // Convert to local time format for the input
-    const tzOffset = d.getTimezoneOffset() * 60000;
-    const localISOTime = (new Date(d.getTime() - tzOffset)).toISOString().slice(0, 16);
-    return localISOTime;
-  };
-
-  const parseFromInput = (localString: string) => {
-    if (!localString) return undefined;
-    const d = new Date(localString);
-    return isNaN(d.getTime()) ? undefined : d.toISOString();
+  const removeTask = (idx: number) => {
+    setTasks(tasks.filter((_, i) => i !== idx));
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm overflow-y-auto">
-      <div 
-        className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-full flex flex-col"
+    <div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-[rgba(26,24,20,0.45)] animate-fade-in"
+      onClick={onCancel}
+    >
+      <div
+        className="bg-paper w-full sm:max-w-xl sm:rounded-3xl rounded-t-3xl shadow-soft animate-sheet-up flex flex-col max-h-[92vh]"
+        onClick={(e) => e.stopPropagation()}
         style={{
-          paddingTop: 'env(safe-area-inset-top)',
-          paddingBottom: 'env(safe-area-inset-bottom)'
+          paddingTop:    'calc(8px + env(safe-area-inset-top))',
+          paddingBottom: 'calc(16px + env(safe-area-inset-bottom))',
         }}
       >
-        <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-indigo-50 rounded-t-xl">
-          <h2 className="text-xl font-bold text-indigo-900">✨ Confirmação Inteligente</h2>
-          <button onClick={onCancel} className="text-gray-400 hover:text-gray-600">✕</button>
+        <div className="flex justify-center sm:hidden">
+          <div className="w-10 h-1 rounded-full bg-paper3 mb-2 mt-1" />
         </div>
 
-        <div className="p-6 overflow-y-auto flex-1">
-          <p className="text-sm text-gray-600 mb-6">
-            A Inteligência Artificial destrinchou seu texto e encontrou {tasks.length} {tasks.length === 1 ? 'tarefa' : 'tarefas'}. Revise os detalhes antes de salvar:
-          </p>
+        {/* header */}
+        <div className="px-5 pt-2 pb-3 flex items-start justify-between">
+          <div className="flex items-start gap-2.5">
+            <div className="w-9 h-9 rounded-xl bg-ink text-white flex items-center justify-center shrink-0">
+              <Sparkles size={16} strokeWidth={2.2} />
+            </div>
+            <div>
+              <div className="text-[10px] font-extrabold uppercase tracking-[0.06em] text-ink-3">
+                IA destrinchou
+              </div>
+              <div className="font-display text-[22px] tracking-[-0.02em] text-ink leading-tight mt-0.5">
+                {tasks.length} {tasks.length === 1 ? 'tarefa encontrada' : 'tarefas encontradas'}.
+              </div>
+              <p className="text-[11px] text-ink-2 mt-1 leading-snug">
+                Revise os detalhes antes de salvar.
+              </p>
+            </div>
+          </div>
+          <button
+            onClick={onCancel}
+            className="w-9 h-9 rounded-xl bg-paper2 flex items-center justify-center text-ink-2"
+            aria-label="Fechar"
+          >
+            <X size={16} />
+          </button>
+        </div>
 
-          <div className="space-y-4">
-            {tasks.map((task, idx) => (
-              <div key={idx} className="border border-gray-200 rounded-lg p-4 bg-gray-50 relative group">
-                <button 
-                  onClick={() => removeTask(idx)}
-                  className="absolute -top-3 -right-3 bg-red-100 text-red-600 rounded-full w-6 h-6 flex items-center justify-center shadow-sm opacity-0 group-hover:opacity-100 transition-opacity"
-                  title="Remover esta tarefa"
-                >
-                  ✕
-                </button>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="sm:col-span-2">
-                    <label className="block text-xs font-medium text-gray-500 mb-1 flex justify-between items-center">
-                      <span>Título da Tarefa</span>
-                      {task.recurrence_rule && (
-                        <span className="text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded flex items-center gap-1" title={`Regra: ${task.recurrence_rule}`}>
-                          🔁 <span className="hidden sm:inline">Recorrente</span>
-                        </span>
-                      )}
-                    </label>
-                    <input 
-                      type="text" 
-                      value={task.title} 
-                      onChange={(e) => updateTask(idx, { title: e.target.value })}
-                      className="w-full rounded border-gray-300 text-sm py-2 px-3 focus:ring-indigo-500 focus:border-indigo-500"
-                    />
+        {/* body */}
+        <div className="px-5 pb-3 flex-1 overflow-y-auto flex flex-col gap-3">
+          {tasks.map((task, idx) => {
+            const ctx = (task.context as ContextType) || 'Pessoal';
+            return (
+              <div
+                key={idx}
+                className={[
+                  'bg-paper2 border border-line rounded-2xl p-3.5',
+                  'border-l-4',
+                  CTX_BAR[ctx],
+                ].join(' ')}
+              >
+                {/* row 1: title + delete */}
+                <div className="flex items-start gap-2">
+                  <input
+                    type="text"
+                    value={task.title || ''}
+                    onChange={(e) => updateTask(idx, { title: e.target.value })}
+                    className="flex-1 min-w-0 bg-transparent text-[15px] font-bold text-ink outline-none border-0 placeholder:text-ink-3"
+                    placeholder="Título da tarefa"
+                  />
+                  <button
+                    onClick={() => removeTask(idx)}
+                    className="w-8 h-8 rounded-xl bg-paper flex items-center justify-center text-danger hover:bg-danger-light shrink-0"
+                    title="Remover"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+
+                {/* tags row */}
+                {task.recurrence_rule && (
+                  <div className="mt-1.5">
+                    <span className="inline-flex items-center gap-1 text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-soft text-ink">
+                      <Repeat size={10} strokeWidth={2.4} /> Recorrente
+                    </span>
                   </div>
-                  
-                  <div>
-                    <label className="block text-xs font-medium text-gray-500 mb-1">Data e Hora Sugerida</label>
-                    <input 
-                      type="datetime-local" 
-                      value={formatForInput(task.due_at)} 
+                )}
+
+                {/* row 2: date + context */}
+                <div className="grid grid-cols-2 gap-2 mt-2.5">
+                  <label className="flex flex-col gap-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wide text-ink-3">Data e hora</span>
+                    <input
+                      type="datetime-local"
+                      value={formatForInput(task.due_at)}
                       onChange={(e) => updateTask(idx, { due_at: parseFromInput(e.target.value) })}
-                      className="w-full rounded border-gray-300 text-sm py-2 px-3 focus:ring-indigo-500 focus:border-indigo-500"
+                      className="bg-paper rounded-xl px-2.5 py-2 text-[12px] text-ink outline-none border-0 tnum"
                     />
-                  </div>
-                  
-                  <div className="flex gap-2">
-                    <div className="flex-1">
-                      <label className="block text-xs font-medium text-gray-500 mb-1">Prioridade</label>
-                      <select 
-                        value={task.priority}
-                        onChange={(e) => updateTask(idx, { priority: Number(e.target.value) })}
-                        className="w-full rounded border-gray-300 text-sm py-2 px-3 focus:ring-indigo-500 focus:border-indigo-500"
-                      >
-                        <option value={0}>Normal (0)</option>
-                        <option value={5}>Média (5)</option>
-                        <option value={8}>Alta (8)</option>
-                        <option value={10}>Urgente (10)</option>
-                      </select>
-                    </div>
-                    
-                    <div className="flex-1">
-                      <label className="block text-xs font-medium text-gray-500 mb-1">Contexto</label>
-                      <select 
-                        value={task.context}
-                        onChange={(e) => updateTask(idx, { context: e.target.value as any })}
-                        className="w-full rounded border-gray-300 text-sm py-2 px-3 focus:ring-indigo-500 focus:border-indigo-500"
-                      >
-                        <option value="PM">PM</option>
-                        <option value="Esdra">Esdra</option>
-                        <option value="Pessoal">Pessoal</option>
-                        <option value="Familia">Familia</option>
-                        <option value="CCB">CCB</option>
-                        <option value="Estudo">Estudo</option>
-                        <option value="Saude">Saude</option>
-                      </select>
-                    </div>
+                  </label>
+                  <label className="flex flex-col gap-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wide text-ink-3">Contexto</span>
+                    <select
+                      value={task.context}
+                      onChange={(e) => updateTask(idx, { context: e.target.value as ContextType })}
+                      className="bg-paper rounded-xl px-2.5 py-2 text-[12px] font-semibold text-ink outline-none border-0"
+                    >
+                      {CONTEXTS_LIST.map((c) => <option key={c} value={c}>{c}</option>)}
+                    </select>
+                  </label>
+                </div>
+
+                {/* row 3: priority segmented */}
+                <div className="mt-2.5">
+                  <span className="text-[10px] font-bold uppercase tracking-wide text-ink-3 block mb-1">
+                    Prioridade
+                  </span>
+                  <div className="flex bg-paper rounded-xl p-1 gap-1">
+                    {PRIORITY_OPTIONS.map((p) => {
+                      const on = (task.priority ?? 0) === p.value;
+                      return (
+                        <button
+                          key={p.value}
+                          onClick={() => updateTask(idx, { priority: p.value })}
+                          className={[
+                            'flex-1 inline-flex items-center justify-center gap-1 py-1.5 rounded-lg text-[11px] font-extrabold transition-colors',
+                            on ? 'bg-ink text-white' : 'text-ink-2',
+                          ].join(' ')}
+                        >
+                          <Flag size={10} strokeWidth={2.4} style={{ color: on ? '#fff' : p.swatch }} />
+                          {p.label}
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
-            ))}
-            
-            {tasks.length === 0 && (
-              <div className="text-center py-8 text-gray-500">
-                Todas as tarefas foram removidas. Cancelar a operação?
-              </div>
-            )}
-          </div>
+            );
+          })}
+
+          {tasks.length === 0 && (
+            <div className="text-center py-10 text-[13px] text-ink-2">
+              Todas as tarefas foram removidas.
+            </div>
+          )}
         </div>
 
-        <div className="p-6 border-t border-gray-100 flex justify-end gap-3 bg-gray-50 rounded-b-xl">
-          <button 
+        {/* footer */}
+        <div className="px-5 pt-3 flex items-center gap-2 border-t border-line">
+          <button
             onClick={onCancel}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50"
+            className="flex-1 h-11 rounded-xl bg-paper2 text-[13px] font-extrabold text-ink-2"
           >
             Cancelar
           </button>
-          <button 
+          <button
             onClick={() => onConfirm(tasks)}
             disabled={tasks.length === 0}
-            className="px-6 py-2 text-sm font-medium text-white bg-indigo-600 rounded-md hover:bg-indigo-700 shadow-sm disabled:opacity-50"
+            className="flex-[1.4] h-11 rounded-xl bg-ink text-[13px] font-extrabold text-white disabled:opacity-40"
           >
-            Salvar {tasks.length} {tasks.length === 1 ? 'Tarefa' : 'Tarefas'}
+            Salvar {tasks.length > 0 ? tasks.length : ''} {tasks.length === 1 ? 'tarefa' : 'tarefas'}
           </button>
         </div>
       </div>
