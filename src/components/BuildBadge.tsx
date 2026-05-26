@@ -9,8 +9,8 @@ export function BuildBadge() {
         position: 'fixed',
         bottom: 'calc(4px + env(safe-area-inset-bottom))',
         left: 4,
-        background: 'rgba(30,27,75,0.75)',
-        color: '#c7d2fe',
+        background: 'rgba(26,24,20,0.6)',
+        color: 'rgba(255,233,194,0.85)',
         fontSize: 9,
         paddingTop: 2,
         paddingLeft: 5,
@@ -19,7 +19,7 @@ export function BuildBadge() {
         borderRadius: 4,
         zIndex: 9999,
         pointerEvents: 'none',
-        fontFamily: 'monospace',
+        fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace',
         backdropFilter: 'blur(4px)',
       }}
     >

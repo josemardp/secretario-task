@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { X, Bell, LogOut, Sparkles } from 'lucide-react';
 import { useContextStore } from '../stores/contextStore';
 import { useNotifications } from '../hooks/useNotifications';
 import { saveApiKeyToCloud } from '../lib/sync';
@@ -24,94 +25,137 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div 
-        className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 m-4"
+    <div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-[rgba(26,24,20,0.45)] animate-fade-in"
+      onClick={onClose}
+    >
+      <div
+        className="bg-paper w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl shadow-soft animate-sheet-up flex flex-col max-h-[92vh]"
+        onClick={(e) => e.stopPropagation()}
         style={{
-          paddingTop: 'calc(24px + env(safe-area-inset-top))',
-          paddingBottom: 'calc(24px + env(safe-area-inset-bottom))'
+          paddingTop:    'calc(8px + env(safe-area-inset-top))',
+          paddingBottom: 'calc(20px + env(safe-area-inset-bottom))',
         }}
       >
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold text-gray-900">Configurações</h2>
-          <button 
+        <div className="flex justify-center sm:hidden">
+          <div className="w-10 h-1 rounded-full bg-paper3 mb-2 mt-1" />
+        </div>
+
+        {/* header */}
+        <div className="px-5 pt-2 pb-3 flex items-start justify-between">
+          <div>
+            <div className="text-[10px] font-extrabold uppercase tracking-[0.06em] text-ink-3">
+              Configurações
+            </div>
+            <div className="font-display text-[24px] tracking-[-0.02em] text-ink mt-0.5 leading-tight">
+              Sua conta &amp; ajustes.
+            </div>
+          </div>
+          <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="w-9 h-9 rounded-xl bg-paper2 flex items-center justify-center text-ink-2"
+            aria-label="Fechar"
           >
-            ✕
+            <X size={16} />
           </button>
         </div>
 
-        <div className="mb-6">
-          <label htmlFor="apiKey" className="block text-sm font-medium text-gray-700 mb-1">
-            Chave da API (OpenAI)
-          </label>
-          <input
-            type="password"
-            id="apiKey"
-            value={apiKeyInput}
-            onChange={(e) => setApiKeyInput(e.target.value)}
-            placeholder="sk-proj-..."
-            className="block w-full rounded-md border-0 py-2 px-3 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-          />
-          <p className="mt-2 text-xs text-gray-500">
-            Sua chave é salva na nuvem (vinculada à sua conta) e fica disponível em qualquer dispositivo ao fazer login. É enviada diretamente para a OpenAI para gerar briefings e busca semântica.
-          </p>
-        </div>
+        {/* body */}
+        <div className="px-5 pb-3 flex-1 overflow-y-auto flex flex-col gap-4">
+          {/* API key */}
+          <section className="bg-paper border border-line rounded-2xl p-4">
+            <div className="flex items-start gap-2.5 mb-2">
+              <div className="w-8 h-8 rounded-xl bg-amber-soft flex items-center justify-center shrink-0 text-ink">
+                <Sparkles size={15} strokeWidth={2} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-[13px] font-extrabold text-ink leading-tight">
+                  Chave da OpenAI
+                </div>
+                <p className="text-[11px] text-ink-2 mt-1 leading-snug">
+                  Salva na nuvem, vinculada à sua conta. Usada para parser inteligente,
+                  briefings e busca semântica.
+                </p>
+              </div>
+            </div>
+            <input
+              type="password"
+              value={apiKeyInput}
+              onChange={(e) => setApiKeyInput(e.target.value)}
+              placeholder="sk-proj-…"
+              className="w-full bg-paper2 rounded-xl px-3 py-2.5 text-[13px] text-ink outline-none border-0 placeholder:text-ink-3 tnum"
+            />
+          </section>
 
-        <div className="mb-6">
-          <h3 className="text-lg font-medium leading-6 text-gray-900 flex items-center gap-2 mb-2">
-            <span>🔔</span> Notificações (PWA)
-          </h3>
-          <div className="bg-gray-50 p-4 rounded-md border border-gray-200">
-            <p className="text-sm text-gray-600 mb-3">
-              Receba lembretes nativos sobre tarefas vencendo e alertas de Daily Briefing, mesmo com o app minimizado.
-            </p>
+          {/* Notifications */}
+          <section className="bg-paper border border-line rounded-2xl p-4">
+            <div className="flex items-start gap-2.5 mb-2">
+              <div className="w-8 h-8 rounded-xl bg-paper2 flex items-center justify-center shrink-0 text-ink">
+                <Bell size={15} strokeWidth={2} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-[13px] font-extrabold text-ink leading-tight">
+                  Notificações
+                </div>
+                <p className="text-[11px] text-ink-2 mt-1 leading-snug">
+                  Receba lembretes nativos sobre tarefas vencendo e do Daily Briefing,
+                  mesmo com o app minimizado.
+                </p>
+              </div>
+            </div>
+
             {permission === 'granted' ? (
-              <div className="text-sm font-semibold text-green-600 flex items-center gap-1">
-                <span>✅</span> Notificações Ativadas
+              <div className="inline-flex items-center gap-1.5 text-[12px] font-bold text-success px-3 py-1.5 rounded-full bg-success-light">
+                <span className="w-1.5 h-1.5 rounded-full bg-success" /> Ativadas
               </div>
             ) : permission === 'denied' ? (
-              <div className="text-sm font-semibold text-red-600">
-                🚫 Permissão bloqueada. Acesse as configurações do seu navegador para desbloquear.
+              <div className="text-[12px] font-semibold text-danger leading-snug">
+                Permissão bloqueada. Acesse as configurações do navegador para
+                desbloquear.
               </div>
             ) : (
               <button
                 type="button"
                 onClick={() => requestPermission()}
-                className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-md text-sm font-semibold transition-colors"
+                className="inline-flex items-center gap-1.5 bg-ink text-white px-3 py-2 rounded-xl text-[12px] font-extrabold"
               >
-                Ativar Notificações
+                Ativar notificações
               </button>
             )}
-          </div>
+          </section>
+
+          {/* Sign out */}
+          <section className="bg-paper border border-line rounded-2xl px-4 py-3 flex items-center justify-between">
+            <div>
+              <div className="text-[13px] font-extrabold text-ink">Sair da conta</div>
+              <div className="text-[11px] text-ink-2">Seus dados sincronizados ficam salvos.</div>
+            </div>
+            <button
+              onClick={async () => {
+                await supabase.auth.signOut();
+                onClose();
+              }}
+              className="inline-flex items-center gap-1.5 text-danger text-[12px] font-extrabold px-3 py-2 rounded-xl bg-danger-light"
+            >
+              <LogOut size={14} /> Sair
+            </button>
+          </section>
         </div>
 
-        <div className="mt-6 flex justify-between items-center border-t border-gray-100 pt-4 flex-wrap gap-3">
+        {/* footer */}
+        <div className="px-5 pt-2 flex items-center gap-2 border-t border-line">
           <button
-            onClick={async () => {
-              await supabase.auth.signOut();
-              onClose();
-            }}
-            className="text-red-500 hover:text-red-700 text-xs font-semibold min-h-[44px] px-3 flex items-center justify-center transition-colors"
+            onClick={onClose}
+            className="flex-1 h-11 rounded-xl bg-paper2 text-[13px] font-extrabold text-ink-2"
           >
-            Sair da conta
+            Cancelar
           </button>
-          
-          <div className="flex gap-2">
-            <button
-              onClick={onClose}
-              className="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 border border-gray-300 rounded-md transition-colors min-h-[44px]"
-            >
-              Cancelar
-            </button>
-            <button
-              onClick={handleSave}
-              className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md transition-colors min-h-[44px]"
-            >
-              Salvar
-            </button>
-          </div>
+          <button
+            onClick={handleSave}
+            className="flex-1 h-11 rounded-xl bg-ink text-[13px] font-extrabold text-white"
+          >
+            Salvar
+          </button>
         </div>
       </div>
     </div>

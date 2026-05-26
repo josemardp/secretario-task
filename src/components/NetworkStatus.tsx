@@ -1,30 +1,21 @@
+import { WifiOff } from 'lucide-react';
 import { useNetwork } from '../hooks/useNetwork';
 
 export function NetworkStatus() {
   const { isOnline } = useNetwork();
-
-  if (isOnline) {
-    return null;
-  }
+  if (isOnline) return null;
 
   return (
-    <div 
-      className="fixed right-4 bg-orange-600 text-white px-4 pt-2 rounded-md shadow-lg flex items-center gap-2 z-50 transition-all duration-300 animate-pulse"
+    <div
+      className="fixed right-3 z-50 inline-flex items-center gap-1.5 bg-warning text-white px-3 rounded-xl shadow-soft text-[11px] font-extrabold"
       style={{
         bottom: 'calc(16px + env(safe-area-inset-bottom))',
-        paddingBottom: 'calc(8px + env(safe-area-inset-bottom))'
+        paddingTop: 8,
+        paddingBottom: 'calc(8px + env(safe-area-inset-bottom))',
       }}
     >
-      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <line x1="1" y1="1" x2="23" y2="23"></line>
-        <path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"></path>
-        <path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"></path>
-        <path d="M10.71 5.05A16 16 0 0 1 22.58 9"></path>
-        <path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"></path>
-        <path d="M8.53 16.11a6 6 0 0 1 6.95 0"></path>
-        <line x1="12" y1="20" x2="12.01" y2="20"></line>
-      </svg>
-      <span className="text-sm font-medium">Offline - Modo local</span>
+      <WifiOff size={13} strokeWidth={2.4} />
+      Offline · modo local
     </div>
   );
 }
