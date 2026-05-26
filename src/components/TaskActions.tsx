@@ -1,4 +1,5 @@
 import { useRef } from 'react';
+import { Check, Sun, Calendar } from 'lucide-react';
 
 interface TaskActionsProps {
   onComplete: () => void;
@@ -7,50 +8,48 @@ interface TaskActionsProps {
   showComplete?: boolean;
 }
 
-export function TaskActions({ 
-  onComplete, 
-  onPostponeTomorrow, 
+export function TaskActions({
+  onComplete,
+  onPostponeTomorrow,
   onPostponeDate,
-  showComplete = true 
+  showComplete = true,
 }: TaskActionsProps) {
   const dateInputRef = useRef<HTMLInputElement>(null);
 
   return (
-    <div className="flex gap-2 items-center flex-wrap">
+    <div className="flex gap-1.5 items-center flex-wrap">
       {showComplete && (
         <button
           onClick={onComplete}
-          className="text-xs font-medium px-2 py-1 rounded-md bg-green-50 text-green-700 hover:bg-green-100 border border-green-200 transition-colors flex items-center gap-1"
+          className="inline-flex items-center gap-1 text-[11px] font-extrabold px-2.5 py-1.5 rounded-lg bg-success text-white hover:opacity-90 transition-colors"
           title="Marcar como concluído"
         >
-          ✅ Concluir
+          <Check size={12} strokeWidth={2.6} /> Concluir
         </button>
       )}
-      
+
       <button
         onClick={onPostponeTomorrow}
-        className="text-xs font-medium px-2 py-1 rounded-md bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 transition-colors flex items-center gap-1"
+        className="inline-flex items-center gap-1 text-[11px] font-extrabold px-2.5 py-1.5 rounded-lg bg-paper2 text-ink hover:bg-paper3 transition-colors"
         title="Adiar para amanhã"
       >
-        ➡️ Amanhã
+        <Sun size={12} strokeWidth={2.2} /> Amanhã
       </button>
-      
+
       <div className="relative">
         <button
           onClick={() => dateInputRef.current?.showPicker?.()}
-          className="text-xs font-medium px-2 py-1 rounded-md bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-200 transition-colors flex items-center gap-1"
+          className="inline-flex items-center gap-1 text-[11px] font-extrabold px-2.5 py-1.5 rounded-lg bg-paper2 text-ink hover:bg-paper3 transition-colors"
           title="Escolher outra data"
         >
-          📅 Adiar
+          <Calendar size={12} strokeWidth={2.2} /> Adiar
         </button>
         <input
           ref={dateInputRef}
           type="date"
           className="absolute opacity-0 w-0 h-0 p-0 m-0 border-0"
           onChange={(e) => {
-            if (e.target.value) {
-              onPostponeDate(e.target.value);
-            }
+            if (e.target.value) onPostponeDate(e.target.value);
           }}
         />
       </div>

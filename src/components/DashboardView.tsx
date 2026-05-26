@@ -1,199 +1,344 @@
 import { useMemo } from 'react';
-import { 
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
-  PieChart, Pie, Cell, LineChart, Line 
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell, LineChart, Line, Legend,
 } from 'recharts';
-import type { Task } from '../types';
+import { ChevronUp } from 'lucide-react';
+import type { Task, ContextType } from '../types';
 
 interface DashboardViewProps {
   tasks: Task[];
 }
 
-const COLORS = ['#4f46e5', '#ec4899', '#f59e0b', '#10b981', '#6366f1', '#8b5cf6'];
+const CTX_COLORS: Record<ContextType, string> = {
+  PM:      '#3F58D9',
+  Esdra:   '#7C3AED',
+  Pessoal: '#C88E2A',
+  Familia: '#1E8590',
+  CCB:     '#5C8A2C',
+  Estudo:  '#C53580',
+  Saude:   '#2E8B4F',
+};
+
+const INK         = '#1A1814';
+const INK_3       = '#A09B91';
+const PAPER2      = '#EFEEE8';
+const PAPER3      = '#E5E3DB';
+const LINE        = '#E5E3DB';
+
+function StatCard({ label, value, sub, dark = false, big = false }: {
+  label: string; value: React.ReactNode; sub?: React.ReactNode;
+  dark?: boolean; big?: boolean;
+}) {
+  return (
+    <div
+      className={
+        'rounded-2xl px-4 py-3.5 border ' +
+        (dark
+          ? 'bg-ink text-white border-ink'
+          : 'bg-paper border-line')
+      }
+    >
+      <div className={'text-[10px] font-extrabold uppercase tracking-[0.06em] ' + (dark ? 'text-amber-soft' : 'text-ink-3')}>
+        {label}
+      </div>
+      <div
+        className={
+          'mt-0.5 tnum ' +
+          (big
+            ? 'font-display text-[40px] leading-[1] tracking-[-0.04em] ' + (dark ? 'text-white' : 'text-ink')
+            : 'font-extrabold text-[24px] leading-[1.05] tracking-[-0.02em] ' + (dark ? 'text-white' : 'text-ink'))
+        }
+      >
+        {value}
+      </div>
+      {sub && (
+        <div className={'text-[11px] mt-1 ' + (dark ? 'text-white/60' : 'text-ink-2')}>
+          {sub}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SectionCard({ title, eyebrow, children }: { title?: string; eyebrow?: string; children: React.ReactNode }) {
+  return (
+    <div className="bg-paper border border-line rounded-2xl p-4">
+      {eyebrow && (
+        <div className="text-[10px] font-extrabold uppercase tracking-[0.06em] text-ink-3 mb-1">
+          {eyebrow}
+        </div>
+      )}
+      {title && (
+        <div className="font-display text-[20px] tracking-[-0.02em] text-ink mb-3">
+          {title}
+        </div>
+      )}
+      {children}
+    </div>
+  );
+}
 
 export function DashboardView({ tasks }: DashboardViewProps) {
-  const doneTasks = useMemo(() => tasks.filter(t => t.status === 'done' && !t.deleted_at), [tasks]);
+  const doneTasks = useMemo(
+    () => tasks.filter(t => t.status === 'done' && !t.deleted_at),
+    [tasks]
+  );
 
-  // 1. Pizza de Contextos
+  // contexts pie
   const contextData = useMemo(() => {
     const counts: Record<string, number> = {};
-    doneTasks.forEach(t => {
-      counts[t.context] = (counts[t.context] || 0) + 1;
-    });
+    doneTasks.forEach(t => { counts[t.context] = (counts[t.context] || 0) + 1; });
     return Object.entries(counts).map(([name, value]) => ({ name, value }));
   }, [doneTasks]);
 
-  // 2. Estimado vs Real (Últimas 10 tarefas que têm ambos)
-  const timeData = useMemo(() => {
-    return doneTasks
-      .filter(t => t.estimated_minutes && t.actual_minutes)
-      .slice(-15)
-      .map(t => ({
-        name: t.title.substring(0, 15) + '...',
-        estimado: t.estimated_minutes,
-        real: Math.round(t.actual_minutes || 0)
-      }));
-  }, [doneTasks]);
+  // estimated vs real
+  const timeData = useMemo(() => doneTasks
+    .filter(t => t.estimated_minutes && t.actual_minutes)
+    .slice(-15)
+    .map(t => ({
+      name: t.title.length > 14 ? t.title.slice(0, 14) + '…' : t.title,
+      estimado: t.estimated_minutes,
+      real: Math.round(t.actual_minutes || 0),
+    })),
+  [doneTasks]);
 
-  // 3. Pico de Produtividade (Horário de conclusão)
+  // peak hour
   const peakHourData = useMemo(() => {
     const hourCounts: Record<string, number> = {};
-    for (let i = 6; i <= 23; i++) hourCounts[`${i}h`] = 0; // Preencher de 6h as 23h
-
+    for (let i = 6; i <= 23; i++) hourCounts[`${i}h`] = 0;
     doneTasks.forEach(t => {
       if (t.updated_at) {
         const hour = new Date(t.updated_at).getHours();
         const key = `${hour}h`;
-        if (hourCounts[key] !== undefined) {
-          hourCounts[key]++;
-        }
+        if (hourCounts[key] !== undefined) hourCounts[key]++;
       }
     });
     return Object.entries(hourCounts).map(([hora, concluídas]) => ({ hora, concluídas }));
   }, [doneTasks]);
 
-  // 4. Média de Prioridade Real
+  // avg priority
   const avgPriority = useMemo(() => {
-    if (doneTasks.length === 0) return 0;
+    if (doneTasks.length === 0) return '0';
     const sum = doneTasks.reduce((acc, t) => acc + t.priority, 0);
     return (sum / doneTasks.length).toFixed(1);
   }, [doneTasks]);
 
-  // 5. Placar Diário da Semana (Últimos 7 dias)
+  // last 7 days
   const dailyData = useMemo(() => {
-    const data: Record<string, number> = {};
+    const data: { dia: string; tarefas: number; key: string }[] = [];
     const today = new Date();
-    
-    // Preparar os últimos 7 dias
     for (let i = 6; i >= 0; i--) {
       const d = new Date(today);
       d.setDate(d.getDate() - i);
-      const dateStr = d.toLocaleDateString('pt-BR', { weekday: 'short' });
-      data[dateStr] = 0;
+      const key = d.toLocaleDateString('pt-BR', { weekday: 'short' });
+      data.push({ dia: key.slice(0, 1).toUpperCase(), tarefas: 0, key });
     }
-
     doneTasks.forEach(t => {
-      if (t.updated_at) {
-        const d = new Date(t.updated_at);
-        // Só conta se foi nos últimos 7 dias
-        const diffTime = Math.abs(today.getTime() - d.getTime());
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        if (diffDays <= 7) {
-          const dateStr = d.toLocaleDateString('pt-BR', { weekday: 'short' });
-          if (data[dateStr] !== undefined) {
-            data[dateStr]++;
-          }
-        }
+      if (!t.updated_at) return;
+      const d = new Date(t.updated_at);
+      const diffDays = Math.ceil(Math.abs(today.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
+      if (diffDays <= 7) {
+        const k = d.toLocaleDateString('pt-BR', { weekday: 'short' });
+        const row = data.find(r => r.key === k);
+        if (row) row.tarefas++;
       }
     });
-    return Object.entries(data).map(([dia, tarefas]) => ({ dia, tarefas }));
+    return data;
   }, [doneTasks]);
+
+  const weekTotal = dailyData.reduce((a, r) => a + r.tarefas, 0);
+  const todayCount = dailyData[dailyData.length - 1]?.tarefas ?? 0;
 
   if (doneTasks.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center p-12 text-center text-gray-500">
-        <span className="text-4xl mb-4">📊</span>
-        <h3 className="text-lg font-medium">Poucos Dados Disponíveis</h3>
-        <p>Conclua algumas tarefas no quadro para a inteligência gerar as suas estatísticas!</p>
+      <div className="bg-paper border border-line rounded-2xl px-6 py-12 text-center">
+        <div className="font-display text-[28px] tracking-[-0.02em] text-ink">
+          Sem dados ainda.
+        </div>
+        <p className="text-[13px] text-ink-2 mt-2 leading-snug max-w-xs mx-auto">
+          Conclua algumas tarefas no quadro para a inteligência gerar suas
+          estatísticas.
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Card Resumo */}
-        <div className="bg-white p-6 rounded-lg shadow border border-gray-100 flex flex-col items-center justify-center">
-          <span className="text-gray-500 text-sm font-semibold uppercase tracking-wider mb-2">Total Concluídas</span>
-          <span className="text-5xl font-bold text-indigo-600">{doneTasks.length}</span>
-        </div>
-        
-        <div className="bg-white p-6 rounded-lg shadow border border-gray-100 flex flex-col items-center justify-center">
-          <span className="text-gray-500 text-sm font-semibold uppercase tracking-wider mb-2">Média de Prioridade</span>
-          <span className="text-5xl font-bold text-pink-600">{avgPriority}</span>
-          <span className="text-xs text-gray-400 mt-1">/ 10</span>
+    <div className="flex flex-col gap-3">
+      {/* Top hero */}
+      <div className="bg-paper border border-line rounded-2xl p-4">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <div className="text-[10px] font-extrabold uppercase tracking-[0.06em] text-ink-3">
+              Esta semana
+            </div>
+            <div className="font-display text-[44px] leading-[1] tracking-[-0.04em] text-ink mt-1 tnum">
+              {weekTotal}
+              <span className="text-ink-3 text-[22px] font-sans not-italic font-normal"> concluídas</span>
+            </div>
+            <div className="mt-1.5 text-[11px] text-success font-bold inline-flex items-center gap-1">
+              <ChevronUp size={11} strokeWidth={2.6} /> hoje: {todayCount}
+            </div>
+          </div>
+
+          {/* donut */}
+          <div
+            className="w-[88px] h-[88px] rounded-full flex items-center justify-center shrink-0"
+            style={{
+              background: contextData.length > 0
+                ? `conic-gradient(${contextData.map((c, i) => {
+                    const pct = (c.value / weekTotal) * 100;
+                    const start = contextData.slice(0, i).reduce((a, b) => a + (b.value / weekTotal) * 100, 0);
+                    return `${CTX_COLORS[c.name as ContextType] || INK_3} ${start}% ${start + pct}%`;
+                  }).join(', ')})`
+                : PAPER3,
+            }}
+          >
+            <div className="w-[60px] h-[60px] rounded-full bg-paper flex flex-col items-center justify-center" style={{ boxShadow: 'inset 0 0 0 1px ' + LINE }}>
+              <span className="font-display text-[20px] leading-[1] text-ink tnum">{weekTotal}</span>
+              <span className="text-[9px] text-ink-3 font-semibold mt-0.5">conc.</span>
+            </div>
+          </div>
         </div>
 
-        <div className="col-span-1 md:col-span-2 bg-white p-6 rounded-lg shadow border border-gray-100">
-          <span className="text-gray-500 text-sm font-semibold uppercase tracking-wider mb-4 block">Volume por Dia (Últimos 7 dias)</span>
-          <div className="h-24 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={dailyData}>
-                <Tooltip cursor={{fill: '#f3f4f6'}} />
-                <Bar dataKey="tarefas" fill="#4f46e5" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+        {/* week bars */}
+        <div className="h-20 mt-3 flex items-end gap-1.5">
+          {dailyData.map((d, i) => {
+            const max = Math.max(...dailyData.map(x => x.tarefas), 1);
+            const h = (d.tarefas / max) * 100;
+            const isToday = i === dailyData.length - 1;
+            return (
+              <div key={i} className="flex-1 flex flex-col items-center gap-1">
+                <div
+                  className="w-full rounded-md"
+                  style={{
+                    height: `${Math.max(h, 4)}%`,
+                    background: isToday ? INK : PAPER3,
+                    minHeight: 4,
+                  }}
+                />
+                <span className={(isToday ? 'text-ink font-extrabold' : 'text-ink-3 font-semibold') + ' text-[9px]'}>
+                  {d.dia}
+                </span>
+              </div>
+            );
+          })}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Estimado vs Real */}
-        <div className="bg-white p-6 rounded-lg shadow border border-gray-100">
-          <h3 className="text-gray-700 font-semibold mb-6 flex items-center gap-2">
-            <span>⏱️</span> Estimativa da IA vs Tempo Real (min)
-          </h3>
-          <div className="h-64">
+      {/* Mini cards */}
+      <div className="grid grid-cols-2 gap-3">
+        <StatCard label="Total" value={doneTasks.length} sub="concluídas no histórico" />
+        <StatCard
+          dark
+          label="Streak"
+          value={<>{todayCount}<span className="text-white/60 font-normal text-[14px]"> hoje</span></>}
+          sub={`média semana ${(weekTotal / 7).toFixed(1)}/dia`}
+        />
+        <StatCard label="Prioridade média" value={avgPriority} sub="das concluídas" />
+        <StatCard
+          label="Adiadas"
+          value={tasks.filter(t => (t.postponed_count ?? 0) > 0 && !t.deleted_at).length}
+          sub="tarefas com adiamento"
+        />
+      </div>
+
+      {/* Contexts */}
+      {contextData.length > 0 && (
+        <SectionCard eyebrow="Por contexto">
+          <div className="flex flex-wrap gap-2">
+            {contextData
+              .slice()
+              .sort((a, b) => b.value - a.value)
+              .map((c) => {
+                const pct = ((c.value / weekTotal) * 100).toFixed(0);
+                return (
+                  <div
+                    key={c.name}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full"
+                    style={{ background: PAPER2 }}
+                  >
+                    <span className="w-2 h-2 rounded-full" style={{ background: CTX_COLORS[c.name as ContextType] || INK_3 }} />
+                    <span className="text-[11px] font-bold text-ink">{c.name}</span>
+                    <span className="text-[11px] font-extrabold text-ink-2 tnum">{pct}%</span>
+                  </div>
+                );
+              })}
+          </div>
+        </SectionCard>
+      )}
+
+      {/* Time est vs real */}
+      {timeData.length > 0 && (
+        <SectionCard eyebrow="Estimativa da IA vs tempo real" title="Você acerta bem?">
+          <div className="h-56 -ml-3">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={timeData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                <XAxis dataKey="name" tick={{fontSize: 10}} interval="preserveStartEnd" />
-                <YAxis />
-                <Tooltip />
-                <Legend />
-                <Line type="monotone" dataKey="estimado" name="Tempo Estimado (IA)" stroke="#9ca3af" strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="real" name="Tempo Real" stroke="#ec4899" strokeWidth={3} activeDot={{ r: 6 }} />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={LINE} />
+                <XAxis dataKey="name" tick={{ fontSize: 10, fill: INK_3 }} interval="preserveStartEnd" axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 10, fill: INK_3 }} axisLine={false} tickLine={false} width={28} />
+                <Tooltip contentStyle={{ background: 'white', border: `1px solid ${LINE}`, borderRadius: 12, fontSize: 12 }} />
+                <Legend wrapperStyle={{ fontSize: 11 }} iconType="circle" />
+                <Line type="monotone" dataKey="estimado" name="Estimado (IA)" stroke={INK_3} strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="real"     name="Real"          stroke={INK}    strokeWidth={3} activeDot={{ r: 5 }} dot={false} />
               </LineChart>
             </ResponsiveContainer>
           </div>
-        </div>
+        </SectionCard>
+      )}
 
-        {/* Pico de Produtividade */}
-        <div className="bg-white p-6 rounded-lg shadow border border-gray-100">
-          <h3 className="text-gray-700 font-semibold mb-6 flex items-center gap-2">
-            <span>⚡</span> Horário de Pico de Foco
-          </h3>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={peakHourData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                <XAxis dataKey="hora" tick={{fontSize: 10}} interval="preserveStartEnd" tickFormatter={(v) => v.replace('h', '')} />
-                <YAxis />
-                <Tooltip cursor={{fill: '#fdf2f8'}} />
-                <Bar dataKey="concluídas" name="Tarefas Finalizadas" fill="#f59e0b" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
+      {/* Peak hour */}
+      <SectionCard eyebrow="Horário de pico" title="Quando você flui?">
+        <div className="h-48 -ml-3">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={peakHourData}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={LINE} />
+              <XAxis
+                dataKey="hora"
+                tick={{ fontSize: 10, fill: INK_3 }}
+                interval="preserveStartEnd"
+                tickFormatter={(v) => v.replace('h', '')}
+                axisLine={false} tickLine={false}
+              />
+              <YAxis tick={{ fontSize: 10, fill: INK_3 }} axisLine={false} tickLine={false} width={24} />
+              <Tooltip cursor={{ fill: PAPER2 }} contentStyle={{ background: 'white', border: `1px solid ${LINE}`, borderRadius: 12, fontSize: 12 }} />
+              <Bar dataKey="concluídas" name="Tarefas concluídas" fill={INK} radius={[6, 6, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
+      </SectionCard>
 
-        {/* Pizza de Contextos */}
-        <div className="bg-white p-6 rounded-lg shadow border border-gray-100">
-          <h3 className="text-gray-700 font-semibold mb-2 flex items-center gap-2">
-            <span>🧩</span> Distribuição de Contextos
-          </h3>
-          <div className="h-64">
+      {/* Pie (compact) */}
+      {contextData.length > 0 && (
+        <SectionCard eyebrow="Distribuição" title="Onde gastei energia">
+          <div className="h-56">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
                   data={contextData}
                   cx="50%"
                   cy="50%"
-                  innerRadius={60}
+                  innerRadius={48}
                   outerRadius={80}
-                  paddingAngle={5}
+                  paddingAngle={3}
                   dataKey="value"
-                  label={({name, percent}) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
+                  stroke="white"
+                  strokeWidth={2}
+                  label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
+                  labelLine={{ stroke: INK_3 }}
+                  style={{ fontSize: 11, fontWeight: 700 }}
                 >
-                  {contextData.map((_entry, index) => (
-                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  {contextData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={CTX_COLORS[entry.name as ContextType] || INK_3} />
                   ))}
                 </Pie>
-                <Tooltip />
+                <Tooltip contentStyle={{ background: 'white', border: `1px solid ${LINE}`, borderRadius: 12, fontSize: 12 }} />
               </PieChart>
             </ResponsiveContainer>
           </div>
-        </div>
-      </div>
+        </SectionCard>
+      )}
     </div>
   );
 }

@@ -2,15 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Regras para transformar o comportamento web em nativo (PWA) */
+/* Native-PWA tweaks */
 body {
+  background: #F7F6F2;
+  font-family: "Inter Tight", Inter, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  color: #1A1814;
   overscroll-behavior-y: none;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
   -webkit-user-select: none;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: geometricPrecision;
 }
 
-/* Permitir seleção de texto apenas em campos onde faz sentido (inputs e textareas) */
 input, textarea, [contenteditable] {
   user-select: auto;
   -webkit-user-select: auto;
@@ -19,4 +23,47 @@ input, textarea, [contenteditable] {
 @supports (padding: env(safe-area-inset-bottom)) {
   .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
   .safe-top    { padding-top:    env(safe-area-inset-top);    }
+}
+
+/* ── Direction B helpers ───────────────────────────────────────── */
+
+/* Italic serif display for headings ("Boa noite, Christian." etc.) */
+.font-display {
+  font-family: "Instrument Serif", "Source Serif Pro", Georgia, serif;
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+}
+
+/* Tabular numerals everywhere numbers stack (times, counters) */
+.tnum { font-variant-numeric: tabular-nums; }
+
+/* Bottom sheet animation */
+@keyframes sheet-up {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+.animate-sheet-up { animation: sheet-up 220ms cubic-bezier(.2,.8,.2,1); }
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.animate-fade-in { animation: fade-in 180ms ease-out; }
+
+/* Hide scrollbars on horizontal strips */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; }
+
+/* Subtle pulse used by the Foco button badge */
+@keyframes ping-soft {
+  0%   { transform: scale(1);    opacity: .9; }
+  100% { transform: scale(2.2);  opacity: 0;  }
+}
+.ping-soft::after {
+  content: '';
+  position: absolute; inset: 0;
+  border-radius: inherit;
+  background: currentColor;
+  animation: ping-soft 1.6s cubic-bezier(0,0,.2,1) infinite;
 }
