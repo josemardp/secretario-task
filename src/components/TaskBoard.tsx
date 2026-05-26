@@ -1,58 +1,272 @@
-import { useEffect } from 'react';
-import type { Task, TaskStatus } from '../types';
+import { useEffect, useState } from 'react';
+import type { Task, TaskStatus, ContextType } from '../types';
 import { CONTEXTS_LIST } from '../types';
 import { useTaskStore } from '../stores/taskStore';
 import { useContextStore } from '../stores/contextStore';
 import { calculateTaskScore } from '../lib/ranking';
 import { TaskActions } from './TaskActions';
+import {
+  Check, Flag, Clock, Repeat, ChevronDown, Trash2,
+} from 'lucide-react';
 
 interface TaskBoardProps {
   tasks: Task[];
 }
 
 const COLUMNS: { id: TaskStatus; title: string }[] = [
-  { id: 'todo', title: 'A Fazer' },
-  { id: 'doing', title: 'Em Andamento' },
-  { id: 'done', title: 'Concluído' },
+  { id: 'todo',  title: 'A fazer' },
+  { id: 'doing', title: 'Em andamento' },
+  { id: 'done',  title: 'Concluído' },
 ];
 
+const CTX_BAR: Record<ContextType, string> = {
+  PM:      'border-l-ctxPM',
+  Esdra:   'border-l-ctxEsdra',
+  Pessoal: 'border-l-ctxPessoal',
+  Familia: 'border-l-ctxFamilia',
+  CCB:     'border-l-ctxCCB',
+  Estudo:  'border-l-ctxEstudo',
+  Saude:   'border-l-ctxSaude',
+};
+
+function formatTime(iso: string | null | undefined) {
+  if (!iso) return null;
+  return new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+}
+
+function toLocalDatetimeInput(iso: string | null | undefined): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  const pad = (n: number) => n.toString().padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+// ─── Compact task row ────────────────────────────────────────────
+
+interface TaskRowProps {
+  task: Task;
+  expanded: boolean;
+  onToggleExpand: () => void;
+  onAdvance: () => void;
+  onRevert: () => void;
+  onPostponeTomorrow: () => void;
+  onPostponeDate: (d: string) => void;
+  isDone: boolean;
+  isFirstInColumn: boolean;
+  isLastInColumn: boolean;
+}
+
+function TaskRow({
+  task, expanded, onToggleExpand,
+  onAdvance, onRevert, onPostponeTomorrow, onPostponeDate,
+  isDone, isFirstInColumn, isLastInColumn,
+}: TaskRowProps) {
+  const { updateTask, deleteTask } = useTaskStore();
+
+  const timeText = formatTime(task.due_at);
+  const durText  = task.actual_minutes != null
+    ? `${task.actual_minutes}m`
+    : task.estimated_minutes != null
+      ? `${task.estimated_minutes}m`
+      : '30m';
+
+  const isLate = !!task.due_at && new Date(task.due_at) < new Date() && !isDone;
+
+  return (
+    <div
+      className={[
+        'bg-paper border border-line border-l-4',
+        CTX_BAR[task.context],
+        'overflow-hidden transition-shadow',
+        isFirstInColumn ? 'rounded-t-2xl' : '',
+        isLastInColumn  ? 'rounded-b-2xl' : '',
+        !isFirstInColumn ? '-mt-px' : '',
+        expanded ? 'shadow-soft' : '',
+      ].join(' ')}
+    >
+      <button
+        onClick={onToggleExpand}
+        className="w-full flex items-center gap-3 px-3 py-3 text-left active:bg-paper2 transition-colors"
+        style={{ opacity: isDone ? 0.55 : 1 }}
+      >
+        {/* checkbox */}
+        <span
+          onClick={(e) => { e.stopPropagation(); if (!isDone) onAdvance(); }}
+          className={[
+            'w-[22px] h-[22px] shrink-0 rounded-full border-[1.6px] flex items-center justify-center transition-colors',
+            isDone ? 'bg-success border-success' : 'bg-white border-line2 hover:border-ink-3',
+          ].join(' ')}
+        >
+          {isDone && <Check size={12} strokeWidth={3} color="#fff" />}
+        </span>
+
+        {/* body */}
+        <span className="flex-1 min-w-0">
+          <span className={`flex items-center gap-1.5 text-[14px] font-bold text-ink tracking-tight ${isDone ? 'line-through' : ''}`}>
+            <span className="truncate min-w-0">{task.title}</span>
+            {task.recurrence_rule && <Repeat size={11} className="shrink-0 text-ink-3" />}
+            {isLate && (
+              <span className="shrink-0 inline-flex items-center text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-danger-light text-danger tracking-wide">
+                ATRASADA
+              </span>
+            )}
+          </span>
+          <span className="flex items-center gap-1.5 mt-1 text-[11px] text-ink-2 tnum">
+            {timeText && <span className="inline-flex items-center gap-1"><Clock size={11} /> {timeText}</span>}
+            {timeText && <span className="text-ink-3">·</span>}
+            <span>{durText}</span>
+            {(task.postponed_count ?? 0) > 0 && (
+              <>
+                <span className="text-ink-3">·</span>
+                <span className="inline-flex items-center gap-0.5 text-warning">🐌 {task.postponed_count}×</span>
+              </>
+            )}
+          </span>
+        </span>
+
+        {/* right side: priority + chevron */}
+        <span className="flex items-center gap-2 shrink-0">
+          {task.priority > 0 && (
+            <span
+              className={
+                'inline-flex items-center gap-0.5 text-[11px] font-extrabold tnum ' +
+                (task.priority >= 8 ? 'text-danger' : task.priority >= 5 ? 'text-warning' : 'text-ink-3')
+              }
+            >
+              <Flag size={11} strokeWidth={2.4} /> P{task.priority}
+            </span>
+          )}
+          <ChevronDown
+            size={16}
+            className={'text-ink-3 transition-transform ' + (expanded ? 'rotate-180' : '')}
+          />
+        </span>
+      </button>
+
+      {/* expanded actions */}
+      {expanded && (
+        <div className="px-3 pb-3 pt-1 border-t border-line2 bg-paper">
+          {!isDone && (
+            <div className="mb-2.5">
+              <TaskActions
+                showComplete={true}
+                onComplete={onAdvance}
+                onPostponeTomorrow={onPostponeTomorrow}
+                onPostponeDate={onPostponeDate}
+              />
+            </div>
+          )}
+
+          {/* meta editors */}
+          <div className="grid grid-cols-2 gap-2">
+            <label className="text-[10px] font-bold uppercase tracking-wide text-ink-3 flex flex-col gap-1">
+              Contexto
+              <select
+                value={task.context}
+                onChange={(e) => updateTask(task.id, { context: e.target.value as ContextType })}
+                onClick={(e) => e.stopPropagation()}
+                className="bg-paper2 rounded-lg px-2 py-1.5 text-[12px] font-semibold text-ink border-0 outline-none"
+              >
+                {CONTEXTS_LIST.map((c) => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </label>
+
+            <label className="text-[10px] font-bold uppercase tracking-wide text-ink-3 flex flex-col gap-1">
+              Quando
+              <input
+                type="datetime-local"
+                value={toLocalDatetimeInput(task.due_at)}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  updateTask(task.id, { due_at: v ? new Date(v).toISOString() : null });
+                }}
+                onClick={(e) => e.stopPropagation()}
+                className="bg-paper2 rounded-lg px-2 py-1.5 text-[12px] text-ink border-0 outline-none tnum"
+              />
+            </label>
+
+            <label className="text-[10px] font-bold uppercase tracking-wide text-ink-3 flex flex-col gap-1 col-span-2">
+              Tempo estimado
+              <div className="flex items-center bg-paper2 rounded-lg overflow-hidden">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    updateTask(task.id, { estimated_minutes: Math.max(5, (task.estimated_minutes || 30) - 15) });
+                  }}
+                  className="px-3 py-1.5 text-ink-2 text-[14px] font-bold"
+                >−15</button>
+                <span className="flex-1 text-center text-[12px] font-bold text-ink tnum">
+                  {task.estimated_minutes ?? 30} min
+                </span>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    updateTask(task.id, { estimated_minutes: (task.estimated_minutes || 30) + 15 });
+                  }}
+                  className="px-3 py-1.5 text-ink-2 text-[14px] font-bold"
+                >+15</button>
+              </div>
+            </label>
+          </div>
+
+          {/* secondary actions */}
+          <div className="mt-2.5 flex items-center justify-between">
+            <span className="text-[10px] text-ink-3 tnum">
+              ★ {calculateTaskScore(task, 0, task.context).toFixed(2)} · #{task.id.slice(0, 6)}
+            </span>
+            <div className="flex items-center gap-1">
+              {!isDone && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); onRevert(); }}
+                  className="text-[11px] font-semibold text-ink-2 px-2 py-1 rounded-lg hover:bg-paper2"
+                  disabled={task.status === 'todo'}
+                >
+                  ← Voltar
+                </button>
+              )}
+              <button
+                onClick={(e) => { e.stopPropagation(); deleteTask(task.id); }}
+                className="text-[11px] font-semibold text-danger px-2 py-1 rounded-lg hover:bg-danger-light inline-flex items-center gap-1"
+              >
+                <Trash2 size={12} /> Excluir
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ─── Board ───────────────────────────────────────────────────────
+
 export function TaskBoard({ tasks }: TaskBoardProps) {
-  const { updateTask, deleteTask, recordViewEvent } = useTaskStore();
+  const { updateTask, recordViewEvent } = useTaskStore();
   const { currentEnergy, activeContext } = useContextStore();
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   useEffect(() => {
-    // Record view events for all active tasks
-    tasks.filter(t => !t.deleted_at).forEach(task => {
-      recordViewEvent(task.id);
-    });
+    tasks.filter(t => !t.deleted_at).forEach(task => recordViewEvent(task.id));
   }, [tasks, recordViewEvent]);
 
   const handleStatusChange = (taskId: string, currentStatus: TaskStatus) => {
     const task = tasks.find(t => t.id === taskId);
     const currentIndex = COLUMNS.findIndex(c => c.id === currentStatus);
     const nextStatus = COLUMNS[currentIndex + 1]?.id;
-    if (nextStatus) {
-      const updates: Partial<Task> = { status: nextStatus };
-      
-      if (nextStatus === 'doing') {
-        updates.started_at = new Date().toISOString();
-      } else if (nextStatus === 'done' && task?.started_at) {
-        const start = new Date(task.started_at).getTime();
-        const end = new Date().getTime();
-        const diffMinutes = Math.round((end - start) / 60000);
-        updates.actual_minutes = diffMinutes;
-      }
-      
-      updateTask(taskId, updates);
+    if (!nextStatus) return;
+    const updates: Partial<Task> = { status: nextStatus };
+    if (nextStatus === 'doing') updates.started_at = new Date().toISOString();
+    else if (nextStatus === 'done' && task?.started_at) {
+      const diff = Math.round((Date.now() - new Date(task.started_at).getTime()) / 60_000);
+      updates.actual_minutes = diff;
     }
+    updateTask(taskId, updates);
   };
 
   const handleStatusRevert = (taskId: string, currentStatus: TaskStatus) => {
     const currentIndex = COLUMNS.findIndex(c => c.id === currentStatus);
     const prevStatus = COLUMNS[currentIndex - 1]?.id;
-    if (prevStatus) {
-      updateTask(taskId, { status: prevStatus });
-    }
+    if (prevStatus) updateTask(taskId, { status: prevStatus });
   };
 
   const handlePostponeTomorrow = (taskId: string) => {
@@ -70,153 +284,50 @@ export function TaskBoard({ tasks }: TaskBoardProps) {
   };
 
   return (
-    <div className="flex flex-col gap-4 sm:flex-row sm:overflow-x-auto pb-4">
+    <div className="flex flex-col gap-5">
       {COLUMNS.map(column => {
-        // Obter as tarefas não excluídas desta coluna
         const columnTasks = tasks.filter(t => t.status === column.id && !t.deleted_at);
-        
-        // Calcular o score e anexar temporariamente para ordenação e exibição
-        const tasksWithScore = columnTasks.map(task => ({
-          ...task,
-          score: calculateTaskScore(task, currentEnergy, activeContext)
+        const tasksWithScore = columnTasks.map(t => ({
+          ...t,
+          score: calculateTaskScore(t, currentEnergy, activeContext),
         }));
-
-        // Ordenar pela maior nota
         tasksWithScore.sort((a, b) => b.score - a.score);
-        
+
         return (
-          <div key={column.id} className="w-full sm:flex-1 sm:min-w-[280px] bg-gray-50 rounded-lg p-4">
-            <h2 className="text-sm font-semibold text-gray-700 mb-4">{column.title} ({columnTasks.length})</h2>
-            <div className="space-y-3">
-              {tasksWithScore.map(task => (
-                <div key={task.id} className="bg-white p-3 rounded-md shadow-sm border border-gray-200 w-full min-w-0 overflow-hidden flex flex-col">
-                  <div className="flex justify-between items-start mb-2 gap-2">
-                    <h4 className="font-semibold text-gray-900 flex items-center gap-1 flex-wrap break-words min-w-0">
-                      {task.recurrence_rule && (
-                        <span title="Tarefa Recorrente" className="text-indigo-500 text-xs">🔁</span>
-                      )}
-                      {(task.postponed_count ?? 0) > 0 && (
-                        <span title={`${task.postponed_count}x adiada`} className="text-orange-500 text-[10px] font-bold bg-orange-50 px-1 rounded">
-                          🐌 {task.postponed_count}x
-                        </span>
-                      )}
-                      {task.title}
-                    </h4>
-                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-sm bg-purple-100 text-purple-800" title="Score do Ranking">
-                      ★ {task.score.toFixed(2)}
-                    </span>
-                  </div>
-                  
-                  <div className="flex items-center gap-2 text-xs text-gray-500 mb-3 flex-wrap min-w-0">
-                    <select
-                      value={task.context}
-                      onChange={(e) => updateTask(task.id, { context: e.target.value as any })}
-                      className="inline-flex items-center rounded-md bg-gray-50 px-2 py-1 font-medium text-gray-600 ring-1 ring-inset ring-gray-500/10 cursor-pointer outline-none border-0 focus:ring-2 focus:ring-indigo-600 appearance-none text-center min-w-[70px]"
-                      title="Clique para alterar o contexto"
-                    >
-                      {CONTEXTS_LIST.map((ctx) => (
-                        <option key={ctx} value={ctx}>{ctx}</option>
-                      ))}
-                    </select>
-                    {task.priority > 0 && (
-                      <span className={`inline-flex items-center rounded-md px-2 py-1 font-medium ring-1 ring-inset ${
-                        task.priority >= 8 ? 'bg-red-50 text-red-700 ring-red-600/10' :
-                        task.priority >= 5 ? 'bg-yellow-50 text-yellow-800 ring-yellow-600/20' :
-                        'bg-green-50 text-green-700 ring-green-600/20'
-                      }`}>
-                        P{task.priority}
-                      </span>
-                    )}
-                    <div className="inline-flex items-center text-indigo-600 text-xs min-w-0">
-                      🗓️
-                      <input
-                        type="datetime-local"
-                        value={task.due_at ? new Date(new Date(task.due_at).getTime() - (new Date().getTimezoneOffset() * 60000)).toISOString().slice(0, 16) : ''}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          updateTask(task.id, { due_at: val ? new Date(val).toISOString() : null });
-                        }}
-                        className="ml-1 bg-transparent border-none p-0 cursor-pointer text-indigo-600 focus:ring-0 text-[10px] max-w-[9rem]"
-                        title="Alterar data/hora"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Controle de Tempo (Sprint 9) */}
-                  <div className="flex justify-between items-center bg-gray-50 p-2 rounded border border-gray-100 mb-3 text-xs">
-                    <div className="flex items-center gap-1">
-                      <span className="text-gray-500">⏳ Tempo:</span>
-                      <span className="font-bold text-gray-700">
-                        {task.actual_minutes !== undefined && task.actual_minutes !== null 
-                          ? `${task.actual_minutes}m (real)` 
-                          : `${task.estimated_minutes || '?'}m (est)`}
-                      </span>
-                    </div>
-                    {task.status !== 'done' && (
-                      <div className="flex gap-1">
-                        <button 
-                          onClick={() => updateTask(task.id, { estimated_minutes: Math.max(5, (task.estimated_minutes || 30) - 15) })}
-                          className="px-1.5 py-0.5 bg-white border border-gray-200 rounded text-gray-600 hover:bg-gray-100"
-                        >
-                          -15m
-                        </button>
-                        <button 
-                          onClick={() => updateTask(task.id, { estimated_minutes: (task.estimated_minutes || 30) + 15 })}
-                          className="px-1.5 py-0.5 bg-white border border-gray-200 rounded text-gray-600 hover:bg-gray-100"
-                        >
-                          +15m
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                  
-                  {column.id !== 'done' && (
-                    <div className="mb-3 pt-2 border-t border-gray-100">
-                      <TaskActions 
-                        showComplete={true}
-                        onComplete={() => handleStatusChange(task.id, 'done')}
-                        onPostponeTomorrow={() => handlePostponeTomorrow(task.id)}
-                        onPostponeDate={(dateString) => handlePostponeDate(task.id, dateString)}
-                      />
-                    </div>
-                  )}
-
-                  <div className="flex justify-between items-center border-t border-gray-100 pt-2 mt-2">
-                    <div className="flex gap-2">
-                      {column.id !== 'todo' && (
-                        <button 
-                          onClick={() => handleStatusRevert(task.id, task.status)}
-                          className="text-xs text-gray-500 hover:text-gray-700 font-medium"
-                        >
-                          ← Voltar
-                        </button>
-                      )}
-                      {column.id !== 'done' && (
-                        <button 
-                          onClick={() => handleStatusChange(task.id, task.status)}
-                          className="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
-                        >
-                          Avançar →
-                        </button>
-                      )}
-                    </div>
-                    <button
-                      onClick={() => deleteTask(task.id)}
-                      className="text-xs text-red-500 hover:text-red-700 font-medium"
-                    >
-                      Excluir
-                    </button>
-                  </div>
-                </div>
-              ))}
-              
-              {columnTasks.length === 0 && (
-                <div className="text-center py-6 text-sm text-gray-400 border-2 border-dashed border-gray-200 rounded-md">
-                  Vazio
-                </div>
-              )}
+          <section key={column.id}>
+            {/* section header */}
+            <div className="flex items-baseline justify-between px-1 mb-2">
+              <h2 className="text-[14px] font-extrabold tracking-tight text-ink">
+                {column.title}
+                <span className="ml-1.5 text-[11px] font-bold text-ink-3 tnum">{columnTasks.length}</span>
+              </h2>
             </div>
-          </div>
+
+            {/* rows */}
+            {tasksWithScore.length === 0 ? (
+              <div className="border-2 border-dashed border-line rounded-2xl px-4 py-6 text-center text-[12px] text-ink-3">
+                Vazio
+              </div>
+            ) : (
+              <div className="flex flex-col">
+                {tasksWithScore.map((task, idx) => (
+                  <TaskRow
+                    key={task.id}
+                    task={task}
+                    expanded={expandedId === task.id}
+                    onToggleExpand={() => setExpandedId(expandedId === task.id ? null : task.id)}
+                    onAdvance={() => handleStatusChange(task.id, task.status)}
+                    onRevert={() => handleStatusRevert(task.id, task.status)}
+                    onPostponeTomorrow={() => handlePostponeTomorrow(task.id)}
+                    onPostponeDate={(d) => handlePostponeDate(task.id, d)}
+                    isDone={column.id === 'done'}
+                    isFirstInColumn={idx === 0}
+                    isLastInColumn={idx === tasksWithScore.length - 1}
+                  />
+                ))}
+              </div>
+            )}
+          </section>
         );
       })}
     </div>
