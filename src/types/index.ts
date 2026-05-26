@@ -28,6 +28,7 @@ export type PendingMutation = {
   operation: 'insert' | 'update' | 'delete';
   entityId: string;
   payload: any;
+  baseUpdatedAt?: string | null;
   createdAt: string;
   retryCount: number;
 };

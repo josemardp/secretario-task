@@ -81,8 +81,13 @@ export const useTaskStore = create<TaskState>()(
       },
 
       updateTask: (id, updates) => {
-        const { tasks, addTask } = get();
+        const { tasks, mutations, addTask, updateMutation } = get();
         const taskToUpdate = tasks.find(t => t.id === id);
+        const clientEditedAt = new Date().toISOString();
+        const payload = {
+          ...updates,
+          updated_at: clientEditedAt,
+        };
 
         // Se a tarefa está sendo concluída e tem regra de recorrência
         if (
@@ -111,20 +116,39 @@ export const useTaskStore = create<TaskState>()(
 
         set((state) => ({
           tasks: state.tasks.map((t) => 
-            t.id === id ? { ...t, ...updates, updated_at: new Date().toISOString() } : t
+            t.id === id ? { ...t, ...updates, updated_at: clientEditedAt } : t
           )
         }));
+
+        const existingPendingMutation = mutations.find(
+          (m) => m.entity === 'task' &&
+            m.entityId === id &&
+            (m.operation === 'insert' || m.operation === 'update')
+        );
+
+        if (existingPendingMutation) {
+          updateMutation(existingPendingMutation.id, {
+            payload: {
+              ...existingPendingMutation.payload,
+              ...payload,
+            },
+            baseUpdatedAt: existingPendingMutation.baseUpdatedAt ?? taskToUpdate?.updated_at ?? null,
+          });
+          return;
+        }
 
         useTaskStore.getState().addMutation({
           entity: 'task',
           operation: 'update',
           entityId: id,
-          payload: updates
+          payload,
+          baseUpdatedAt: taskToUpdate?.updated_at ?? null
         });
       },
 
       deleteTask: (id) => {
         const now = new Date().toISOString();
+        const taskToDelete = get().tasks.find(t => t.id === id);
         set((state) => ({
           tasks: state.tasks.map((t) => 
             t.id === id ? { ...t, deleted_at: now, updated_at: now } : t
@@ -135,7 +159,8 @@ export const useTaskStore = create<TaskState>()(
           entity: 'task',
           operation: 'delete',
           entityId: id,
-          payload: { deleted_at: now }
+          payload: { deleted_at: now, updated_at: now },
+          baseUpdatedAt: taskToDelete?.updated_at ?? null
         });
       },
 

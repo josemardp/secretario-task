@@ -260,3 +260,9 @@ Alternativas descartadas:
 - Validar apenas no `handleDragEnd` final — descartada por não fornecer feedback estético prévio (o usuário continuaria visualizando a linha azul em slots passados, dando a entender que o drop seria aceito, para só depois receber um aviso ou ter a ação barrada).
 - Recalcular a data a cada segundo (com `setInterval`) — descartada por causar re-renderizações e flutuações de estados de slots perto do limiar atual enquanto o usuário arrasta o card.
 Contexto: Hardening pós-auditoria de UX Mobile-First e melhorias críticas de usabilidade móvel.
+
+## 2026-05-26 — Hardening de sync e tabela `profiles`
+Decisão: aplicar correções de sincronização para tombstones, zero-row updates, lock de processamento da fila, precondição de `updated_at` para updates offline e Realtime como complemento ao polling. Criar `profiles` para persistir a chave OpenAI na nuvem, removendo `aiApiKey` da persistência em localStorage.
+Motivo: a auditoria de sync identificou perda silenciosa de deletes entre dispositivos, mutações tratadas como sucesso sem linha afetada e exposição local da chave OpenAI. A tabela `profiles` já era usada pelo código, mas não existia em migration.
+Alternativas descartadas: manter a chave apenas em localStorage — descartada por exposição de segredo no browser; remover imediatamente todas as features de IA — descartada por fugir do escopo desta correção pontual.
+Contexto: correções BUG-001, BUG-003, BUG-004, BUG-005, BUG-006, BUG-007, BUG-008, BUG-009, BUG-011. BUG-010 foi adiado por solicitação explícita do usuário.
