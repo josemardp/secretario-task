@@ -329,6 +329,23 @@ O `entity_type` permanece como `TEXT` no MVP por simplicidade. Pode ser converti
 
 ---
 
+## Tabela `profiles`
+
+Adicionada no hardening de sync de 2026-05-26 para suportar a chave OpenAI compartilhada entre dispositivos sem persisti-la em localStorage.
+
+```sql
+CREATE TABLE IF NOT EXISTS public.profiles (
+  id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  openai_api_key text,
+  updated_at timestamptz DEFAULT now()
+);
+```
+
+## Observacao de seguranca
+`profiles.openai_api_key` existe para compatibilidade com as funcionalidades de IA ja presentes no app. O cliente nao deve persistir esse valor em localStorage.
+
+---
+
 ## Vocabulário de `operation`
 
 O vocabulário `'insert' | 'update' | 'delete'` é compartilhado entre:
@@ -407,6 +424,18 @@ CREATE POLICY "users_update_own_sync_log" ON sync_log
 ```
 
 `sync_log` permite UPDATE pelo próprio usuário, mas o trigger `sync_log_protect_immutable_trigger` (definido acima) restringe quais campos podem ser alterados. Sem política de DELETE: registros permanecem para auditoria.
+
+## Políticas — `profiles`
+
+```sql
+CREATE POLICY "users can manage own profile"
+  ON public.profiles
+  FOR ALL
+  USING (auth.uid() = id)
+  WITH CHECK (auth.uid() = id);
+```
+
+`profiles` é restrita ao proprio usuario via `auth.uid() = id`.
 
 ---
 

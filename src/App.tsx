@@ -48,16 +48,40 @@ function App() {
     if (!session || !isOnline) return;
 
     const runSync = () =>
-      fetchRemoteTasks().then(() => processSyncQueue());
+      fetchRemoteTasks()
+        .then(() => processSyncQueue())
+        .catch((err) => console.error('[sync] ciclo falhou:', err));
 
-    fetchApiKeyFromCloud().then(key => {
-      if (key) useContextStore.getState().setAiApiKey(key);
-    });
+    fetchApiKeyFromCloud()
+      .then(key => {
+        if (key) useContextStore.getState().setAiApiKey(key);
+      })
+      .catch((err) => console.error('[sync] falha ao carregar API key:', err));
 
     runSync();
     const interval = setInterval(runSync, 30000);
     return () => clearInterval(interval);
   }, [session, isOnline]);
+
+  useEffect(() => {
+    const userId = session?.user.id;
+    if (!userId || !isOnline) return;
+
+    const channel = supabase
+      .channel('tasks-realtime')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'tasks', filter: `user_id=eq.${userId}` },
+        () => {
+          fetchRemoteTasks().catch((err) => console.error('[sync] realtime falhou:', err));
+        }
+      )
+      .subscribe();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [session?.user.id, isOnline]);
 
   return (
     <BrowserRouter>
