@@ -235,6 +235,17 @@ export default function Home() {
           <div className="flex items-center gap-2 shrink-0">
             <InstallPWA />
             <button
+              onClick={() => setFocoOpen(true)}
+              className="relative w-9 h-9 rounded-xl bg-paper2 flex items-center justify-center text-ink active:bg-paper3"
+              aria-label="Abrir Foco do Dia"
+              title="Foco do Dia"
+            >
+              <Target size={16} strokeWidth={2.2} />
+              {briefingTasks.length > 0 && (
+                <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-warning border border-paper2" />
+              )}
+            </button>
+            <button
               onClick={() => setSearchOpen((v) => !v)}
               className="w-9 h-9 rounded-xl bg-paper2 flex items-center justify-center text-ink-2 active:bg-paper3"
               aria-label="Buscar"
@@ -338,19 +349,6 @@ export default function Home() {
           <DashboardView tasks={tasks} />
         )}
       </main>
-
-      {/* ── Foco button (bottom-left) ─────────────────────────────── */}
-      <button
-        onClick={() => setFocoOpen(true)}
-        className="fixed left-4 z-20 w-12 h-12 rounded-full bg-paper border border-line shadow-soft flex items-center justify-center text-ink active:bg-paper2"
-        style={{ bottom: 'calc(64px + 12px + env(safe-area-inset-bottom))' }}
-        aria-label="Abrir Foco do Dia"
-      >
-        <Target size={20} strokeWidth={2.2} />
-        {briefingTasks.length > 0 && (
-          <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-warning border-2 border-paper" />
-        )}
-      </button>
 
       {/* ── Capture bar ──────────────────────────────────────────── */}
       <form
