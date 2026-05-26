@@ -1,6 +1,6 @@
 # STATUS.md — SecretárioTask
 
-Última atualização: 2026-05-25
+Última atualização: 2026-05-26
 
 ---
 
@@ -52,7 +52,7 @@ A auditoria de UX Mobile-First e o hardening do Progressive Web App (PWA) foram 
 
 # Próximo passo concreto
 
-Monitorar o aplicativo em produção real, coletar feedbacks de uso do dia a dia e se preparar para as integrações inteligentes futuras planejadas para a v1.1+.
+Monitorar o aplicativo em produção real, coletar feedbacks de uso do dia a dia e se preparar para as integrações inteligentes futuras planejadas para a v1.1+. *(Nota: Ajustada duplicação visual de tarefas longas na Agenda em 2026-05-26).*
 
 ---
 
