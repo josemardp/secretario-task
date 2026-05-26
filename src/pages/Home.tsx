@@ -105,11 +105,13 @@ export default function Home() {
   const todayCount = useMemo(() => {
     const start = new Date(); start.setHours(0, 0, 0, 0);
     const end   = new Date(); end.setHours(23, 59, 59, 999);
-    return tasks.filter(t =>
+    const filtered = tasks.filter(t =>
       !t.deleted_at &&
       t.status !== 'done' &&
       t.due_at && new Date(t.due_at) >= start && new Date(t.due_at) <= end
-    ).length;
+    );
+    console.log("todayCount tasks:", filtered.map(t => ({ id: t.id, title: t.title, status: t.status, due_at: t.due_at })));
+    return filtered.length;
   }, [tasks]);
 
   const handleTaskSubmit = async (e: React.FormEvent) => {
