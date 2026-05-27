@@ -330,13 +330,13 @@ export function TimelineView({ tasks, overSlotId, dragStartTime }: TimelineViewP
     const task = tasks.find(t => t.id === taskId);
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(23, 59, 59, 999);
+    tomorrow.setHours(9, 0, 0, 0);
     updateTask(taskId, { due_at: tomorrow.toISOString(), postponed_count: (task?.postponed_count || 0) + 1 });
   };
 
   const handlePostponeDate = (taskId: string, dateString: string) => {
     const task = tasks.find(t => t.id === taskId);
-    const selected = new Date(dateString + 'T23:59:59');
+    const selected = new Date(dateString + 'T09:00:00');
     updateTask(taskId, { due_at: selected.toISOString(), postponed_count: (task?.postponed_count || 0) + 1 });
   };
 
