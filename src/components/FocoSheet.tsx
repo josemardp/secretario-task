@@ -1,13 +1,13 @@
-import { useState } from 'react';
 import { Sparkles, Clock, Flag, ArrowRight, X } from 'lucide-react';
 import type { Task, ContextType } from '../types';
-import { useContextStore } from '../stores/contextStore';
-import { generateSmartBriefing } from '../lib/ai';
 
 interface FocoSheetProps {
   isOpen: boolean;
   onClose: () => void;
   topTasks: Task[];
+  briefingText: string | null;
+  isGeneratingBriefing: boolean;
+  onGenerateBriefing: () => void;
   onStartTop1?: (task: Task) => void;
 }
 
@@ -34,32 +34,19 @@ function formatTimeRange(task: Task): string {
   return `${fmt(start)} – ${fmt(end)}`;
 }
 
-export function FocoSheet({ isOpen, onClose, topTasks, onStartTop1 }: FocoSheetProps) {
-  const { currentEnergy, aiApiKey } = useContextStore();
-  const [briefingText, setBriefingText] = useState<string | null>(null);
-  const [isGenerating, setIsGenerating] = useState(false);
-
+export function FocoSheet({
+  isOpen,
+  onClose,
+  topTasks,
+  briefingText,
+  isGeneratingBriefing,
+  onGenerateBriefing,
+  onStartTop1,
+}: FocoSheetProps) {
   if (!isOpen) return null;
 
   const top1 = topTasks[0];
   const rest = topTasks.slice(1, 3);
-
-  const handleBriefing = async () => {
-    if (!aiApiKey) {
-      alert('Configure a chave da OpenAI nas configurações primeiro.');
-      return;
-    }
-    setIsGenerating(true);
-    try {
-      const text = await generateSmartBriefing(topTasks, currentEnergy, aiApiKey);
-      setBriefingText(text);
-    } catch (err) {
-      console.error(err);
-      alert('Não consegui gerar o briefing agora. Tenta de novo.');
-    } finally {
-      setIsGenerating(false);
-    }
-  };
 
   return (
     <div className="fixed inset-0 z-50 animate-fade-in" onClick={onClose}>
@@ -87,12 +74,12 @@ export function FocoSheet({ isOpen, onClose, topTasks, onStartTop1 }: FocoSheetP
           </div>
           <div className="flex items-center gap-2">
             <button
-              onClick={handleBriefing}
-              disabled={isGenerating}
+              onClick={onGenerateBriefing}
+              disabled={isGeneratingBriefing}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-ink text-white text-[11px] font-extrabold disabled:opacity-50"
             >
               <Sparkles size={12} strokeWidth={2.2} />
-              {isGenerating ? 'Pensando…' : 'Briefing'}
+              {isGeneratingBriefing ? 'Pensando…' : 'Briefing'}
             </button>
             <button
               onClick={onClose}

@@ -21,7 +21,7 @@ import { SettingsModal } from '../components/SettingsModal';
 import { InstallPWA } from '../components/InstallPWA';
 import { NotificationEngine } from '../components/NotificationEngine';
 import { FocoSheet } from '../components/FocoSheet';
-import { getDailyBriefing } from '../lib/briefing';
+import { generateBriefingFromTopTasks, getDailyBriefing } from '../lib/briefing';
 import type { Task } from '../types';
 
 function getGreeting(): string {
@@ -53,8 +53,12 @@ export default function Home() {
   const [overSlotId, setOverSlotId] = useState<string | null>(null);
   const [dragStartTime, setDragStartTime] = useState<Date | null>(null);
   const [focoOpen, setFocoOpen] = useState(false);
+  const [briefingText, setBriefingText] = useState<string | null>(null);
+  const [isGeneratingBriefing, setIsGeneratingBriefing] = useState(false);
 
-  const { tasks, addTask, updateTask } = useTaskStore();
+  const tasks = useTaskStore((s) => s.tasks);
+  const addTask = useTaskStore((s) => s.addTask);
+  const updateTask = useTaskStore((s) => s.updateTask);
   const { activeContext, currentEnergy, setCurrentEnergy, aiApiKey } = useContextStore();
 
   const isTaskForToday = (dueAt: string | null) => {
@@ -107,14 +111,31 @@ export default function Home() {
     handle();
   }, [audioBlob, aiApiKey, clearAudio]);
 
-  const briefingTasks = useMemo(
-    () => getDailyBriefing(tasks, currentEnergy, activeContext, 3),
-    [tasks, currentEnergy, activeContext]
-  );
+  const briefingTasks = useMemo(() => {
+    return getDailyBriefing(tasks, currentEnergy, activeContext, 3);
+  }, [tasks, currentEnergy, activeContext]);
 
   const todayCount = useMemo(() => {
     return tasks.filter((t) => !t.deleted_at && t.status !== 'done' && isTaskForToday(t.due_at)).length;
   }, [tasks]);
+
+  const handleGenerateBriefing = async () => {
+    if (!aiApiKey) {
+      alert('Configure a chave da OpenAI nas configurações primeiro.');
+      return;
+    }
+
+    setIsGeneratingBriefing(true);
+    try {
+      const text = await generateBriefingFromTopTasks(briefingTasks, currentEnergy, aiApiKey);
+      setBriefingText(text);
+    } catch (err) {
+      console.error(err);
+      alert('Não consegui gerar o briefing agora. Tenta de novo.');
+    } finally {
+      setIsGeneratingBriefing(false);
+    }
+  };
 
   const handleTaskSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -226,6 +247,9 @@ export default function Home() {
         isOpen={focoOpen}
         onClose={() => setFocoOpen(false)}
         topTasks={briefingTasks}
+        briefingText={briefingText}
+        isGeneratingBriefing={isGeneratingBriefing}
+        onGenerateBriefing={handleGenerateBriefing}
         onStartTop1={(t) => {
           updateTask(t.id, { status: 'doing', started_at: new Date().toISOString() });
           setFocoOpen(false);
