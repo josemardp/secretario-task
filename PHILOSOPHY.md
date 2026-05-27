@@ -241,9 +241,9 @@ Tokens e autenticação:
 - não devem circular em stores globais sem necessidade
 
 Método oficial de autenticação:
-- magic link (email OTP) via Supabase Auth
-- sem gestão manual de senha
+- e-mail e senha (signInWithPassword) via Supabase Auth
 - sem token customizado
+- sessão gerenciada exclusivamente pelo Supabase Client
 
 ---
 
@@ -340,7 +340,7 @@ Toda evolução futura deve preservar:
 - offline básico
 - fila offline de mutações
 - persistência local
-- autenticação por magic link
+- autenticação por e-mail e senha (signInWithPassword)
 
 ## O MVP NÃO inclui
 - LLM

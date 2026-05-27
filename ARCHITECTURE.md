@@ -78,13 +78,12 @@ PostgreSQL + Auth + RLS
 # Autenticação
 
 ## Método oficial
-Magic link (email OTP) via Supabase Auth: `supabase.auth.signInWithOtp({ email })`.
+E-mail e senha via Supabase Auth: `supabase.auth.signInWithPassword({ email, password })`.
 
 ## Fluxo
-1. Usuário insere e-mail na tela de login
-2. Supabase envia link único para o e-mail
-3. Usuário clica no link, sessão é estabelecida
-4. Sessão é gerenciada exclusivamente pelo Supabase Client
+1. Usuário insere e-mail e senha na tela de login
+2. Supabase valida as credenciais e estabelece a sessão
+3. Sessão é gerenciada exclusivamente pelo Supabase Client
 
 ## Regras
 - não copiar tokens manualmente para `localStorage`
@@ -94,7 +93,8 @@ Magic link (email OTP) via Supabase Auth: `supabase.auth.signInWithOtp({ email }
 
 ## Justificativa
 - usuário único do MVP é o próprio dev
-- sem senha = sem tela de recuperação, sem armazenamento sensível
+- senha é mais ágil: não depende de chegada de e-mail, alinhado com P1 (execução acima de tudo)
+- Supabase configurado: Email provider habilitado, Confirm email ON
 - migração para multi-usuário no pós-MVP é trivial
 
 ---

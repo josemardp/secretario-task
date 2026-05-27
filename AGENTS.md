@@ -97,7 +97,7 @@ Versões pinadas para preservar previsibilidade. Mudança de versão major deve 
 # Autenticação
 
 ## Método oficial
-Magic link (email OTP) via Supabase Auth: `supabase.auth.signInWithOtp({ email })`.
+E-mail e senha via Supabase Auth: `supabase.auth.signInWithPassword({ email, password })`.
 
 ## Regras
 - não copiar tokens manualmente para `localStorage` ou `sessionStorage`
