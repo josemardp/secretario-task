@@ -57,6 +57,16 @@ export default function Home() {
   const { tasks, addTask, updateTask } = useTaskStore();
   const { activeContext, currentEnergy, setCurrentEnergy, aiApiKey } = useContextStore();
 
+  const isTaskForToday = (dueAt: string | null) => {
+    if (!dueAt) return false;
+    const due = new Date(dueAt);
+    const start = new Date();
+    start.setHours(0, 0, 0, 0);
+    const end = new Date();
+    end.setHours(23, 59, 59, 999);
+    return due >= start && due <= end;
+  };
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(TouchSensor,   { activationConstraint: { delay: 250, tolerance: 5 } })
@@ -103,15 +113,7 @@ export default function Home() {
   );
 
   const todayCount = useMemo(() => {
-    const start = new Date(); start.setHours(0, 0, 0, 0);
-    const end   = new Date(); end.setHours(23, 59, 59, 999);
-    const filtered = tasks.filter(t =>
-      !t.deleted_at &&
-      t.status !== 'done' &&
-      t.due_at && new Date(t.due_at) >= start && new Date(t.due_at) <= end
-    );
-    console.log("todayCount tasks:", filtered.map(t => ({ id: t.id, title: t.title, status: t.status, due_at: t.due_at })));
-    return filtered.length;
+    return tasks.filter((t) => !t.deleted_at && t.status !== 'done' && isTaskForToday(t.due_at)).length;
   }, [tasks]);
 
   const handleTaskSubmit = async (e: React.FormEvent) => {
@@ -190,9 +192,19 @@ export default function Home() {
 
   const clearSearch = () => { setSearchText(''); setSemanticResults(null); };
 
-  const displayedTasks = semanticResults
-    ? tasks.filter(t => semanticResults.some(r => r.id === t.id))
-    : tasks.filter(t => searchText ? t.title.toLowerCase().includes(searchText.toLowerCase()) : true);
+  const baseVisibleTasks = useMemo(() => {
+    const activeTasks = tasks.filter((t) => !t.deleted_at);
+    if (semanticResults) {
+      return activeTasks.filter((t) => semanticResults.some((r) => r.id === t.id));
+    }
+    if (!searchText) return activeTasks;
+    return activeTasks.filter((t) => t.title.toLowerCase().includes(searchText.toLowerCase()));
+  }, [tasks, semanticResults, searchText]);
+
+  const tasksForTodayView = useMemo(
+    () => baseVisibleTasks.filter((t) => isTaskForToday(t.due_at)),
+    [baseVisibleTasks]
+  );
 
   return (
     <div
@@ -329,7 +341,7 @@ export default function Home() {
         <BehavioralSuggestion tasks={tasks} />
 
         {viewMode === 'kanban' ? (
-          <TaskBoard tasks={displayedTasks} />
+          <TaskBoard tasks={tasksForTodayView} />
         ) : viewMode === 'timeline' ? (
           <DndContext
             sensors={sensors}
@@ -345,7 +357,7 @@ export default function Home() {
               setDragStartTime(null);
             }}
           >
-            <TimelineView tasks={displayedTasks} overSlotId={overSlotId} dragStartTime={dragStartTime} />
+            <TimelineView tasks={baseVisibleTasks} overSlotId={overSlotId} dragStartTime={dragStartTime} />
           </DndContext>
         ) : (
           <DashboardView tasks={tasks} />

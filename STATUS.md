@@ -1,6 +1,6 @@
 # STATUS.md — SecretárioTask
 
-Última atualização: 2026-05-26
+Última atualização: 2026-05-27
 
 ---
 
@@ -57,7 +57,7 @@ A auditoria de UX Mobile-First e o hardening do Progressive Web App (PWA) foram 
 
 # Próximo passo concreto
 
-Validar sync desktop/mobile em uso real. (BUG-010 segue intencionalmente adiado.)
+Validar manualmente o fluxo Hoje↔Agenda: concluir, adiar e editar tarefas em ambas as abas sem reload.
 
 ---
 
