@@ -33,6 +33,7 @@ Todos os épicos de refinamento de PWA e melhorias críticas de UX Mobile-First 
 # Progresso dentro do sprint atual
 
 A auditoria de UX Mobile-First e o hardening do Progressive Web App (PWA) foram executados perfeitamente, resolvendo problemas de safe-area, auto-zoom no iOS Safari, compactação de telas menores de 384px, e hierarquias visuais da agenda e do Foco do Dia.
+Foi aplicado também o ajuste operacional do Foco/TOP 3 para comportamento reativo em tempo real, com briefing sob demanda baseado no TOP 3 vigente no clique.
 
 ## Checklist
 - [x] Pré-requisitos críticos (Viewport fit cover & PWA event listener cleanup).
@@ -52,12 +53,13 @@ A auditoria de UX Mobile-First e o hardening do Progressive Web App (PWA) foram 
 - [x] Senha do banco rotacionada.
 - [x] BUG-010 encerrado como won't fix — autenticação por e-mail e senha mantida intencionalmente (decisão registrada em DECISIONS.md).
 - [x] Documentação alinhada com o código real (magic link → e-mail e senha).
+- [x] Correção do Foco/TOP 3: tarefas sem `due_at` passam a entrar no Top 3; briefing permanece estático até clique e gera com o Top 3 atual.
 
 ---
 
 # Próximo passo concreto
 
-Validar manualmente o fluxo Hoje↔Agenda: concluir, adiar e editar tarefas em ambas as abas sem reload.
+Executar validação manual final do Foco: concluir TOP 1, confirmar recomputação imediata do TOP 3 e regenerar Briefing para conferir uso do ranking atualizado.
 
 ---
 
