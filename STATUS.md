@@ -53,13 +53,13 @@ A auditoria de UX Mobile-First e o hardening do Progressive Web App (PWA) foram 
 
 # Próximo passo concreto
 
-Aplicar as migrations `0005_add_postponed_count.sql` e `0006_create_profiles.sql` no Supabase, rotacionar a senha exposta anteriormente e validar sync desktop/mobile em uso real. *(BUG-010 segue intencionalmente adiado.)*
+Validar sync desktop/mobile em uso real. (BUG-010 segue intencionalmente adiado.)
 
 ---
 
 # Bloqueios em aberto
 
-Pendente operacional: rotacionar a senha do banco exposta no historico Git e aplicar as migrations novas no ambiente Supabase.
+Nenhum bloqueio em aberto.
 
 ---
 
