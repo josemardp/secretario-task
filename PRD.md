@@ -70,17 +70,17 @@ Detalhes técnicos completos da stack, incluindo justificativa para versões pin
 # Autenticação
 
 ## Método oficial
-Magic link (email OTP) via Supabase Auth.
+E-mail e senha via Supabase Auth (`signInWithPassword`).
 
 ## Fluxo
-1. usuário insere e-mail
-2. recebe link único por e-mail
-3. clica no link → sessão estabelecida
+1. usuário insere e-mail e senha
+2. Supabase valida as credenciais → sessão estabelecida
 
 ## Justificativa
 - usuário único do MVP é o próprio dev
-- sem senha, sem tela de recuperação
-- baixa fricção operacional
+- senha é mais ágil: sem dependência de chegada de e-mail
+- alinhado com P1 (execução acima de tudo)
+- Supabase configurado: Email provider Enabled, Confirm email ON
 - migração para multi-usuário no pós-MVP é trivial
 
 ---
@@ -111,7 +111,7 @@ CREATE TYPE context_type AS ENUM (
 # Funcionalidades do MVP
 
 ## Inclusas no MVP
-- autenticação (magic link)
+- autenticação (e-mail e senha)
 - CRUD de tarefas
 - soft delete (via `deleted_at`)
 - board simples
@@ -415,7 +415,7 @@ Soft delete via `deleted_at` previne "ressurreição" de registros em conflitos 
 
 ## Sprint 1 — Fundação
 - scaffold (React 19 + Vite 6 + TS 5 + Tailwind 3)
-- auth (magic link)
+- auth (e-mail e senha)
 - banco (`tasks`, `task_events`, `sync_log` aplicados, com CHECK constraints, `due_at`, `deleted_at`, triggers)
 - `vercel.json` com rewrite SPA
 - home mínima
@@ -503,7 +503,7 @@ O MVP será considerado bem-sucedido se:
 # Nota de Consolidação
 
 Documento revisado em 2026-05-12 após auditoria técnica que identificou bloqueantes e refinamentos:
-- método de autenticação definido (magic link)
+- método de autenticação definido (e-mail e senha — signInWithPassword)
 - campo `due_at` adicionado a `tasks`
 - soft delete via `deleted_at`
 - CHECK constraints em `priority`, `energy`, `task_events.type`

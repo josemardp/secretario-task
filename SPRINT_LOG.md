@@ -30,7 +30,7 @@ Construir a fundação técnica inicial do projeto com autenticação, persistê
 - Supabase configurado (Supabase JS 2)
 - `.env.example` versionado, `.env` no `.gitignore`
 - `vercel.json` na raiz com rewrite SPA
-- Fluxo de login funcional via magic link (`supabase.auth.signInWithOtp`)
+- Fluxo de login funcional via e-mail e senha (`supabase.auth.signInWithPassword`)
 - Estrutura inicial com Zustand 5
 - Persistência local via `zustand/middleware/persist` (localStorage)
 - Fila offline de mutações (`PendingMutation[]`) no `taskStore`
@@ -103,7 +103,7 @@ Para schemas SQL completos (incluindo triggers e índices parciais), consultar `
 
 ## Critérios de conclusão
 - Aplicação inicia corretamente
-- Login funcional via magic link
+- Login funcional via e-mail e senha (signInWithPassword)
 - Banco conectado, três tabelas aplicadas com CHECK constraints e triggers
 - Estrutura base operacional pronta
 - Captura simples funcionando

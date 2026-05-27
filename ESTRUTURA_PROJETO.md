@@ -167,7 +167,7 @@ Sem `vercel.json`, rotas profundas (`/board`, `/login`, etc.) retornam 404 em re
 
 Responsável por:
 - conexão Supabase
-- autenticação via magic link
+- autenticação via e-mail e senha (signInWithPassword)
 - exportação do client único
 - configuração base do Supabase Client
 
@@ -319,7 +319,7 @@ Responsável por:
 - estado de login
 
 ## Método oficial
-Magic link (email OTP) via `supabase.auth.signInWithOtp({ email })`.
+E-mail e senha via `supabase.auth.signInWithPassword({ email, password })`.
 
 ## Regras
 - evitar armazenamento manual de tokens

@@ -1,6 +1,6 @@
 # DECISIONS.md — SecretárioTask
 
-Última atualização: 2026-05-12
+Última atualização: 2026-05-26
 Status: registro vivo de decisões técnicas e operacionais
 
 ---
@@ -86,14 +86,25 @@ Contexto: auditoria pré-Sprint 1.
 
 As decisões abaixo foram tomadas durante a segunda rodada de auditoria, que identificou bloqueantes e refinamentos técnicos não cobertos pela consolidação anterior.
 
-## 2026-05-12 — Método de autenticação: magic link (email OTP)
-Decisão: autenticação via magic link do Supabase (`supabase.auth.signInWithOtp`). Usuário insere e-mail, recebe link, clica e está logado. Sem senha.
-Motivo: usuário único do MVP é o próprio dev; gestão de senha adiciona fricção sem ganho; OAuth Google exige configuração adicional no Supabase e Google Cloud; auth anônima dificulta migração para multi-usuário no pós-MVP.
-Alternativas descartadas:
-- Email + senha — descartada por fricção e necessidade de tela de recuperação de senha.
-- OAuth Google — descartada por overhead de configuração no MVP solo.
-- Autenticação anônima — descartada por dificultar acesso multi-dispositivo.
-Contexto: pré-Sprint 1. Bloqueante identificado na auditoria de 2026-05-12.
+## 2026-05-12 — Método de autenticação: magic link (email OTP) ⚠️ REVISADO em 2026-05-26
+~~Decisão: autenticação via magic link do Supabase (`supabase.auth.signInWithOtp`). Usuário insere e-mail, recebe link, clica e está logado. Sem senha.~~
+Esta decisão foi revogada. Ver entrada de 2026-05-26 abaixo.
+Contexto original: pré-Sprint 1. Bloqueante identificado na auditoria de 2026-05-12.
+
+## 2026-05-26 — Método de autenticação revisado: e-mail e senha
+
+Contexto: a decisão original (2026-05-12) especificava magic link,
+mas a implementação real (Sprint 1) usou signInWithPassword.
+O código nunca implementou signInWithOtp em nenhum momento.
+
+Decisão: manter e-mail e senha como método oficial.
+Motivo: uso pessoal de app operacional — senha é mais ágil,
+sem dependência de chegada de e-mail, alinhado com P1 (execução
+acima de tudo). Magic link aumentaria fricção no uso diário.
+Supabase configurado: Email provider Enabled, Confirm email ON.
+
+Impacto: nenhum no código. Apenas documentação atualizada.
+BUG-010 encerrado como won't fix — decisão de produto intencional.
 
 ## 2026-05-12 — Campo `due_at` adicionado em `tasks`
 Decisão: adicionar `due_at TIMESTAMPTZ NULL` na tabela `tasks` desde o Sprint 1. Campo é opcional (nullable) e populado pelo parser quando expressões temporais forem detectadas ("amanhã", "hoje", "depois de amanhã", "14h", etc).

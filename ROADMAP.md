@@ -33,7 +33,7 @@ Estabelecer a base técnica do projeto com autenticação, persistência inicial
 - Integração inicial com Supabase (Supabase JS 2)
 - `.env.example` versionado, `.env` no `.gitignore`
 - `vercel.json` na raiz com rewrite SPA
-- Fluxo de autenticação via magic link (email OTP)
+- Fluxo de autenticação via e-mail e senha (signInWithPassword)
 - Estrutura inicial de stores com Zustand 5
 - Persistência local via `zustand/middleware/persist` (localStorage)
 - Fila offline de mutações (`PendingMutation[]`) implementada no `taskStore`
@@ -63,7 +63,7 @@ A `sync_log` é criada já no Sprint 1, mas seu uso operacional (LWW, retry, obs
 
 ## Critério de conclusão
 - Aplicação inicia corretamente
-- Login funcional (magic link)
+- Login funcional (e-mail e senha)
 - Banco conectado, três tabelas aplicadas com constraints e triggers
 - Persistência local funcional
 - Estrutura base operacional pronta

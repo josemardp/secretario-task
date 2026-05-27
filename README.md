@@ -68,7 +68,7 @@ Detalhes completos no `AGENTS.md`, seção "Protocolo de Trabalho".
 - Estado: Zustand 5 (com `persist` em localStorage)
 - Backend: Supabase (Supabase JS 2 + PostgreSQL + Auth + RLS)
 - Deploy: Vercel (com `vercel.json` rewrite SPA)
-- Auth: magic link (email OTP)
+- Auth: e-mail e senha (signInWithPassword)
 
 Versões pinadas para preservar previsibilidade. Detalhes em `ARCHITECTURE.md`.
 
@@ -76,7 +76,7 @@ Versões pinadas para preservar previsibilidade. Detalhes em `ARCHITECTURE.md`.
 
 # Sprints do MVP
 
-1. **Sprint 1 — Fundação:** scaffold, auth (magic link), banco completo (`tasks`, `task_events`, `sync_log` com constraints e triggers), captura offline básica, fila offline (`PendingMutation[]`), `vercel.json`
+1. **Sprint 1 — Fundação:** scaffold, auth (e-mail e senha), banco completo (`tasks`, `task_events`, `sync_log` com constraints e triggers), captura offline básica, fila offline (`PendingMutation[]`), `vercel.json`
 2. **Sprint 2 — CRUD + Parser:** CRUD com soft delete, parser determinístico (interpreta `due_at`), board
 3. **Sprint 3 — Ranking Engine:** priorização determinística (com `due_at` e energia compatível com usuário)
 4. **Sprint 4 — Briefing + UX:** briefing determinístico (com throttling de `viewed`), refinos de UX
