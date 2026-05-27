@@ -13,15 +13,27 @@ interface SettingsModalProps {
 export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const { aiApiKey, setAiApiKey } = useContextStore();
   const [apiKeyInput, setApiKeyInput] = useState(aiApiKey || '');
+  const [saveError, setSaveError] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
   const { permission, requestPermission } = useNotifications();
 
   if (!isOpen) return null;
 
   const handleSave = async () => {
     const key = apiKeyInput.trim() || null;
-    setAiApiKey(key);
-    await saveApiKeyToCloud(key);
-    onClose();
+    setSaveError('');
+    setIsSaving(true);
+
+    try {
+      await saveApiKeyToCloud(key);
+      setAiApiKey(key);
+      onClose();
+    } catch (err) {
+      console.error('Erro ao salvar chave:', err);
+      setSaveError('Nao foi possivel salvar a chave agora. Tente novamente.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -85,6 +97,11 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               placeholder="sk-proj-…"
               className="w-full bg-paper2 rounded-xl px-3 py-2.5 text-[13px] text-ink outline-none border-0 placeholder:text-ink-3 tnum"
             />
+            {saveError && (
+              <p className="mt-2 text-[11px] font-semibold text-danger">
+                {saveError}
+              </p>
+            )}
           </section>
 
           {/* Notifications */}
@@ -152,9 +169,10 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           </button>
           <button
             onClick={handleSave}
+            disabled={isSaving}
             className="flex-1 h-11 rounded-xl bg-ink text-[13px] font-extrabold text-white"
           >
-            Salvar
+            {isSaving ? 'Salvando...' : 'Salvar'}
           </button>
         </div>
       </div>

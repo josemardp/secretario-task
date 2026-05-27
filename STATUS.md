@@ -1,6 +1,6 @@
 # STATUS.md — SecretárioTask
 
-Última atualização: 2026-05-25
+Última atualização: 2026-05-26
 
 ---
 
@@ -47,18 +47,19 @@ A auditoria de UX Mobile-First e o hardening do Progressive Web App (PWA) foram 
 - [x] Substituição do Drag-and-Drop nativo do HTML5 por @dnd-kit em TimelineView.tsx para touch móvel.
 - [x] Adicionado feedback visual linear de drag-and-drop (Estilo C - Trello/Linear) e contraste nos slots inativos na Agenda.
 - [x] Implementado bloqueio nativo (useDroppable disabled) e esmaecimento para slots passados na Agenda.
+- [x] Aplicado hardening de sync: tombstones, zero-row updates, lock da fila, Realtime, profiles, postponed_count e API key fora do localStorage. BUG-010 adiado por solicitacao explicita.
 
 ---
 
 # Próximo passo concreto
 
-Monitorar o aplicativo em produção real, coletar feedbacks de uso do dia a dia e se preparar para as integrações inteligentes futuras planejadas para a v1.1+.
+Aplicar as migrations `0005_add_postponed_count.sql` e `0006_create_profiles.sql` no Supabase, rotacionar a senha exposta anteriormente e validar sync desktop/mobile em uso real. *(BUG-010 segue intencionalmente adiado.)*
 
 ---
 
 # Bloqueios em aberto
 
-Nenhum. Sistema operacional e UX 100% polida nos viewports alvo (360px - 390px).
+Pendente operacional: rotacionar a senha do banco exposta no historico Git e aplicar as migrations novas no ambiente Supabase.
 
 ---
 
