@@ -23,6 +23,10 @@ export const useContextStore = create<ContextState>()(
     }),
     {
       name: 'secretario-task:context-store',
+      partialize: (state) => ({
+        activeContext: state.activeContext,
+        currentEnergy: state.currentEnergy,
+      }),
     }
   )
 );
