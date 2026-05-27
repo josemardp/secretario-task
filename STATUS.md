@@ -48,6 +48,10 @@ A auditoria de UX Mobile-First e o hardening do Progressive Web App (PWA) foram 
 - [x] Adicionado feedback visual linear de drag-and-drop (Estilo C - Trello/Linear) e contraste nos slots inativos na Agenda.
 - [x] Implementado bloqueio nativo (useDroppable disabled) e esmaecimento para slots passados na Agenda.
 - [x] Aplicado hardening de sync: tombstones, zero-row updates, lock da fila, Realtime, profiles, postponed_count e API key fora do localStorage. BUG-010 adiado por solicitacao explicita.
+- [x] Migrations 0005 e 0006 aplicadas no Supabase.
+- [x] Senha do banco rotacionada.
+- [x] BUG-010 encerrado como won't fix — autenticação por e-mail e senha mantida intencionalmente (decisão registrada em DECISIONS.md).
+- [x] Documentação alinhada com o código real (magic link → e-mail e senha).
 
 ---
 
