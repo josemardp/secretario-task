@@ -1,6 +1,6 @@
 # DECISIONS.md — SecretárioTask
 
-Última atualização: 2026-05-26
+Última atualização: 2026-05-31
 Status: registro vivo de decisões técnicas e operacionais
 
 ---
@@ -277,3 +277,9 @@ Decisão: aplicar correções de sincronização para tombstones, zero-row updat
 Motivo: a auditoria de sync identificou perda silenciosa de deletes entre dispositivos, mutações tratadas como sucesso sem linha afetada e exposição local da chave OpenAI. A tabela `profiles` já era usada pelo código, mas não existia em migration.
 Alternativas descartadas: manter a chave apenas em localStorage — descartada por exposição de segredo no browser; remover imediatamente todas as features de IA — descartada por fugir do escopo desta correção pontual.
 Contexto: correções BUG-001, BUG-003, BUG-004, BUG-005, BUG-006, BUG-007, BUG-008, BUG-009, BUG-011. BUG-010 foi adiado por solicitação explícita do usuário.
+
+## 2026-05-31 — Imutabilidade de `tasks.created_at` no trigger
+Decisão: o trigger de atualização de tarefas força `NEW.created_at = OLD.created_at` antes de gravar qualquer `UPDATE`.
+Motivo: `created_at` representa a criação original da tarefa e deve permanecer imutável mesmo se um cliente antigo, uma mutação offline ou uma operação manual enviar esse campo no payload. O banco é a última barreira de proteção para preservar a auditoria temporal.
+Alternativas descartadas: confiar apenas na sanitização do cliente — descartada por não cobrir clientes desatualizados, bugs futuros ou operações diretas no banco; negar updates que enviem `created_at` — descartada por ser mais frágil operacionalmente e poder quebrar sync legado sem necessidade.
+Contexto: implementação da migration `0007_created_updated_at_tasks.sql` e exibição discreta de criação/última edição das tarefas.
