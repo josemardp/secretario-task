@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { rescheduleToDate, postponeToTomorrow } from '../lib/datetime';
+import { formatDateTime, rescheduleToDate, postponeToTomorrow, wasEdited } from '../lib/datetime';
 import type { Task, TaskStatus, ContextType } from '../types';
 import { CONTEXTS_LIST } from '../types';
 import { useTaskStore } from '../stores/taskStore';
@@ -233,6 +233,15 @@ function TaskRow({
               </button>
             </div>
           </div>
+
+          {task.created_at && (
+            <div className="text-xs text-gray-400 mt-3 space-y-0.5">
+              <p>Criada em {formatDateTime(task.created_at)}</p>
+              {wasEdited(task.created_at, task.updated_at) && (
+                <p>Editada em {formatDateTime(task.updated_at)}</p>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>

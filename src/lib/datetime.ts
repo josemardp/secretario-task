@@ -79,3 +79,16 @@ function applyTimeFromOriginalOrDefault(
   const slot = nextDefaultDueTime(now);
   target.setHours(slot.getHours(), slot.getMinutes(), 0, 0);
 }
+
+export function formatDateTime(iso: string): string {
+  const d = new Date(iso);
+  return (
+    d.toLocaleDateString('pt-BR') +
+    ' às ' +
+    d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+  );
+}
+
+export function wasEdited(created_at: string, updated_at: string): boolean {
+  return Math.abs(new Date(updated_at).getTime() - new Date(created_at).getTime()) > 60_000;
+}

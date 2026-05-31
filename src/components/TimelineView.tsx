@@ -1,5 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
-import { rescheduleToDate, postponeToTomorrow } from '../lib/datetime';
+import { formatDateTime, rescheduleToDate, postponeToTomorrow, wasEdited } from '../lib/datetime';
 import { useDraggable, useDroppable, useDndMonitor } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { Calendar as CalIcon, Flag, Repeat, X, Edit3, Trash2 } from 'lucide-react';
@@ -674,6 +674,15 @@ export function TimelineView({ tasks, overSlotId, dragStartTime }: TimelineViewP
                 Salvar
               </button>
             </div>
+
+            {editingTask.created_at && (
+              <div className="text-xs text-gray-400 mt-3 space-y-0.5">
+                <p>Criada em {formatDateTime(editingTask.created_at)}</p>
+                {wasEdited(editingTask.created_at, editingTask.updated_at) && (
+                  <p>Editada em {formatDateTime(editingTask.updated_at)}</p>
+                )}
+              </div>
+            )}
           </div>
         </div>
       )}
