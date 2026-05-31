@@ -152,8 +152,8 @@ CREATE TABLE tasks (
   status task_status DEFAULT 'todo',
   due_at TIMESTAMPTZ,
   deleted_at TIMESTAMPTZ,
-  created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now(),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   estimated_minutes INTEGER,
   actual_minutes INTEGER,
   started_at TIMESTAMPTZ,
@@ -187,26 +187,28 @@ CREATE TABLE tasks (
 - todas as queries do MVP devem filtrar `WHERE deleted_at IS NULL`
 - previne "ressurreição" de registros em conflitos LWW (delete em um device + edit em outro)
 
+## Campos `created_at` e `updated_at`
+
+`created_at` registra a criação original da tarefa e é imutável. `updated_at` é atualizado automaticamente pelo banco a cada `UPDATE`. O cliente pode preencher ambos ao criar tarefa localmente para suportar offline imediato, mas nunca envia `created_at` nem `updated_at` em payloads de `UPDATE`.
+
 ## Trigger para `updated_at`
 
 ```sql
-CREATE OR REPLACE FUNCTION update_updated_at_column()
-RETURNS TRIGGER AS $$
+CREATE OR REPLACE FUNCTION set_updated_at()
+RETURNS TRIGGER LANGUAGE plpgsql AS $$
 BEGIN
+  NEW.created_at = OLD.created_at;
   NEW.updated_at = now();
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$;
+
+CREATE TRIGGER tasks_set_updated_at
+  BEFORE UPDATE ON tasks
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 ```
 
-```sql
-CREATE TRIGGER tasks_updated_at
-BEFORE UPDATE ON tasks
-FOR EACH ROW
-EXECUTE FUNCTION update_updated_at_column();
-```
-
-**Observação:** o trigger deve ser criado imediatamente após `CREATE TABLE tasks`, na mesma migração.
+**Observação:** em bancos criados antes da migration `0007`, o trigger antigo `tasks_updated_at` é removido e substituído por `tasks_set_updated_at`.
 
 ## Índices recomendados
 

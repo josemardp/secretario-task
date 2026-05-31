@@ -84,10 +84,9 @@ export const useTaskStore = create<TaskState>()(
         const { tasks, mutations, addTask, updateMutation } = get();
         const taskToUpdate = tasks.find(t => t.id === id);
         const clientEditedAt = new Date().toISOString();
-        const payload = {
-          ...updates,
-          updated_at: clientEditedAt,
-        };
+        const payload = { ...updates };
+        delete payload.created_at;
+        delete payload.updated_at;
 
         // Se a tarefa está sendo concluída e tem regra de recorrência
         if (
@@ -116,7 +115,7 @@ export const useTaskStore = create<TaskState>()(
 
         set((state) => ({
           tasks: state.tasks.map((t) => 
-            t.id === id ? { ...t, ...updates, updated_at: clientEditedAt } : t
+            t.id === id ? { ...t, ...payload, updated_at: clientEditedAt } : t
           )
         }));
 
@@ -127,10 +126,15 @@ export const useTaskStore = create<TaskState>()(
         );
 
         if (existingPendingMutation) {
+          const pendingPayload =
+            existingPendingMutation.operation === 'insert'
+              ? { ...payload, updated_at: clientEditedAt }
+              : payload;
+
           updateMutation(existingPendingMutation.id, {
             payload: {
               ...existingPendingMutation.payload,
-              ...payload,
+              ...pendingPayload,
             },
             baseUpdatedAt: existingPendingMutation.baseUpdatedAt ?? taskToUpdate?.updated_at ?? null,
           });
@@ -159,7 +163,7 @@ export const useTaskStore = create<TaskState>()(
           entity: 'task',
           operation: 'delete',
           entityId: id,
-          payload: { deleted_at: now, updated_at: now },
+          payload: { deleted_at: now },
           baseUpdatedAt: taskToDelete?.updated_at ?? null
         });
       },

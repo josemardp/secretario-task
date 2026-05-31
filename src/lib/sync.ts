@@ -6,6 +6,18 @@ import type { Task } from '../types';
 
 let isSyncing = false;
 
+function replaceLocalTask(task: Task) {
+  const { tasks, setTasks } = useTaskStore.getState();
+  setTasks(tasks.map((local) => local.id === task.id ? task : local));
+}
+
+function stripServerTimestamps(payload: Record<string, unknown>) {
+  const { created_at: _createdAt, updated_at: _updatedAt, ...safePayload } = payload;
+  void _createdAt;
+  void _updatedAt;
+  return safePayload;
+}
+
 export async function fetchRemoteTasks() {
   const { data: remoteTasks, error } = await supabase
     .from('tasks')
@@ -41,7 +53,8 @@ export async function fetchApiKeyFromCloud(): Promise<string | null> {
     .maybeSingle();
 
   if (error) throw error;
-  return (data as any)?.openai_api_key ?? null;
+  const profile = data as { openai_api_key?: string | null } | null;
+  return profile?.openai_api_key ?? null;
 }
 
 export async function saveApiKeyToCloud(apiKey: string | null): Promise<void> {
@@ -76,7 +89,9 @@ export async function processSyncQueue() {
     for (const mutation of pendingMutations) {
       try {
         if (mutation.entity === 'task') {
-          const payloadToSync = { ...mutation.payload } as any;
+          const payloadToSync: Record<string, unknown> = {
+            ...(mutation.payload as Record<string, unknown>),
+          };
 
           const apiKey = useContextStore.getState().aiApiKey;
           if (apiKey && (mutation.operation === 'insert' || mutation.operation === 'update')) {
@@ -93,14 +108,15 @@ export async function processSyncQueue() {
           }
 
           if (mutation.operation === 'insert') {
-            const { error } = await supabase.from('tasks').insert({
+            const { data, error } = await supabase.from('tasks').insert({
               ...payloadToSync,
               user_id: userId,
-            });
+            }).select('*').single();
             if (error) throw error;
+            if (data) replaceLocalTask(data as Task);
           } else if (mutation.operation === 'update') {
             let query = supabase.from('tasks')
-              .update(payloadToSync)
+              .update(stripServerTimestamps(payloadToSync))
               .eq('id', mutation.entityId)
               .eq('user_id', userId);
 
@@ -109,26 +125,28 @@ export async function processSyncQueue() {
             }
 
             const { data, error } = await query
-              .select('id')
+              .select('*')
               .maybeSingle();
 
             if (error) throw error;
             if (!data) throw new Error(`Task ${mutation.entityId} nao foi atualizada - zero rows`);
+            replaceLocalTask(data as Task);
           } else if (mutation.operation === 'delete') {
             const { data, error } = await supabase.from('tasks')
-              .update(payloadToSync)
+              .update(stripServerTimestamps(payloadToSync))
               .eq('id', mutation.entityId)
               .eq('user_id', userId)
-              .select('id')
+              .select('*')
               .maybeSingle();
 
             if (error) throw error;
             if (!data) throw new Error(`Task ${mutation.entityId} nao foi deletada - zero rows`);
+            replaceLocalTask(data as Task);
           }
         } else if (mutation.entity === 'task_event') {
           if (mutation.operation === 'insert') {
             const { error } = await supabase.from('task_events').insert({
-              ...(mutation.payload as any),
+              ...(mutation.payload as Record<string, unknown>),
               user_id: userId,
             });
             if (error) throw error;
@@ -145,11 +163,12 @@ export async function processSyncQueue() {
           status: 'synced',
           synced_at: new Date().toISOString(),
         }).then(() => {}, () => {});
-      } catch (err: any) {
+      } catch (err: unknown) {
         console.error(`Mutation failed: ${mutation.id}`, err);
 
         const newRetryCount = mutation.retryCount + 1;
         store.updateMutation(mutation.id, { retryCount: newRetryCount });
+        const message = err instanceof Error ? err.message : 'Unknown error';
 
         try {
           await supabase.from('sync_log').insert({
@@ -159,7 +178,7 @@ export async function processSyncQueue() {
             operation: mutation.operation,
             status: 'failed',
             retry_count: newRetryCount,
-            last_error: err?.message || 'Unknown error',
+            last_error: message,
           });
         } catch (logErr) {
           console.error('Failed to log sync failure', logErr);

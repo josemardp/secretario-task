@@ -1,6 +1,6 @@
 # STATUS.md — SecretárioTask
 
-Última atualização: 2026-05-27
+Última atualização: 2026-05-31
 
 ---
 
@@ -54,12 +54,13 @@ Foi aplicado também o ajuste operacional do Foco/TOP 3 para comportamento reati
 - [x] BUG-010 encerrado como won't fix — autenticação por e-mail e senha mantida intencionalmente (decisão registrada em DECISIONS.md).
 - [x] Documentação alinhada com o código real (magic link → e-mail e senha).
 - [x] Correção do Foco/TOP 3: tarefas sem `due_at` passam a entrar no Top 3; briefing permanece estático até clique e gera com o Top 3 atual.
+- [x] Registro e exibição discreta de criação/última edição das tarefas com `created_at`/`updated_at`.
 
 ---
 
 # Próximo passo concreto
 
-Executar validação manual final do Foco: concluir TOP 1, confirmar recomputação imediata do TOP 3 e regenerar Briefing para conferir uso do ranking atualizado.
+Validar manualmente criação, edição, adiamento e visualização expandida de tarefas conferindo as linhas "Criada em" e "Editada em".
 
 ---
 
