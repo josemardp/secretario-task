@@ -411,18 +411,29 @@ export function TimelineView({ tasks, overSlotId, dragStartTime }: TimelineViewP
     return timeline;
   }, [tasks, currentEnergy, activeContext, selectedDate, dismissedBreaks]);
 
-  // Time grid 08:30–22:00
+  // Régua dinâmica: 08:30–21:30 por padrão, estendida para incluir
+  // qualquer tarefa do dia que caia fora dessa janela (ex.: noturnas).
+  const DEFAULT_START_MIN = 8 * 60 + 30; // 08:30
+  const DEFAULT_END_MIN = 21 * 60 + 30;  // 21:30
+  const floorTo30 = (min: number) => Math.floor(min / 30) * 30;
+
+  let gridStartMin = DEFAULT_START_MIN;
+  let gridEndMin = DEFAULT_END_MIN;
+  for (const b of blocks) {
+    const bm = b.startTime.getHours() * 60 + b.startTime.getMinutes();
+    if (bm < gridStartMin) gridStartMin = floorTo30(bm);
+    if (bm > gridEndMin) gridEndMin = floorTo30(bm);
+  }
+
   const timeGrid: { timeString: string; dateObj: Date }[] = [];
-  for (let h = 8; h <= 21; h++) {
-    if (h === 8) {
-      const d = new Date(selectedDate); d.setHours(8, 30, 0, 0);
-      timeGrid.push({ timeString: '08:30', dateObj: d });
-    } else {
-      const d1 = new Date(selectedDate); d1.setHours(h, 0, 0, 0);
-      timeGrid.push({ timeString: `${h.toString().padStart(2, '0')}:00`, dateObj: d1 });
-      const d2 = new Date(selectedDate); d2.setHours(h, 30, 0, 0);
-      timeGrid.push({ timeString: `${h.toString().padStart(2, '0')}:30`, dateObj: d2 });
-    }
+  for (let min = gridStartMin; min <= gridEndMin; min += 30) {
+    const gh = Math.floor(min / 60);
+    const gm = min % 60;
+    const d = new Date(selectedDate); d.setHours(gh, gm, 0, 0);
+    timeGrid.push({
+      timeString: `${gh.toString().padStart(2, '0')}:${gm.toString().padStart(2, '0')}`,
+      dateObj: d,
+    });
   }
 
   const formatTime = (date: Date) => date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
