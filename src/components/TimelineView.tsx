@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
+import { rescheduleToDate, postponeToTomorrow } from '../lib/datetime';
 import { useDraggable, useDroppable, useDndMonitor } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { Calendar as CalIcon, Flag, Repeat, X, Edit3, Trash2 } from 'lucide-react';
@@ -328,16 +329,12 @@ export function TimelineView({ tasks, overSlotId, dragStartTime }: TimelineViewP
 
   const handlePostponeTomorrow = (taskId: string) => {
     const task = tasks.find(t => t.id === taskId);
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    tomorrow.setHours(9, 0, 0, 0);
-    updateTask(taskId, { due_at: tomorrow.toISOString(), postponed_count: (task?.postponed_count || 0) + 1 });
+    updateTask(taskId, { due_at: postponeToTomorrow(task?.due_at ?? null), postponed_count: (task?.postponed_count || 0) + 1 });
   };
 
   const handlePostponeDate = (taskId: string, dateString: string) => {
     const task = tasks.find(t => t.id === taskId);
-    const selected = new Date(dateString + 'T09:00:00');
-    updateTask(taskId, { due_at: selected.toISOString(), postponed_count: (task?.postponed_count || 0) + 1 });
+    updateTask(taskId, { due_at: rescheduleToDate(dateString, task?.due_at ?? null), postponed_count: (task?.postponed_count || 0) + 1 });
   };
 
   // ── Block calculation (unchanged logic) ──

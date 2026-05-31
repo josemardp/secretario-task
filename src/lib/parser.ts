@@ -1,4 +1,5 @@
 import type { ContextType, Task } from '../types';
+import { nextDefaultDueTime, applyDefaultTimeToDate } from './datetime';
 
 const CONTEXTS: ContextType[] = ['PM', 'Esdra', 'Pessoal', 'Familia', 'CCB', 'Estudo', 'Saude'];
 
@@ -117,13 +118,12 @@ export function parseTaskInput(rawText: string, defaultContext: ContextType): Pa
       dateFound = true;
     }
   } else if (dateFound && !explicitDateMatch && !timeMatch) {
-    baseDate.setHours(23, 59, 59, 999);
+    baseDate = applyDefaultTimeToDate(baseDate, today);
   }
 
-  // Se nao encontrou data NENHUMA, o padrao do sistema e "Amanha as 14:00"
+  // Se nao encontrou data NENHUMA, o padrao e HOJE no proximo slot de 30 min.
   if (!dateFound) {
-    baseDate.setDate(today.getDate() + 1);
-    baseDate.setHours(14, 0, 0, 0);
+    baseDate = nextDefaultDueTime(today);
     dateFound = true;
   }
 
