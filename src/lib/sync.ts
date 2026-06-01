@@ -11,11 +11,16 @@ function replaceLocalTask(task: Task) {
   setTasks(tasks.map((local) => local.id === task.id ? task : local));
 }
 
-function stripServerTimestamps(payload: Record<string, unknown>) {
-  const { created_at: _createdAt, updated_at: _updatedAt, ...safePayload } = payload;
-  void _createdAt;
-  void _updatedAt;
-  return safePayload;
+function toTimestampOrZero(iso: string | null | undefined): number {
+  if (!iso) return 0;
+
+  const timestamp = new Date(iso).getTime();
+  return Number.isNaN(timestamp) ? 0 : timestamp;
+}
+
+function stripReadonlyTaskFields<T extends Record<string, unknown>>(payload: T): Omit<T, 'created_at' | 'updated_at'> {
+  const { created_at: _createdAt, updated_at: _updatedAt, ...rest } = payload;
+  return rest;
 }
 
 export async function fetchRemoteTasks() {
@@ -34,7 +39,7 @@ export async function fetchRemoteTasks() {
 
   remoteTasks.forEach((remote) => {
     const local = taskMap.get(remote.id);
-    if (!local || new Date(remote.updated_at) >= new Date(local.updated_at)) {
+    if (!local || toTimestampOrZero(remote.updated_at) >= toTimestampOrZero(local.updated_at)) {
       taskMap.set(remote.id, remote as Task);
     }
   });
@@ -89,9 +94,10 @@ export async function processSyncQueue() {
     for (const mutation of pendingMutations) {
       try {
         if (mutation.entity === 'task') {
-          const payloadToSync: Record<string, unknown> = {
-            ...(mutation.payload as Record<string, unknown>),
-          };
+          const rawPayload = { ...(mutation.payload as Record<string, unknown>) };
+          const payloadToSync: Record<string, unknown> = mutation.operation === 'insert'
+            ? rawPayload
+            : stripReadonlyTaskFields(rawPayload);
 
           const apiKey = useContextStore.getState().aiApiKey;
           if (apiKey && (mutation.operation === 'insert' || mutation.operation === 'update')) {
@@ -116,7 +122,7 @@ export async function processSyncQueue() {
             if (data) replaceLocalTask(data as Task);
           } else if (mutation.operation === 'update') {
             let query = supabase.from('tasks')
-              .update(stripServerTimestamps(payloadToSync))
+              .update(payloadToSync)
               .eq('id', mutation.entityId)
               .eq('user_id', userId);
 
@@ -133,7 +139,7 @@ export async function processSyncQueue() {
             replaceLocalTask(data as Task);
           } else if (mutation.operation === 'delete') {
             const { data, error } = await supabase.from('tasks')
-              .update(stripServerTimestamps(payloadToSync))
+              .update(payloadToSync)
               .eq('id', mutation.entityId)
               .eq('user_id', userId)
               .select('*')
