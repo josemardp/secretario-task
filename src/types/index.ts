@@ -22,6 +22,11 @@ export interface Task {
   postponed_count?: number | null;
 }
 
+export type TaskInput = Omit<Task, 'id' | 'created_at' | 'updated_at'> & {
+  created_at?: string;
+  updated_at?: string;
+};
+
 export type PendingMutation = {
   id: string;
   entity: 'task' | 'task_event';

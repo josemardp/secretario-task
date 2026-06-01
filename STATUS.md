@@ -1,6 +1,6 @@
 # STATUS.md — SecretárioTask
 
-Última atualização: 2026-05-31
+Última atualização: 2026-06-01
 
 ---
 
@@ -34,6 +34,7 @@ Todos os épicos de refinamento de PWA e melhorias críticas de UX Mobile-First 
 
 A auditoria de UX Mobile-First e o hardening do Progressive Web App (PWA) foram executados perfeitamente, resolvendo problemas de safe-area, auto-zoom no iOS Safari, compactação de telas menores de 384px, e hierarquias visuais da agenda e do Foco do Dia.
 Foi aplicado também o ajuste operacional do Foco/TOP 3 para comportamento reativo em tempo real, com briefing sob demanda baseado no TOP 3 vigente no clique.
+Foi implementado também o registro e a exibição discreta de `created_at`/`updated_at` nas experiências de edição e expansão de tarefas, com sync blindado para não enviar esses campos em `UPDATE`.
 
 ## Checklist
 - [x] Pré-requisitos críticos (Viewport fit cover & PWA event listener cleanup).
@@ -55,12 +56,13 @@ Foi aplicado também o ajuste operacional do Foco/TOP 3 para comportamento reati
 - [x] Documentação alinhada com o código real (magic link → e-mail e senha).
 - [x] Correção do Foco/TOP 3: tarefas sem `due_at` passam a entrar no Top 3; briefing permanece estático até clique e gera com o Top 3 atual.
 - [x] Registro e exibição discreta de criação/última edição das tarefas com `created_at`/`updated_at`.
+- [x] Correção visual da Agenda: cards de tarefas renderizam acima da linha vermelha de "agora".
 
 ---
 
 # Próximo passo concreto
 
-Validar manualmente criação, edição, adiamento e visualização expandida de tarefas conferindo as linhas "Criada em" e "Editada em".
+Validar manualmente criação, edição, adiamento e visualização expandida de tarefas conferindo as linhas "Criada em" e "Editada em"; confirmar também que cards atrasados ficam acima da linha vermelha de "agora" na Agenda.
 
 ---
 

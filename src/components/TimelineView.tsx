@@ -83,7 +83,7 @@ function DraggableTaskCard({
       {...listeners}
       {...attributes}
       className={[
-        'w-full min-w-0 overflow-hidden flex flex-col bg-paper rounded-xl border border-line border-l-4',
+        'relative z-20 w-full min-w-0 overflow-hidden flex flex-col bg-paper rounded-xl border border-line border-l-4',
         CTX_BAR[t.context],
         'cursor-grab active:cursor-grabbing',
         isDragging ? 'shadow-soft' : 'shadow-card',
@@ -660,6 +660,15 @@ export function TimelineView({ tasks, overSlotId, dragStartTime }: TimelineViewP
               </label>
             </div>
 
+            {editingTask.created_at && (
+              <div className="mt-3 space-y-0.5 text-xs text-gray-400">
+                <p>Criada em {formatDateTime(editingTask.created_at)}</p>
+                {editingTask.updated_at && wasEdited(editingTask.created_at, editingTask.updated_at) && (
+                  <p>Editada em {formatDateTime(editingTask.updated_at)}</p>
+                )}
+              </div>
+            )}
+
             <div className="flex gap-2 pt-1">
               <button
                 onClick={() => setEditingTask(null)}
@@ -674,15 +683,6 @@ export function TimelineView({ tasks, overSlotId, dragStartTime }: TimelineViewP
                 Salvar
               </button>
             </div>
-
-            {editingTask.created_at && (
-              <div className="text-xs text-gray-400 mt-3 space-y-0.5">
-                <p>Criada em {formatDateTime(editingTask.created_at)}</p>
-                {wasEdited(editingTask.created_at, editingTask.updated_at) && (
-                  <p>Editada em {formatDateTime(editingTask.updated_at)}</p>
-                )}
-              </div>
-            )}
           </div>
         </div>
       )}

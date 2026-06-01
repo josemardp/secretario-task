@@ -233,11 +233,10 @@ function TaskRow({
               </button>
             </div>
           </div>
-
           {task.created_at && (
-            <div className="text-xs text-gray-400 mt-3 space-y-0.5">
+            <div className="mt-3 space-y-0.5 text-xs text-gray-400">
               <p>Criada em {formatDateTime(task.created_at)}</p>
-              {wasEdited(task.created_at, task.updated_at) && (
+              {task.updated_at && wasEdited(task.created_at, task.updated_at) && (
                 <p>Editada em {formatDateTime(task.updated_at)}</p>
               )}
             </div>

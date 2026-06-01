@@ -1,6 +1,11 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { Task, PendingMutation } from '../types';
+import type { Task, TaskInput, PendingMutation } from '../types';
+
+function stripReadonlyTaskFields<T extends Partial<Task>>(task: T): Omit<T, 'created_at' | 'updated_at'> {
+  const { created_at: _createdAt, updated_at: _updatedAt, ...rest } = task;
+  return rest;
+}
 
 function getNextOccurrence(baseDateStr: string | null, rule: string): string {
   const d = baseDateStr ? new Date(baseDateStr) : new Date();
@@ -41,7 +46,7 @@ interface TaskState {
   tasks: Task[];
   mutations: PendingMutation[];
   viewedRecords: Record<string, string>;
-  addTask: (task: Omit<Task, 'id' | 'created_at' | 'updated_at'>) => void;
+  addTask: (task: TaskInput) => void;
   updateTask: (id: string, updates: Partial<Task>) => void;
   deleteTask: (id: string) => void;
   recordViewEvent: (taskId: string) => void;
@@ -61,11 +66,13 @@ export const useTaskStore = create<TaskState>()(
       addTask: (taskData) => {
         const id = crypto.randomUUID();
         const now = new Date().toISOString();
+        const createdAt = taskData.created_at ?? now;
+        const updatedAt = taskData.updated_at ?? createdAt;
         const newTask: Task = {
           ...taskData,
           id,
-          created_at: now,
-          updated_at: now,
+          created_at: createdAt,
+          updated_at: updatedAt,
         };
 
         set((state) => ({
@@ -84,9 +91,8 @@ export const useTaskStore = create<TaskState>()(
         const { tasks, mutations, addTask, updateMutation } = get();
         const taskToUpdate = tasks.find(t => t.id === id);
         const clientEditedAt = new Date().toISOString();
-        const payload = { ...updates };
-        delete payload.created_at;
-        delete payload.updated_at;
+        const sanitizedUpdates = stripReadonlyTaskFields(updates);
+        const payload = sanitizedUpdates;
 
         // Se a tarefa está sendo concluída e tem regra de recorrência
         if (
@@ -115,7 +121,7 @@ export const useTaskStore = create<TaskState>()(
 
         set((state) => ({
           tasks: state.tasks.map((t) => 
-            t.id === id ? { ...t, ...payload, updated_at: clientEditedAt } : t
+            t.id === id ? { ...t, ...sanitizedUpdates, updated_at: clientEditedAt } : t
           )
         }));
 
@@ -126,16 +132,19 @@ export const useTaskStore = create<TaskState>()(
         );
 
         if (existingPendingMutation) {
-          const pendingPayload =
-            existingPendingMutation.operation === 'insert'
-              ? { ...payload, updated_at: clientEditedAt }
-              : payload;
+          const mergedPayload = existingPendingMutation.operation === 'insert'
+            ? {
+                ...existingPendingMutation.payload,
+                ...payload,
+                updated_at: clientEditedAt,
+              }
+            : {
+                ...existingPendingMutation.payload,
+                ...payload,
+              };
 
           updateMutation(existingPendingMutation.id, {
-            payload: {
-              ...existingPendingMutation.payload,
-              ...pendingPayload,
-            },
+            payload: mergedPayload,
             baseUpdatedAt: existingPendingMutation.baseUpdatedAt ?? taskToUpdate?.updated_at ?? null,
           });
           return;
@@ -153,6 +162,7 @@ export const useTaskStore = create<TaskState>()(
       deleteTask: (id) => {
         const now = new Date().toISOString();
         const taskToDelete = get().tasks.find(t => t.id === id);
+        const deletePayload = { deleted_at: now };
         set((state) => ({
           tasks: state.tasks.map((t) => 
             t.id === id ? { ...t, deleted_at: now, updated_at: now } : t
@@ -163,7 +173,7 @@ export const useTaskStore = create<TaskState>()(
           entity: 'task',
           operation: 'delete',
           entityId: id,
-          payload: { deleted_at: now },
+          payload: deletePayload,
           baseUpdatedAt: taskToDelete?.updated_at ?? null
         });
       },
@@ -236,6 +246,11 @@ export const useTaskStore = create<TaskState>()(
     }),
     {
       name: 'secretario-task:task-store',
+      partialize: (state) => ({
+        tasks: state.tasks,
+        mutations: state.mutations,
+        viewedRecords: state.viewedRecords,
+      }),
     }
   )
 );
