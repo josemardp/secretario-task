@@ -236,6 +236,7 @@ Preparar o sistema para uso diário contínuo.
 - Migração para Tailwind 4 (paradigma CSS-first)
 - Conversão de `task_events.type` para ENUM PostgreSQL (caso a lista estabilize)
 - Conversão de `sync_log.entity_type` para ENUM (quando outras entidades passarem a sincronizar)
+- Remover estado `dismissedBreaks` e botão "Ignorar pausa" (legado inativo)
 
 ---
 

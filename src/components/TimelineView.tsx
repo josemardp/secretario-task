@@ -10,20 +10,12 @@ import { useContextStore } from '../stores/contextStore';
 import { useTaskStore } from '../stores/taskStore';
 import { TaskActions } from './TaskActions';
 import { CalendarWidget } from './CalendarWidget';
+import { useAgendaPositions, type TimelineBlock } from '../hooks/useAgendaPositions';
 
 interface TimelineViewProps {
   tasks: Task[];
   overSlotId: string | null;
   dragStartTime: Date | null;
-}
-
-interface TimelineBlock {
-  id: string;
-  type: 'task' | 'break';
-  title: string;
-  startTime: Date;
-  endTime: Date;
-  task?: Task;
 }
 
 const CTX_BAR: Record<ContextType, string> = {
@@ -337,79 +329,7 @@ export function TimelineView({ tasks, overSlotId, dragStartTime }: TimelineViewP
     updateTask(taskId, { due_at: rescheduleToDate(dateString, task?.due_at ?? null), postponed_count: (task?.postponed_count || 0) + 1 });
   };
 
-  // ── Block calculation (unchanged logic) ──
-  const blocks = useMemo(() => {
-    const now = new Date();
-    const isToday = selectedDate.getDate() === now.getDate() &&
-                    selectedDate.getMonth() === now.getMonth() &&
-                    selectedDate.getFullYear() === now.getFullYear();
-
-    const startOfDay = new Date(selectedDate.getTime());
-    startOfDay.setHours(8, 30, 0, 0);
-
-    let currentTime = new Date(isToday ? Math.max(now.getTime(), startOfDay.getTime()) : startOfDay.getTime());
-    const m = currentTime.getMinutes();
-    if (m > 0 && m <= 30) currentTime.setMinutes(30, 0, 0);
-    else if (m > 30) currentTime.setHours(currentTime.getHours() + 1, 0, 0, 0);
-
-    let todoTasks = tasks.filter(t => t.status === 'todo' && !t.deleted_at);
-
-    if (isToday) {
-      todoTasks = todoTasks.filter(t => {
-        if (!t.due_at) return true;
-        const due = new Date(t.due_at);
-        return due <= now || (
-          due.getDate() === now.getDate() &&
-          due.getMonth() === now.getMonth() &&
-          due.getFullYear() === now.getFullYear()
-        );
-      });
-    } else {
-      todoTasks = todoTasks.filter(t => {
-        if (!t.due_at) return false;
-        const due = new Date(t.due_at);
-        return due.getDate() === selectedDate.getDate() &&
-               due.getMonth() === selectedDate.getMonth() &&
-               due.getFullYear() === selectedDate.getFullYear();
-      });
-    }
-
-    const timeline: TimelineBlock[] = [];
-
-    const futureScheduled = todoTasks.filter(t => t.due_at && new Date(t.due_at) > now);
-    for (const task of futureScheduled) {
-      const duration = task.estimated_minutes || 30;
-      const blockStart = new Date(task.due_at!);
-      const blockEnd = new Date(blockStart.getTime() + duration * 60000);
-      timeline.push({ id: task.id, type: 'task', title: task.title, startTime: blockStart, endTime: blockEnd, task });
-    }
-
-    const toQueue = todoTasks
-      .filter(t => !t.due_at || new Date(t.due_at) <= now)
-      .map(task => ({ ...task, score: calculateTaskScore(task, currentEnergy, activeContext) }))
-      .sort((a, b) => b.score - a.score);
-
-    const MAX_PER_SLOT = 4;
-    const lastSlotStart = new Date(selectedDate);
-    lastSlotStart.setHours(16, 30, 0, 0);
-
-    let slotStart = new Date(Math.min(currentTime.getTime(), lastSlotStart.getTime()));
-    let countInSlot = 0;
-
-    for (const task of toQueue) {
-      if (countInSlot >= MAX_PER_SLOT && slotStart.getTime() < lastSlotStart.getTime()) {
-        slotStart = new Date(Math.min(slotStart.getTime() + 30 * 60 * 1000, lastSlotStart.getTime()));
-        countInSlot = 0;
-      }
-      const blockStart = new Date(slotStart);
-      const blockEnd = new Date(slotStart.getTime() + 30 * 60 * 1000);
-      timeline.push({ id: task.id, type: 'task', title: task.title, startTime: blockStart, endTime: blockEnd, task });
-      countInSlot++;
-    }
-
-    timeline.sort((a, b) => a.startTime.getTime() - b.startTime.getTime());
-    return timeline;
-  }, [tasks, currentEnergy, activeContext, selectedDate, dismissedBreaks]);
+  const { blocks, now } = useAgendaPositions(tasks, selectedDate, currentEnergy, activeContext);
 
   // Régua dinâmica: 08:30–21:30 por padrão, estendida para incluir
   // qualquer tarefa do dia que caia fora dessa janela (ex.: noturnas).
@@ -484,7 +404,6 @@ export function TimelineView({ tasks, overSlotId, dragStartTime }: TimelineViewP
             return start >= slotStart && start < slotEnd;
           });
 
-          const now = new Date();
           const isToday = selectedDate.getDate() === now.getDate() &&
                           selectedDate.getMonth() === now.getMonth() &&
                           selectedDate.getFullYear() === now.getFullYear();
