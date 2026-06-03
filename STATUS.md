@@ -1,6 +1,6 @@
 # STATUS.md — SecretárioTask
 
-Última atualização: 2026-06-01
+Última atualização: 2026-06-03
 
 ---
 
@@ -57,12 +57,13 @@ Foi implementado também o registro e a exibição discreta de `created_at`/`upd
 - [x] Correção do Foco/TOP 3: tarefas sem `due_at` passam a entrar no Top 3; briefing permanece estático até clique e gera com o Top 3 atual.
 - [x] Registro e exibição discreta de criação/última edição das tarefas com `created_at`/`updated_at`.
 - [x] Correção visual da Agenda: cards de tarefas renderizam acima da linha vermelha de "agora".
+- [x] Reposicionamento em tempo real de tarefas atrasadas na Agenda (tick de 30s) e encapsulamento em useAgendaPositions.
 
 ---
 
 # Próximo passo concreto
 
-Validar manualmente criação, edição, adiamento e visualização expandida de tarefas conferindo as linhas "Criada em" e "Editada em"; confirmar também que cards atrasados ficam acima da linha vermelha de "agora" na Agenda.
+Validar manualmente o reposicionamento em tempo real de tarefas atrasadas na Agenda (conforme o roteiro em walkthrough.md) e confirmar o comportamento dinâmico do relógio de 30 segundos.
 
 ---
 
