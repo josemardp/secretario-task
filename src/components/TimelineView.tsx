@@ -1,16 +1,16 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { formatDateTime, rescheduleToDate, postponeToTomorrow, wasEdited } from '../lib/datetime';
 import { useDraggable, useDroppable, useDndMonitor } from '@dnd-kit/core';
 import { CSS } from '@dnd-kit/utilities';
 import { Calendar as CalIcon, Flag, Repeat, X, Edit3, Trash2 } from 'lucide-react';
 import type { Task, ContextType } from '../types';
 import { CONTEXTS_LIST } from '../types';
-import { calculateTaskScore } from '../lib/ranking';
 import { useContextStore } from '../stores/contextStore';
 import { useTaskStore } from '../stores/taskStore';
 import { TaskActions } from './TaskActions';
 import { CalendarWidget } from './CalendarWidget';
 import { useAgendaPositions, type TimelineBlock } from '../hooks/useAgendaPositions';
+
 
 interface TimelineViewProps {
   tasks: Task[];
