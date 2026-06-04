@@ -88,11 +88,12 @@ export const useTaskStore = create<TaskState>()(
       },
 
       updateTask: (id, updates) => {
-        const { tasks, mutations, addTask, updateMutation } = get();
+        const { tasks, mutations, updateMutation } = get();
         const taskToUpdate = tasks.find(t => t.id === id);
         const clientEditedAt = new Date().toISOString();
         const sanitizedUpdates = stripReadonlyTaskFields(updates);
         const payload = sanitizedUpdates;
+        let recurringClone: TaskInput | null = null;
 
         // Se a tarefa está sendo concluída e tem regra de recorrência
         if (
@@ -101,22 +102,20 @@ export const useTaskStore = create<TaskState>()(
           taskToUpdate.status !== 'done' && 
           taskToUpdate.recurrence_rule
         ) {
-           const nextDueAt = getNextOccurrence(taskToUpdate.due_at, taskToUpdate.recurrence_rule);
-           // Cria o clone de forma assíncrona para não dar conflito com o set() atual do Zustand
-           setTimeout(() => {
-             addTask({
-               user_id: taskToUpdate.user_id,
-               title: taskToUpdate.title,
-               description: taskToUpdate.description,
-               context: taskToUpdate.context,
-               priority: taskToUpdate.priority,
-               energy: taskToUpdate.energy,
-               status: 'todo',
-               due_at: nextDueAt,
-               deleted_at: null,
-               recurrence_rule: taskToUpdate.recurrence_rule
-             });
-           }, 500);
+          const nextDueAt = getNextOccurrence(taskToUpdate.due_at, taskToUpdate.recurrence_rule);
+          recurringClone = {
+            user_id: taskToUpdate.user_id,
+            title: taskToUpdate.title,
+            description: taskToUpdate.description,
+            context: taskToUpdate.context,
+            priority: taskToUpdate.priority,
+            energy: taskToUpdate.energy,
+            status: 'todo',
+            due_at: nextDueAt,
+            deleted_at: null,
+            recurrence_rule: taskToUpdate.recurrence_rule,
+            recurrence_origin_id: taskToUpdate.id
+          };
         }
 
         set((state) => ({
@@ -124,6 +123,20 @@ export const useTaskStore = create<TaskState>()(
             t.id === id ? { ...t, ...sanitizedUpdates, updated_at: clientEditedAt } : t
           )
         }));
+
+        const addRecurringCloneIfMissing = () => {
+          if (!recurringClone || !taskToUpdate) return;
+
+          const cloneAlreadyExists = useTaskStore.getState().tasks.some((t) =>
+            t.recurrence_origin_id === taskToUpdate.id &&
+            !t.deleted_at &&
+            t.status !== 'done'
+          );
+
+          if (!cloneAlreadyExists) {
+            useTaskStore.getState().addTask(recurringClone);
+          }
+        };
 
         const existingPendingMutation = mutations.find(
           (m) => m.entity === 'task' &&
@@ -147,6 +160,7 @@ export const useTaskStore = create<TaskState>()(
             payload: mergedPayload,
             baseUpdatedAt: existingPendingMutation.baseUpdatedAt ?? taskToUpdate?.updated_at ?? null,
           });
+          addRecurringCloneIfMissing();
           return;
         }
 
@@ -157,6 +171,8 @@ export const useTaskStore = create<TaskState>()(
           payload,
           baseUpdatedAt: taskToUpdate?.updated_at ?? null
         });
+
+        addRecurringCloneIfMissing();
       },
 
       deleteTask: (id) => {

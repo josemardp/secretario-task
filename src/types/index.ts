@@ -19,6 +19,7 @@ export interface Task {
   actual_minutes?: number | null;
   started_at?: string | null;
   recurrence_rule?: string | null;
+  recurrence_origin_id?: string | null;
   postponed_count?: number | null;
 }
 
