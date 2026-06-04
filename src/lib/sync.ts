@@ -23,6 +23,30 @@ function stripReadonlyTaskFields<T extends Record<string, unknown>>(payload: T):
   return rest;
 }
 
+function deduplicateFunctionalTasks(tasks: Task[]): Task[] {
+  const dedupedTasks = tasks.map((task) => ({ ...task }));
+  const latestByFunctionalKey = new Map<string, Task>();
+  const tombstoneTimestamp = new Date().toISOString();
+
+  dedupedTasks.forEach((task) => {
+    if (task.deleted_at) return;
+
+    const key = `${task.user_id}|${task.title}|${task.due_at ?? ''}|${task.recurrence_rule ?? ''}`;
+    const current = latestByFunctionalKey.get(key);
+
+    if (!current || toTimestampOrZero(task.updated_at) > toTimestampOrZero(current.updated_at)) {
+      latestByFunctionalKey.set(key, task);
+    }
+  });
+
+  const keptIds = new Set(Array.from(latestByFunctionalKey.values()).map((task) => task.id));
+
+  return dedupedTasks.map((task) => {
+    if (task.deleted_at || keptIds.has(task.id)) return task;
+    return { ...task, deleted_at: tombstoneTimestamp };
+  });
+}
+
 export async function fetchRemoteTasks() {
   const { data: remoteTasks, error } = await supabase
     .from('tasks')
@@ -44,7 +68,9 @@ export async function fetchRemoteTasks() {
     }
   });
 
-  setTasks(Array.from(taskMap.values()).filter((t) => !t.deleted_at));
+  const dedupedTasks = deduplicateFunctionalTasks(Array.from(taskMap.values()));
+
+  setTasks(dedupedTasks.filter((t) => !t.deleted_at));
 }
 
 export async function fetchApiKeyFromCloud(): Promise<string | null> {

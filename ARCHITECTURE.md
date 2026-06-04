@@ -158,6 +158,7 @@ CREATE TABLE tasks (
   actual_minutes INTEGER,
   started_at TIMESTAMPTZ,
   recurrence_rule TEXT,
+  recurrence_origin_id UUID REFERENCES tasks(id) ON DELETE SET NULL,
   postponed_count INTEGER DEFAULT 0
 );
 ```
@@ -191,6 +192,12 @@ CREATE TABLE tasks (
 
 `created_at` registra a criação original da tarefa e é imutável. `updated_at` é atualizado automaticamente pelo banco a cada `UPDATE`. O cliente pode preencher ambos ao criar tarefa localmente para suportar offline imediato, mas nunca envia `created_at` nem `updated_at` em payloads de `UPDATE`.
 
+## Campo `recurrence_origin_id`
+
+- UUID nullable referenciando `tasks(id)` com `ON DELETE SET NULL`
+- preenchido pelo cliente ao criar o clone da próxima ocorrência recorrente
+- usado como guard local de idempotência para impedir clones repetidos da mesma tarefa-pai
+
 ## Trigger para `updated_at`
 
 ```sql
@@ -220,6 +227,10 @@ WHERE deleted_at IS NULL;
 CREATE INDEX idx_tasks_user_due
 ON tasks (user_id, due_at)
 WHERE deleted_at IS NULL AND due_at IS NOT NULL;
+
+CREATE INDEX idx_recurrence_origin
+ON tasks (recurrence_origin_id)
+WHERE recurrence_origin_id IS NOT NULL;
 ```
 
 Os índices parciais (`WHERE deleted_at IS NULL`) mantêm performance sem custo de armazenar registros excluídos.
