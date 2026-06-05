@@ -39,6 +39,7 @@ Foi corrigida a criação duplicada de tarefas recorrentes com guard idempotente
 Foi corrigido o briefing para excluir tarefas concluídas, deletadas ou com horário anterior ao momento atual, incluindo reforço do contexto temporal no prompt inteligente.
 Foi removida a duplicação da regra de tarefa acionável para briefing, centralizando o filtro em helper compartilhado.
 Foi ajustada a barra de captura para expandir automaticamente com textos longos e preservar espaço inferior proporcional na tela.
+Foi removido o drag-and-drop por toque dos cards da Agenda para priorizar a rolagem vertical natural em mobile.
 
 ## Checklist
 - [x] Pré-requisitos críticos (Viewport fit cover & PWA event listener cleanup).
@@ -65,6 +66,7 @@ Foi ajustada a barra de captura para expandir automaticamente com textos longos 
 - [x] Correção temporal do briefing: tarefas concluídas e tarefas com horário passado não entram no Top 3 nem no briefing inteligente.
 - [x] Centralização da regra de tarefa acionável para briefing em helper compartilhado.
 - [x] Autoexpansão da barra de captura para visualizar textos longos antes de cadastrar tarefas.
+- [x] Remoção do arraste por toque na Agenda para permitir rolagem vertical sobre cards e laterais.
 
 ---
 
@@ -74,6 +76,7 @@ Validar manualmente o reposicionamento em tempo real de tarefas atrasadas na Age
 Validar também a recorrência em duas abas: concluir uma tarefa recorrente e confirmar que apenas uma próxima ocorrência ativa aparece após sync.
 Validar manualmente o briefing às 12h ou depois, confirmando que tarefas concluídas e tarefas agendadas antes do horário atual não aparecem no Top 3 do briefing.
 Validar manualmente a barra de captura no mobile com um texto longo, confirmando que o campo cresce e mantém os botões de voz/envio acessíveis.
+Validar manualmente a rolagem da Agenda no mobile iniciando o gesto em cima dos cards e nas laterais da linha do tempo.
 
 ---
 
