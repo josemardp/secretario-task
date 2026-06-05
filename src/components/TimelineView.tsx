@@ -1,7 +1,5 @@
 import { useState, useEffect } from 'react';
 import { formatDateTime, rescheduleToDate, postponeToTomorrow, wasEdited } from '../lib/datetime';
-import { useDraggable, useDroppable, useDndMonitor } from '@dnd-kit/core';
-import { CSS } from '@dnd-kit/utilities';
 import { Calendar as CalIcon, Flag, Repeat, X, Edit3, Trash2 } from 'lucide-react';
 import type { Task, ContextType } from '../types';
 import { CONTEXTS_LIST } from '../types';
@@ -14,8 +12,6 @@ import { useAgendaPositions, type TimelineBlock } from '../hooks/useAgendaPositi
 
 interface TimelineViewProps {
   tasks: Task[];
-  overSlotId: string | null;
-  dragStartTime: Date | null;
 }
 
 const CTX_BAR: Record<ContextType, string> = {
@@ -35,9 +31,9 @@ function toLocalDatetimeInput(iso: string | null | undefined): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-// ─── Draggable task card ────────────────────────────────────────
+// ─── Task card ──────────────────────────────────────────────────
 
-interface DraggableTaskCardProps {
+interface TimelineTaskCardProps {
   block: TimelineBlock;
   updateTask: (id: string, updates: Partial<Task>) => void;
   deleteTask: (id: string) => void;
@@ -48,11 +44,10 @@ interface DraggableTaskCardProps {
   formatTime: (date: Date) => string;
 }
 
-function DraggableTaskCard({
+function TimelineTaskCard({
   block, updateTask, deleteTask, openEdit,
   handleComplete, handlePostponeTomorrow, handlePostponeDate, formatTime,
-}: DraggableTaskCardProps) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({ id: block.id });
+}: TimelineTaskCardProps) {
   const t = block.task!;
   const isLate =
     (t.due_at && new Date(t.due_at) < new Date()) ||
@@ -61,24 +56,18 @@ function DraggableTaskCard({
       new Date(t.created_at).getDate() === new Date().getDate());
 
   const style: React.CSSProperties = {
-    transform: CSS.Transform.toString(transform),
-    touchAction: 'none',
-    opacity: isDragging ? 0.6 : undefined,
+    touchAction: 'pan-y',
   };
 
   const durText = t.actual_minutes != null ? `${t.actual_minutes}m real` : `${t.estimated_minutes || 30}m`;
 
   return (
     <div
-      ref={setNodeRef}
       style={style}
-      {...listeners}
-      {...attributes}
       className={[
         'relative z-20 w-full min-w-0 overflow-hidden flex flex-col bg-paper rounded-xl border border-line border-l-4',
         CTX_BAR[t.context],
-        'cursor-grab active:cursor-grabbing',
-        isDragging ? 'shadow-soft' : 'shadow-card',
+        'shadow-card',
       ].join(' ')}
     >
       <div className="px-3 pt-2.5 pb-2.5">
@@ -182,61 +171,30 @@ interface TimelineSlotProps {
   topPercent: number;
   now: Date;
   slotBlocksCount: number;
-  isDropTarget: boolean;
-  dragStartTime: Date | null;
-  selectedDate: Date;
   children: React.ReactNode;
 }
 
 function TimelineSlot({
   slot, isTargetSlot, isCurrentSlot, topPercent, now,
-  slotBlocksCount, isDropTarget, dragStartTime, selectedDate, children,
+  slotBlocksCount, children,
 }: TimelineSlotProps) {
-  const isToday = selectedDate.toDateString() === new Date().toDateString();
-  const isPast  = isToday && dragStartTime !== null && slot.dateObj.getTime() < dragStartTime.getTime();
-
-  const { setNodeRef } = useDroppable({
-    id: `slot-${slot.dateObj.toISOString()}`,
-    disabled: isPast,
-  });
-
-  const [isDragging, setIsDragging] = useState(false);
-  useDndMonitor({
-    onDragStart: () => setIsDragging(true),
-    onDragEnd:   () => setIsDragging(false),
-    onDragCancel:() => setIsDragging(false),
-  });
-
   // half-hour vs hour boundary
   const onHourBoundary = slot.dateObj.getMinutes() === 0;
 
   return (
     <div
-      ref={setNodeRef}
       id={isTargetSlot ? 'current-time-slot' : undefined}
       className={[
         'flex relative border-b',
         onHourBoundary ? 'border-line' : 'border-line2',
         slotBlocksCount === 0 ? 'min-h-[28px]' : 'min-h-[76px]',
-        isDropTarget && !isPast ? 'bg-amber-soft/30 transition-colors' :
-          isDragging && !isPast ? 'bg-paper2/60 transition-colors' : '',
       ].join(' ')}
       style={{
-        opacity: isPast && isDragging ? 0.35 : undefined,
-        transition: 'opacity 150ms ease, background-color 150ms ease',
+        touchAction: 'pan-y',
       }}
     >
-      {/* Drop highlight */}
-      {isDropTarget && !isPast && (
-        <div className="absolute top-0 left-0 right-0 h-[2px] bg-ink z-10 pointer-events-none">
-          <div className="absolute -top-2 left-2 text-[10px] font-extrabold text-ink bg-paper px-1.5 py-0.5 rounded border border-line z-20 whitespace-nowrap select-none">
-            {slot.timeString}
-          </div>
-        </div>
-      )}
-
       {/* Now line */}
-      {isCurrentSlot && !isDropTarget && !isPast && (
+      {isCurrentSlot && (
         <div
           className="absolute left-0 right-0 z-10 flex items-center pointer-events-none w-full"
           style={{ top: `${topPercent}%`, transform: 'translateY(-50%)' }}
@@ -268,7 +226,7 @@ function TimelineSlot({
 
 // ─── Main view ──────────────────────────────────────────────────
 
-export function TimelineView({ tasks, overSlotId, dragStartTime }: TimelineViewProps) {
+export function TimelineView({ tasks }: TimelineViewProps) {
   const { currentEnergy, activeContext } = useContextStore();
   const { updateTask, deleteTask } = useTaskStore();
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -415,8 +373,6 @@ export function TimelineView({ tasks, overSlotId, dragStartTime }: TimelineViewP
           const isTargetSlot = isToday && targetScrollTime >= slotTime && targetScrollTime < slotEndTime;
           const minutesOffset = Math.floor((nowTime - slotTime) / 60000);
           const topPercent = (minutesOffset / 30) * 100;
-          const isDropTarget = overSlotId === `slot-${slot.dateObj.toISOString()}`;
-
           return (
             <TimelineSlot
               key={slot.timeString}
@@ -426,9 +382,6 @@ export function TimelineView({ tasks, overSlotId, dragStartTime }: TimelineViewP
               topPercent={topPercent}
               now={now}
               slotBlocksCount={slotBlocks.length}
-              isDropTarget={isDropTarget}
-              dragStartTime={dragStartTime}
-              selectedDate={selectedDate}
             >
               {slotBlocks.map((block) => {
                 if (block.type === 'break') {
@@ -457,7 +410,7 @@ export function TimelineView({ tasks, overSlotId, dragStartTime }: TimelineViewP
                 }
 
                 return (
-                  <DraggableTaskCard
+                  <TimelineTaskCard
                     key={`${block.id}-${slot.timeString}`}
                     block={block}
                     updateTask={updateTask}

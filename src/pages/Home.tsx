@@ -10,7 +10,6 @@ import {
   CheckCircle, CalendarDays, BarChart2, Target, Plus, Mic, Search,
   Settings as SettingsIcon, ArrowRight, X, Zap,
 } from 'lucide-react';
-import { DndContext, PointerSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { BuildBadge } from '../components/BuildBadge';
 import { TaskBoard } from '../components/TaskBoard';
 import { TimelineView } from '../components/TimelineView';
@@ -50,8 +49,6 @@ export default function Home() {
   const [semanticResults, setSemanticResults] = useState<{ id: string; similarity: number }[] | null>(null);
   const [pendingSmartTasks, setPendingSmartTasks] = useState<Partial<Task>[] | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [overSlotId, setOverSlotId] = useState<string | null>(null);
-  const [dragStartTime, setDragStartTime] = useState<Date | null>(null);
   const [focoOpen, setFocoOpen] = useState(false);
   const [briefingText, setBriefingText] = useState<string | null>(null);
   const [isGeneratingBriefing, setIsGeneratingBriefing] = useState(false);
@@ -72,22 +69,6 @@ export default function Home() {
     const end = new Date();
     end.setHours(23, 59, 59, 999);
     return due >= start && due <= end;
-  };
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(TouchSensor,   { activationConstraint: { delay: 250, tolerance: 5 } })
-  );
-
-  const handleDragEnd = (event: any) => {
-    const { active, over } = event;
-    if (!over) return;
-    const taskId = String(active.id);
-    const overId = String(over.id);
-    if (overId.startsWith('slot-')) {
-      const slotIso = overId.replace('slot-', '');
-      updateTask(taskId, { due_at: slotIso });
-    }
   };
 
   const { isRecording, audioBlob, startRecording, stopRecording, clearAudio } = useAudioRecorder();
@@ -385,22 +366,7 @@ export default function Home() {
         {viewMode === 'kanban' ? (
           <TaskBoard tasks={tasksForTodayView} />
         ) : viewMode === 'timeline' ? (
-          <DndContext
-            sensors={sensors}
-            onDragStart={() => setDragStartTime(new Date())}
-            onDragOver={({ over }) => setOverSlotId(over?.id ? String(over.id) : null)}
-            onDragEnd={(event) => {
-              handleDragEnd(event);
-              setOverSlotId(null);
-              setDragStartTime(null);
-            }}
-            onDragCancel={() => {
-              setOverSlotId(null);
-              setDragStartTime(null);
-            }}
-          >
-            <TimelineView tasks={baseVisibleTasks} overSlotId={overSlotId} dragStartTime={dragStartTime} />
-          </DndContext>
+          <TimelineView tasks={baseVisibleTasks} />
         ) : (
           <DashboardView tasks={tasks} />
         )}
