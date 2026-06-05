@@ -1,6 +1,6 @@
 # STATUS.md — SecretárioTask
 
-Última atualização: 2026-06-04
+Última atualização: 2026-06-05
 
 ---
 
@@ -36,6 +36,7 @@ A auditoria de UX Mobile-First e o hardening do Progressive Web App (PWA) foram 
 Foi aplicado também o ajuste operacional do Foco/TOP 3 para comportamento reativo em tempo real, com briefing sob demanda baseado no TOP 3 vigente no clique.
 Foi implementado também o registro e a exibição discreta de `created_at`/`updated_at` nas experiências de edição e expansão de tarefas, com sync blindado para não enviar esses campos em `UPDATE`.
 Foi corrigida a criação duplicada de tarefas recorrentes com guard idempotente por `recurrence_origin_id` e deduplicação funcional no merge remoto.
+Foi corrigido o briefing para excluir tarefas concluídas, deletadas ou com horário anterior ao momento atual, incluindo reforço do contexto temporal no prompt inteligente.
 
 ## Checklist
 - [x] Pré-requisitos críticos (Viewport fit cover & PWA event listener cleanup).
@@ -59,6 +60,7 @@ Foi corrigida a criação duplicada de tarefas recorrentes com guard idempotente
 - [x] Registro e exibição discreta de criação/última edição das tarefas com `created_at`/`updated_at`.
 - [x] Correção visual da Agenda: cards de tarefas renderizam acima da linha vermelha de "agora".
 - [x] Reposicionamento em tempo real de tarefas atrasadas na Agenda (tick de 30s) e encapsulamento em useAgendaPositions.
+- [x] Correção temporal do briefing: tarefas concluídas e tarefas com horário passado não entram no Top 3 nem no briefing inteligente.
 
 ---
 
@@ -66,6 +68,7 @@ Foi corrigida a criação duplicada de tarefas recorrentes com guard idempotente
 
 Validar manualmente o reposicionamento em tempo real de tarefas atrasadas na Agenda (conforme o roteiro em walkthrough.md) e confirmar o comportamento dinâmico do relógio de 30 segundos.
 Validar também a recorrência em duas abas: concluir uma tarefa recorrente e confirmar que apenas uma próxima ocorrência ativa aparece após sync.
+Validar manualmente o briefing às 12h ou depois, confirmando que tarefas concluídas e tarefas agendadas antes do horário atual não aparecem no Top 3 do briefing.
 
 ---
 

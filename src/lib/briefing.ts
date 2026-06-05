@@ -2,6 +2,14 @@ import type { Task, ContextType } from '../types';
 import { calculateTaskScore } from './ranking';
 import { generateSmartBriefing } from './ai';
 
+function isActiveBriefingTask(task: Task, now: Date): boolean {
+  if (task.deleted_at) return false;
+  if (task.status === 'done') return false;
+  if (!task.due_at) return true;
+
+  return new Date(task.due_at).getTime() >= now.getTime();
+}
+
 export function getDailyBriefing(tasks: Task[], currentEnergy: number, activeContext: ContextType, limit: number = 3): Task[] {
   const now = new Date();
   const start = new Date(now);
@@ -15,8 +23,8 @@ export function getDailyBriefing(tasks: Task[], currentEnergy: number, activeCon
     return due >= start && due <= end;
   };
 
-  // "Pendentes, não deletadas, do dia corrente"
-  const pendingTodayTasks = tasks.filter((t) => !t.deleted_at && t.status !== 'done' && isForToday(t.due_at));
+  // "Pendentes, não deletadas, do dia corrente e ainda acionáveis"
+  const pendingTodayTasks = tasks.filter((t) => isActiveBriefingTask(t, now) && isForToday(t.due_at));
 
   // Calculate scores without mutating task shape
   const tasksWithScore = pendingTodayTasks.map((task) => ({
@@ -48,5 +56,8 @@ export async function generateBriefingFromTopTasks(
   currentEnergy: number,
   aiApiKey: string
 ): Promise<string> {
-  return generateSmartBriefing(topTasks, currentEnergy, aiApiKey);
+  const now = new Date();
+  const actionableTasks = topTasks.filter((task) => isActiveBriefingTask(task, now));
+
+  return generateSmartBriefing(actionableTasks, currentEnergy, aiApiKey);
 }
