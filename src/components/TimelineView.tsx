@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { formatDateTime, rescheduleToDate, postponeToTomorrow, wasEdited } from '../lib/datetime';
 import { Calendar as CalIcon, Flag, Repeat, X, Edit3, Trash2 } from 'lucide-react';
 import type { Task, ContextType } from '../types';
@@ -166,24 +166,24 @@ function TimelineTaskCard({
 
 interface TimelineSlotProps {
   slot: { timeString: string; dateObj: Date };
-  isTargetSlot: boolean;
   isCurrentSlot: boolean;
   topPercent: number;
   now: Date;
   slotBlocksCount: number;
   children: React.ReactNode;
+  anchorRef?: React.Ref<HTMLDivElement>;
 }
 
 function TimelineSlot({
-  slot, isTargetSlot, isCurrentSlot, topPercent, now,
-  slotBlocksCount, children,
+  slot, isCurrentSlot, topPercent, now,
+  slotBlocksCount, children, anchorRef,
 }: TimelineSlotProps) {
   // half-hour vs hour boundary
   const onHourBoundary = slot.dateObj.getMinutes() === 0;
 
   return (
     <div
-      id={isTargetSlot ? 'current-time-slot' : undefined}
+      ref={anchorRef}
       className={[
         'flex relative border-b',
         onHourBoundary ? 'border-line' : 'border-line2',
@@ -238,9 +238,19 @@ export function TimelineView({ tasks }: TimelineViewProps) {
     context: 'Pessoal' as ContextType, priority: 0, energy: 0,
   });
 
+  const anchorRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    const el = document.getElementById('current-time-slot');
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    let raf1: number, raf2: number;
+    raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => {
+        anchorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+    return () => {
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
+    };
   }, [selectedDate]);
 
   const openEdit = (task: Task) => {
@@ -314,6 +324,23 @@ export function TimelineView({ tasks }: TimelineViewProps) {
     });
   }
 
+  const isToday = selectedDate.getDate() === now.getDate() &&
+                  selectedDate.getMonth() === now.getMonth() &&
+                  selectedDate.getFullYear() === now.getFullYear();
+
+  let anchorIndex = 0;
+  if (isToday) {
+    const nextSlotIndex = timeGrid.findIndex(
+      s => s.dateObj.getHours() > now.getHours() ||
+          (s.dateObj.getHours() === now.getHours() && s.dateObj.getMinutes() >= now.getMinutes())
+    );
+    if (nextSlotIndex === -1) {
+      anchorIndex = timeGrid.length - 1;
+    } else {
+      anchorIndex = nextSlotIndex > 0 ? nextSlotIndex - 1 : nextSlotIndex;
+    }
+  }
+
   const formatTime = (date: Date) => date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
   const longDate = selectedDate.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
@@ -362,26 +389,21 @@ export function TimelineView({ tasks }: TimelineViewProps) {
             return start >= slotStart && start < slotEnd;
           });
 
-          const isToday = selectedDate.getDate() === now.getDate() &&
-                          selectedDate.getMonth() === now.getMonth() &&
-                          selectedDate.getFullYear() === now.getFullYear();
           const nowTime = now.getTime();
           const slotTime = slot.dateObj.getTime();
           const slotEndTime = slotTime + 30 * 60 * 1000;
           const isCurrentSlot = isToday && nowTime >= slotTime && nowTime < slotEndTime;
-          const targetScrollTime = nowTime - 30 * 60 * 1000;
-          const isTargetSlot = isToday && targetScrollTime >= slotTime && targetScrollTime < slotEndTime;
           const minutesOffset = Math.floor((nowTime - slotTime) / 60000);
           const topPercent = (minutesOffset / 30) * 100;
           return (
             <TimelineSlot
               key={slot.timeString}
               slot={slot}
-              isTargetSlot={isTargetSlot}
               isCurrentSlot={isCurrentSlot}
               topPercent={topPercent}
               now={now}
               slotBlocksCount={slotBlocks.length}
+              anchorRef={idx === anchorIndex ? anchorRef : undefined}
             >
               {slotBlocks.map((block) => {
                 if (block.type === 'break') {

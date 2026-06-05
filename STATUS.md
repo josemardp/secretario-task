@@ -69,17 +69,16 @@ Foi corrigida a hierarquia visual mobile para impedir que cards da Agenda cubram
 - [x] Autoexpansão da barra de captura para visualizar textos longos antes de cadastrar tarefas.
 - [x] Remoção do arraste por toque na Agenda para permitir rolagem vertical sobre cards e laterais.
 - [x] Ajuste de z-index da barra de captura para ficar acima dos cards da Agenda.
+- [x] Correção de UX: scroll automático para o horário atual ao abrir a Agenda (duplo requestAnimationFrame).
 
 ---
 
 # Próximo passo concreto
 
-Validar manualmente o reposicionamento em tempo real de tarefas atrasadas na Agenda (conforme o roteiro em walkthrough.md) e confirmar o comportamento dinâmico do relógio de 30 segundos.
-Validar também a recorrência em duas abas: concluir uma tarefa recorrente e confirmar que apenas uma próxima ocorrência ativa aparece após sync.
-Validar manualmente o briefing às 12h ou depois, confirmando que tarefas concluídas e tarefas agendadas antes do horário atual não aparecem no Top 3 do briefing.
-Validar manualmente a barra de captura no mobile com um texto longo, confirmando que o campo cresce e mantém os botões de voz/envio acessíveis.
-Validar manualmente a rolagem da Agenda no mobile iniciando o gesto em cima dos cards e nas laterais da linha do tempo.
-Validar manualmente que cards da Agenda não aparecem por cima da barra de captura quando o texto digitado é longo.
+Validar manualmente no celular real a âncora de scroll da Agenda: 
+1. Abrir a Agenda e ver se rola pro slot atual.
+2. Navegar para amanhã e voltar para hoje para testar o re-cálculo da âncora.
+3. Adiar uma tarefa e verificar se o scroll permanece estável.
 
 ---
 

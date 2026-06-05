@@ -283,3 +283,9 @@ Decisão: o trigger de atualização de tarefas força `NEW.created_at = OLD.cre
 Motivo: `created_at` representa a criação original da tarefa e deve permanecer imutável mesmo se um cliente antigo, uma mutação offline ou uma operação manual enviar esse campo no payload. O banco é a última barreira de proteção para preservar a auditoria temporal.
 Alternativas descartadas: confiar apenas na sanitização do cliente — descartada por não cobrir clientes desatualizados, bugs futuros ou operações diretas no banco; negar updates que enviem `created_at` — descartada por ser mais frágil operacionalmente e poder quebrar sync legado sem necessidade.
 Contexto: implementação da migration `0007_created_updated_at_tasks.sql` e exibição discreta de criação/última edição das tarefas.
+
+## 2026-06-05 — Duplo requestAnimationFrame para scroll âncora da Agenda
+Decisão: Utilizar duplo `requestAnimationFrame` aninhado no lugar de `setTimeout` com tempo predeterminado (ex: 100ms) para disparar o `scrollIntoView` na montagem da view de Agenda (timeline).
+Motivo: Um `setTimeout` com valor mágico resolve a race condition entre a hidratação da timeline e a atribuição da `ref` na maioria dos aparelhos rápidos, mas pode falhar (anchor falho) em devices lentos (Android de entrada) onde a pintura completa do layout demora. O duplo `rAF` não usa valor mágico, garantindo estritamente dois frames de renderização para que o alvo de scroll esteja 100% pronto na árvore DOM antes de repuxar a tela.
+Alternativas descartadas: `setTimeout(..., 100)` — descartada para evitar valores temporais arbitrários que variam de aparelho para aparelho e que causam falhas de scroll intermitentes.
+Contexto: Resolução do bug de "scroll/exibição da Agenda fixado no passado em vez de no presente".
