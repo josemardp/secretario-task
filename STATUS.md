@@ -40,6 +40,7 @@ Foi corrigido o briefing para excluir tarefas concluídas, deletadas ou com hor�
 Foi removida a duplicação da regra de tarefa acionável para briefing, centralizando o filtro em helper compartilhado.
 Foi ajustada a barra de captura para expandir automaticamente com textos longos e preservar espaço inferior proporcional na tela.
 Foi removido o drag-and-drop por toque dos cards da Agenda para priorizar a rolagem vertical natural em mobile.
+Foi corrigida a hierarquia visual mobile para impedir que cards da Agenda cubram a barra de captura expandida.
 
 ## Checklist
 - [x] Pré-requisitos críticos (Viewport fit cover & PWA event listener cleanup).
@@ -67,6 +68,7 @@ Foi removido o drag-and-drop por toque dos cards da Agenda para priorizar a rola
 - [x] Centralização da regra de tarefa acionável para briefing em helper compartilhado.
 - [x] Autoexpansão da barra de captura para visualizar textos longos antes de cadastrar tarefas.
 - [x] Remoção do arraste por toque na Agenda para permitir rolagem vertical sobre cards e laterais.
+- [x] Ajuste de z-index da barra de captura para ficar acima dos cards da Agenda.
 
 ---
 
@@ -77,6 +79,7 @@ Validar também a recorrência em duas abas: concluir uma tarefa recorrente e co
 Validar manualmente o briefing às 12h ou depois, confirmando que tarefas concluídas e tarefas agendadas antes do horário atual não aparecem no Top 3 do briefing.
 Validar manualmente a barra de captura no mobile com um texto longo, confirmando que o campo cresce e mantém os botões de voz/envio acessíveis.
 Validar manualmente a rolagem da Agenda no mobile iniciando o gesto em cima dos cards e nas laterais da linha do tempo.
+Validar manualmente que cards da Agenda não aparecem por cima da barra de captura quando o texto digitado é longo.
 
 ---
 

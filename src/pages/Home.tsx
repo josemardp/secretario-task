@@ -376,7 +376,7 @@ export default function Home() {
       <form
         ref={captureBarRef}
         onSubmit={handleTaskSubmit}
-        className="fixed left-0 right-0 z-10 bg-paper border-t border-line px-3 flex items-end gap-2 select-none"
+        className="fixed left-0 right-0 z-40 bg-paper border-t border-line px-3 flex items-end gap-2 select-none"
         style={{
           bottom: 'calc(64px + env(safe-area-inset-bottom))',
           paddingTop: 8, paddingBottom: 8,
@@ -426,7 +426,7 @@ export default function Home() {
 
       {/* ── Tab bar ───────────────────────────────────────────────── */}
       <nav
-        className="fixed bottom-0 left-0 right-0 bg-paper border-t border-line z-20 flex select-none safe-bottom"
+        className="fixed bottom-0 left-0 right-0 bg-paper border-t border-line z-50 flex select-none safe-bottom"
         style={{ height: 'calc(56px + env(safe-area-inset-bottom))' }}
       >
         {([
