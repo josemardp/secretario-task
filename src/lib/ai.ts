@@ -1,14 +1,7 @@
 import type { Task } from '../types';
+import { isActionableBriefingTask } from './taskFilters';
 
 const OPENAI_API_URL = 'https://api.openai.com/v1';
-
-function isActionableForBriefing(task: Task, now: Date): boolean {
-  if (task.deleted_at) return false;
-  if (task.status === 'done') return false;
-  if (!task.due_at) return true;
-
-  return new Date(task.due_at).getTime() >= now.getTime();
-}
 
 function formatBriefingDateTime(date: Date): string {
   return new Intl.DateTimeFormat('pt-BR', {
@@ -52,7 +45,7 @@ export async function generateSmartBriefing(
   const now = new Date();
   const formattedNow = formatBriefingDateTime(now);
   const tasksListText = tasks
-    .filter((task) => isActionableForBriefing(task, now))
+    .filter((task) => isActionableBriefingTask(task, now))
     .slice(0, 10) // Limit context to top 10 tasks to save tokens
     .map(t => `- ${t.title} (Status: ${t.status}, Horario: ${formatTaskDueAt(t.due_at)}, Prioridade: ${t.priority}, Energia exigida: ${t.energy}, Contexto: ${t.context})`)
     .join('\n');

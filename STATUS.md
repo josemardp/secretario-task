@@ -37,6 +37,7 @@ Foi aplicado também o ajuste operacional do Foco/TOP 3 para comportamento reati
 Foi implementado também o registro e a exibição discreta de `created_at`/`updated_at` nas experiências de edição e expansão de tarefas, com sync blindado para não enviar esses campos em `UPDATE`.
 Foi corrigida a criação duplicada de tarefas recorrentes com guard idempotente por `recurrence_origin_id` e deduplicação funcional no merge remoto.
 Foi corrigido o briefing para excluir tarefas concluídas, deletadas ou com horário anterior ao momento atual, incluindo reforço do contexto temporal no prompt inteligente.
+Foi removida a duplicação da regra de tarefa acionável para briefing, centralizando o filtro em helper compartilhado.
 
 ## Checklist
 - [x] Pré-requisitos críticos (Viewport fit cover & PWA event listener cleanup).
@@ -61,6 +62,7 @@ Foi corrigido o briefing para excluir tarefas concluídas, deletadas ou com hor�
 - [x] Correção visual da Agenda: cards de tarefas renderizam acima da linha vermelha de "agora".
 - [x] Reposicionamento em tempo real de tarefas atrasadas na Agenda (tick de 30s) e encapsulamento em useAgendaPositions.
 - [x] Correção temporal do briefing: tarefas concluídas e tarefas com horário passado não entram no Top 3 nem no briefing inteligente.
+- [x] Centralização da regra de tarefa acionável para briefing em helper compartilhado.
 
 ---
 
