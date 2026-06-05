@@ -63,6 +63,22 @@ function App() {
     return () => clearInterval(interval);
   }, [session, isOnline]);
 
+  // Pull imediato ao voltar ao foco (mobile: WebSocket cai em background)
+  useEffect(() => {
+    if (!session || !isOnline) return;
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchRemoteTasks()
+          .then(() => processSyncQueue())
+          .catch((err) => console.error('[sync] visibilitychange falhou:', err));
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [session, isOnline]);
+
   useEffect(() => {
     const userId = session?.user.id;
     if (!userId || !isOnline) return;
