@@ -2,6 +2,27 @@ import type { Task } from '../types';
 
 const OPENAI_API_URL = 'https://api.openai.com/v1';
 
+function isActionableForBriefing(task: Task, now: Date): boolean {
+  if (task.deleted_at) return false;
+  if (task.status === 'done') return false;
+  if (!task.due_at) return true;
+
+  return new Date(task.due_at).getTime() >= now.getTime();
+}
+
+function formatBriefingDateTime(date: Date): string {
+  return new Intl.DateTimeFormat('pt-BR', {
+    dateStyle: 'full',
+    timeStyle: 'short',
+  }).format(date);
+}
+
+function formatTaskDueAt(dueAt: string | null): string {
+  if (!dueAt) return 'sem horario definido';
+
+  return formatBriefingDateTime(new Date(dueAt));
+}
+
 export async function generateEmbedding(text: string, apiKey: string): Promise<number[]> {
   const response = await fetch(`${OPENAI_API_URL}/embeddings`, {
     method: 'POST',
@@ -28,18 +49,23 @@ export async function generateSmartBriefing(
   energy: number, 
   apiKey: string
 ): Promise<string> {
+  const now = new Date();
+  const formattedNow = formatBriefingDateTime(now);
   const tasksListText = tasks
+    .filter((task) => isActionableForBriefing(task, now))
     .slice(0, 10) // Limit context to top 10 tasks to save tokens
-    .map(t => `- ${t.title} (Prioridade: ${t.priority}, Energia exigida: ${t.energy}, Contexto: ${t.context})`)
+    .map(t => `- ${t.title} (Status: ${t.status}, Horario: ${formatTaskDueAt(t.due_at)}, Prioridade: ${t.priority}, Energia exigida: ${t.energy}, Contexto: ${t.context})`)
     .join('\n');
 
   const systemPrompt = `Você é um assistente pessoal de produtividade (SecretárioTask).
 Seu objetivo é dar um briefing motivacional e super direto para o usuário começar o dia ou a sessão de trabalho.
-O usuário tem um nível de energia atual de ${energy}/10. 
+Agora é ${formattedNow}.
+O usuário tem um nível de energia atual de ${energy}/10.
 Adapte o seu tom: se a energia for alta (8-10), seja altamente encorajador para tarefas difíceis. Se for baixa (1-3), recomende pegar leve e focar no que é fácil.
+Não proponha, mencione ou use como base tarefas concluídas, deletadas ou com horário anterior ao momento atual informado acima.
 
 Tarefas do Top Ranking atual:
-${tasksListText}
+${tasksListText || '(Nenhuma tarefa acionável no momento.)'}
 
 Gere um parágrafo único (máximo de 3 frases) com uma sugestão clara de por onde ele deve começar considerando a energia atual dele. Seja amigável mas direto ao ponto. Sem saudações clichês compridas.`;
 
@@ -52,7 +78,7 @@ Gere um parágrafo único (máximo de 3 frases) com uma sugestão clara de por o
     body: JSON.stringify({
       model: 'gpt-4o-mini',
       messages: [{ role: 'system', content: systemPrompt }],
-      temperature: 0.7,
+      temperature: 0,
       max_tokens: 150,
     }),
   });
