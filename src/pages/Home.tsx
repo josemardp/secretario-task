@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useTaskStore } from '../stores/taskStore';
 import { useContextStore } from '../stores/contextStore';
 
@@ -55,6 +55,9 @@ export default function Home() {
   const [focoOpen, setFocoOpen] = useState(false);
   const [briefingText, setBriefingText] = useState<string | null>(null);
   const [isGeneratingBriefing, setIsGeneratingBriefing] = useState(false);
+  const taskInputRef = useRef<HTMLTextAreaElement | null>(null);
+  const captureBarRef = useRef<HTMLFormElement | null>(null);
+  const [captureBarHeight, setCaptureBarHeight] = useState(56);
 
   const tasks = useTaskStore((s) => s.tasks);
   const addTask = useTaskStore((s) => s.addTask);
@@ -89,6 +92,21 @@ export default function Home() {
 
   const { isRecording, audioBlob, startRecording, stopRecording, clearAudio } = useAudioRecorder();
   const [isTranscribing, setIsTranscribing] = useState(false);
+
+  useEffect(() => {
+    const input = taskInputRef.current;
+    if (!input) return;
+
+    const maxHeight = Math.min(window.innerHeight * 0.45, 260);
+    input.style.height = 'auto';
+    input.style.height = `${Math.max(36, Math.min(input.scrollHeight, maxHeight))}px`;
+    input.style.overflowY = input.scrollHeight > maxHeight ? 'auto' : 'hidden';
+
+    const captureBar = captureBarRef.current;
+    if (captureBar) {
+      setCaptureBarHeight(Math.ceil(captureBar.getBoundingClientRect().height));
+    }
+  }, [taskText]);
 
   useEffect(() => {
     async function handle() {
@@ -359,7 +377,7 @@ export default function Home() {
           maxWidth: '100%',
           overflowX: 'hidden',
           boxSizing: 'border-box',
-          paddingBottom: 'calc(56px + 56px + env(safe-area-inset-bottom))',
+          paddingBottom: `calc(64px + ${captureBarHeight}px + env(safe-area-inset-bottom))`,
         }}
       >
         <BehavioralSuggestion tasks={tasks} />
@@ -390,15 +408,17 @@ export default function Home() {
 
       {/* ── Capture bar ──────────────────────────────────────────── */}
       <form
+        ref={captureBarRef}
         onSubmit={handleTaskSubmit}
-        className="fixed left-0 right-0 z-10 bg-paper border-t border-line px-3 flex items-center gap-2 select-none"
+        className="fixed left-0 right-0 z-10 bg-paper border-t border-line px-3 flex items-end gap-2 select-none"
         style={{
           bottom: 'calc(64px + env(safe-area-inset-bottom))',
           paddingTop: 8, paddingBottom: 8,
         }}
       >
-        <Plus size={18} className="text-ink-3 shrink-0 ml-1" />
+        <Plus size={18} className="text-ink-3 shrink-0 ml-1 mb-2" />
         <textarea
+          ref={taskInputRef}
           value={taskText}
           onChange={(e) => setTaskText(e.target.value)}
           placeholder="Nova tarefa…"
@@ -406,11 +426,11 @@ export default function Home() {
           onKeyDown={(e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
               e.preventDefault();
-              handleTaskSubmit(e as any);
+              e.currentTarget.form?.requestSubmit();
             }
           }}
           disabled={isAddingTask || isTranscribing}
-          className="flex-1 min-w-0 bg-transparent text-[14px] text-ink placeholder:text-ink-3 outline-none resize-none h-9 py-1.5"
+          className="flex-1 min-w-0 bg-transparent text-[14px] leading-5 text-ink placeholder:text-ink-3 outline-none resize-none min-h-9 py-1.5"
           style={{ fontSize: 16 }}
         />
         <button
