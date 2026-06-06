@@ -457,18 +457,17 @@ export function TimelineView({ tasks }: TimelineViewProps) {
           onClick={() => setEditingTask(null)}
         >
           <div
-            className="bg-paper w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl shadow-soft p-5 flex flex-col gap-3 animate-sheet-up"
+            className="bg-paper w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl shadow-soft flex flex-col animate-sheet-up max-h-[90dvh]"
             style={{
-              paddingTop: 'calc(20px + env(safe-area-inset-top))',
-              paddingBottom: 'calc(20px + env(safe-area-inset-bottom))',
+              paddingTop: 'calc(12px + env(safe-area-inset-top))',
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex justify-center sm:hidden">
+            <div className="flex justify-center sm:hidden px-5">
               <div className="w-10 h-1 rounded-full bg-paper3 mb-2" />
             </div>
 
-            <div className="flex items-start justify-between">
+            <div className="flex items-start justify-between px-5">
               <div>
                 <div className="text-[10px] font-extrabold uppercase tracking-[0.06em] text-ink-3">
                   Editar tarefa
@@ -485,6 +484,8 @@ export function TimelineView({ tasks }: TimelineViewProps) {
                 <X size={16} />
               </button>
             </div>
+
+            <div className="flex-1 overflow-y-auto px-5 flex flex-col gap-3 pb-3">
 
             <label className="flex flex-col gap-1">
               <span className="text-[10px] font-bold uppercase tracking-wide text-ink-3">Título</span>
@@ -563,7 +564,12 @@ export function TimelineView({ tasks }: TimelineViewProps) {
               </div>
             )}
 
-            <div className="flex gap-2 pt-1">
+            </div>{/* end scrollable body */}
+
+            <div
+              className="px-5 pt-3 flex gap-2 border-t border-line2"
+              style={{ paddingBottom: 'calc(16px + env(safe-area-inset-bottom))' }}
+            >
               <button
                 onClick={() => setEditingTask(null)}
                 className="flex-1 py-2.5 rounded-xl bg-paper2 text-[13px] font-extrabold text-ink-2"
