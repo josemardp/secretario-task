@@ -1,6 +1,6 @@
 # STATUS.md — SecretárioTask
 
-Última atualização: 2026-06-05
+Última atualização: 2026-06-06
 
 ---
 
@@ -70,15 +70,27 @@ Foi corrigida a hierarquia visual mobile para impedir que cards da Agenda cubram
 - [x] Remoção do arraste por toque na Agenda para permitir rolagem vertical sobre cards e laterais.
 - [x] Ajuste de z-index da barra de captura para ficar acima dos cards da Agenda.
 - [x] Correção de UX: scroll automático para o horário atual ao abrir a Agenda (duplo requestAnimationFrame).
+- [x] Todos os overlays corrigidos para mobile com `createPortal` + `z-[9999]`: modal de edição (Agenda), FocoSheet (Briefing/TOP 3), MultiTaskConfirmModal, SettingsModal e CalendarWidget — todos escapam do stacking context do `<main overflowX: clip>`.
+- [x] Seletor visual de recorrência adicionado ao modal de edição da Agenda (TimelineView): pills de dias da semana + atalhos rápidos (Diario, Dias uteis, Semanal, Mensal, Impares, Pares).
+- [x] Tipo `RecurrenceRule` criado em `src/types/index.ts` como tipo auxiliar de UI (distinto de `Task.recurrence_rule: string | null` para compatibilidade com o parser).
+- [x] Lógica de recorrência extraída para `src/lib/recurrence.ts`: WEEKDAY_PILLS, RECURRENCE_PRESETS, toggleWeekday (com promoção automática para `daily` ao selecionar 7 dias), togglePreset, getNextOccurrenceFromNow.
+- [x] Seletor de recorrência replicado no editor inline do Kanban (TaskBoard) importando de `recurrence.ts`.
+- [x] `getNextOccurrence` no taskStore atualizado para suportar `odd_days` e `even_days`.
+- [x] Reagendamento automático de `due_at` ao mudar regra de recorrência no modal da Agenda.
+- [x] Bug 1 (sync): LWW update → loop infinito corrigido — mutation descartada silenciosamente quando servidor mais novo que `baseUpdatedAt`.
+- [x] Bug 2 (sync): race condition em `fetchRemoteTasks` paralelos corrigido com flag module-level `isFetchingRemote`.
+- [x] Bug 3 (sync): Realtime não reconectava após background — corrigido com callback de status correto no `.subscribe()` da API Supabase JS v2 (substituiu `.on('system', ...)` inválido).
+- [x] Bug 4 (sync): clock skew no INSERT corrigido — `stripReadonlyTaskFields` aplicado também no INSERT + migration `0009` com trigger `BEFORE INSERT` aplicada no Supabase em produção (06/06/2026).
+- [x] Bug 5 (sync): delete LWW → loop infinito corrigido — zero rows num delete descarta mutation silenciosamente com `removeMutation + continue`.
 
 ---
 
 # Próximo passo concreto
 
-Validar manualmente no celular real a âncora de scroll da Agenda: 
-1. Abrir a Agenda e ver se rola pro slot atual.
-2. Navegar para amanhã e voltar para hoje para testar o re-cálculo da âncora.
-3. Adiar uma tarefa e verificar se o scroll permanece estável.
+Validar manualmente no celular real:
+1. Editar uma tarefa no PC e verificar se aparece no mobile em até 5 segundos (Realtime reconectado).
+2. Testar seletor de recorrência no Kanban e na Agenda — verificar persistência após reload.
+3. Criar tarefa no mobile e verificar `created_at`/`updated_at` no Supabase Dashboard (devem ser do servidor, não do cliente).
 
 ---
 
