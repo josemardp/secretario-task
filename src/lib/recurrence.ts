@@ -80,11 +80,17 @@ export function getNextOccurrenceFromNow(
 
 // ─── Helpers de toggle para o seletor de dias ────────────────────
 
-/** Alterna um dia da semana na regra atual. Retorna a nova RecurrenceRule. */
+const ALL_WEEKDAY_KEYS = WEEKDAY_PILLS.map(d => d.key);
+
+/** Alterna um dia da semana na regra atual. Retorna a nova RecurrenceRule.
+ *
+ * Promoção automática: quando todos os 7 dias ficam selecionados, a regra
+ * é promovida para 'daily'. Ao remover qualquer dia de 'daily', a regra
+ * passa para a lista dos 6 dias restantes. */
 export function toggleWeekday(current: RecurrenceRule, key: string): RecurrenceRule {
   if (current === 'daily') {
-    // daily → remove este dia (passa para lista sem ele)
-    const next = WEEKDAY_PILLS.map(d => d.key).filter(k => k !== key).join(',');
+    // daily → remove este dia (passa para lista com os 6 restantes)
+    const next = ALL_WEEKDAY_KEYS.filter(k => k !== key).join(',');
     return (next || null) as RecurrenceRule;
   }
   const days = typeof current === 'string'
@@ -94,7 +100,9 @@ export function toggleWeekday(current: RecurrenceRule, key: string): RecurrenceR
     ? days.filter(k => k !== key)
     : [...days, key];
   // Ordena pela ordem canônica da semana
-  const ordered = WEEKDAY_PILLS.map(d => d.key).filter(k => next.includes(k));
+  const ordered = ALL_WEEKDAY_KEYS.filter(k => next.includes(k));
+  // Promoção: 7 dias selecionados → 'daily'
+  if (ordered.length === 7) return 'daily';
   return (ordered.length ? ordered.join(',') : null) as RecurrenceRule;
 }
 
