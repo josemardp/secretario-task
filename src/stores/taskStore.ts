@@ -18,6 +18,12 @@ function getNextOccurrence(baseDateStr: string | null, rule: string): string {
       d.setDate(d.getDate() + 7);
     } else if (rule === 'monthly') {
       d.setMonth(d.getMonth() + 1);
+    } else if (rule === 'odd_days') {
+      d.setDate(d.getDate() + 1);
+      while (d.getDate() % 2 === 0) d.setDate(d.getDate() + 1);
+    } else if (rule === 'even_days') {
+      d.setDate(d.getDate() + 1);
+      while (d.getDate() % 2 !== 0) d.setDate(d.getDate() + 1);
     } else {
       // rule pode ser "monday,tuesday" ou apenas "monday"
       const daysMap: Record<string, number> = { sunday: 0, monday: 1, tuesday: 2, wednesday: 3, thursday: 4, friday: 5, saturday: 6 };
