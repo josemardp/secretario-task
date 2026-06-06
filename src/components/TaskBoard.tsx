@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { formatDateTime, rescheduleToDate, postponeToTomorrow, wasEdited } from '../lib/datetime';
-import type { Task, TaskStatus, ContextType } from '../types';
+import { WEEKDAY_PILLS, RECURRENCE_PRESETS, toggleWeekday, togglePreset } from '../lib/recurrence';
+import type { Task, TaskStatus, ContextType, RecurrenceRule } from '../types';
 import { CONTEXTS_LIST } from '../types';
 import { useTaskStore } from '../stores/taskStore';
 import { useContextStore } from '../stores/contextStore';
@@ -63,6 +64,14 @@ function TaskRow({
   isDone, isFirstInColumn, isLastInColumn,
 }: TaskRowProps) {
   const { updateTask, deleteTask } = useTaskStore();
+  const [localRecurrence, setLocalRecurrence] = useState<RecurrenceRule>(
+    (task.recurrence_rule ?? null) as RecurrenceRule,
+  );
+
+  // Sincroniza quando a tarefa muda (ex: outra aba atualizou)
+  useEffect(() => {
+    setLocalRecurrence((task.recurrence_rule ?? null) as RecurrenceRule);
+  }, [task.recurrence_rule]);
 
   const timeText = formatTime(task.due_at);
   const durText  = task.actual_minutes != null
@@ -185,6 +194,62 @@ function TaskRow({
                 className="bg-paper2 rounded-lg px-2 py-1.5 text-[12px] text-ink border-0 outline-none tnum"
               />
             </label>
+
+            <div className="col-span-2 flex flex-col gap-2">
+              <span className="text-[10px] font-bold uppercase tracking-wide text-ink-3">Recorrência</span>
+
+              {/* Linha 1: quadradinhos dos dias da semana */}
+              <div className="grid grid-cols-7 gap-1.5">
+                {WEEKDAY_PILLS.map(({ label, key }) => {
+                  const active = localRecurrence === 'daily'
+                    ? true
+                    : typeof localRecurrence === 'string'
+                      ? localRecurrence.split(',').includes(key)
+                      : false;
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const next = toggleWeekday(localRecurrence, key);
+                        setLocalRecurrence(next);
+                        updateTask(task.id, { recurrence_rule: next });
+                      }}
+                      className={`h-9 rounded-xl text-[11px] font-extrabold transition-colors ${
+                        active ? 'bg-ink text-white' : 'bg-paper2 text-ink-2'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Linha 2: atalhos rápidos */}
+              <div className="flex flex-wrap gap-1.5">
+                {RECURRENCE_PRESETS.map(({ label, value }) => {
+                  const active = localRecurrence === value;
+                  return (
+                    <button
+                      key={label}
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const next = togglePreset(localRecurrence, value);
+                        setLocalRecurrence(next);
+                        updateTask(task.id, { recurrence_rule: next });
+                      }}
+                      className={`px-3 py-1.5 rounded-xl text-[11px] font-extrabold transition-colors ${
+                        active ? 'bg-ink text-white' : 'bg-paper2 text-ink-2'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
 
             <label className="text-[10px] font-bold uppercase tracking-wide text-ink-3 flex flex-col gap-1 col-span-2">
               Tempo estimado
