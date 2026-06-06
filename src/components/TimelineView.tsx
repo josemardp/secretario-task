@@ -272,7 +272,7 @@ export function TimelineView({ tasks }: TimelineViewProps) {
       context: task.context,
       priority: task.priority,
       energy: task.energy,
-      recurrence_rule: (task.recurrence_rule ?? null) as RecurrenceRule,
+      recurrence_rule: (task.recurrence_rule ?? null) as RecurrenceRule | null,
     });
   };
 
