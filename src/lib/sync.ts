@@ -4,7 +4,11 @@ import { useContextStore } from '../stores/contextStore';
 import { generateEmbedding } from './ai';
 import type { Task } from '../types';
 
+// ─── Flags de lock ────────────────────────────────────────────────
+// Bug 2: fetchRemoteTasks precisava de guard análogo ao isSyncing para
+// evitar merges paralelos que sobrescrevem o resultado um do outro.
 let isSyncing = false;
+let isFetchingRemote = false;
 
 function replaceLocalTask(task: Task) {
   const { tasks, setTasks } = useTaskStore.getState();
@@ -48,29 +52,38 @@ function deduplicateFunctionalTasks(tasks: Task[]): Task[] {
 }
 
 export async function fetchRemoteTasks() {
-  const { data: remoteTasks, error } = await supabase
-    .from('tasks')
-    .select('*'); // fetch tombstones too
+  // Bug 2: guard para evitar merges paralelos.
+  // Se já há um fetch em andamento, retorna early sem fazer nada.
+  if (isFetchingRemote) return;
+  isFetchingRemote = true;
 
-  if (error) throw error;
-  if (!remoteTasks) return;
+  try {
+    const { data: remoteTasks, error } = await supabase
+      .from('tasks')
+      .select('*'); // fetch tombstones too
 
-  const { tasks: localTasks, setTasks } = useTaskStore.getState();
+    if (error) throw error;
+    if (!remoteTasks) return;
 
-  const taskMap = new Map<string, Task>();
+    const { tasks: localTasks, setTasks } = useTaskStore.getState();
 
-  localTasks.forEach((t) => taskMap.set(t.id, t));
+    const taskMap = new Map<string, Task>();
 
-  remoteTasks.forEach((remote) => {
-    const local = taskMap.get(remote.id);
-    if (!local || toTimestampOrZero(remote.updated_at) >= toTimestampOrZero(local.updated_at)) {
-      taskMap.set(remote.id, remote as Task);
-    }
-  });
+    localTasks.forEach((t) => taskMap.set(t.id, t));
 
-  const dedupedTasks = deduplicateFunctionalTasks(Array.from(taskMap.values()));
+    remoteTasks.forEach((remote) => {
+      const local = taskMap.get(remote.id);
+      if (!local || toTimestampOrZero(remote.updated_at) >= toTimestampOrZero(local.updated_at)) {
+        taskMap.set(remote.id, remote as Task);
+      }
+    });
 
-  setTasks(dedupedTasks.filter((t) => !t.deleted_at));
+    const dedupedTasks = deduplicateFunctionalTasks(Array.from(taskMap.values()));
+
+    setTasks(dedupedTasks.filter((t) => !t.deleted_at));
+  } finally {
+    isFetchingRemote = false;
+  }
 }
 
 export async function fetchApiKeyFromCloud(): Promise<string | null> {
@@ -121,9 +134,12 @@ export async function processSyncQueue() {
       try {
         if (mutation.entity === 'task') {
           const rawPayload = { ...(mutation.payload as Record<string, unknown>) };
-          const payloadToSync: Record<string, unknown> = mutation.operation === 'insert'
-            ? rawPayload
-            : stripReadonlyTaskFields(rawPayload);
+
+          // Bug 4: stripReadonlyTaskFields agora é aplicado também no INSERT,
+          // removendo created_at/updated_at do payload para que o trigger do
+          // banco (BEFORE INSERT) gere os timestamps corretos pelo servidor.
+          // Antes, apenas o bloco de update chamava stripReadonlyTaskFields.
+          const payloadToSync: Record<string, unknown> = stripReadonlyTaskFields(rawPayload);
 
           const apiKey = useContextStore.getState().aiApiKey;
           if (apiKey && (mutation.operation === 'insert' || mutation.operation === 'update')) {
@@ -145,6 +161,8 @@ export async function processSyncQueue() {
               user_id: userId,
             }).select('*').single();
             if (error) throw error;
+            // replaceLocalTask traz o updated_at/created_at gerado pelo servidor
+            // de volta para o store, corrigindo o clock skew do cliente.
             if (data) replaceLocalTask(data as Task);
           } else if (mutation.operation === 'update') {
             let query = supabase.from('tasks')
@@ -161,7 +179,28 @@ export async function processSyncQueue() {
               .maybeSingle();
 
             if (error) throw error;
-            if (!data) throw new Error(`Task ${mutation.entityId} nao foi atualizada - zero rows`);
+
+            if (!data) {
+              // Bug 1: "zero rows" com a cláusula .lte ativa significa que o
+              // servidor foi atualizado por outro device após o cliente ler a
+              // tarefa (conflito LWW). A versão do servidor já prevaleceu.
+              // O comportamento correto é descartar esta mutation silenciosamente
+              // (o fetchRemoteTasks já trouxe o estado correto do servidor) e
+              // NÃO fazer force-merge, pois isso violaria LWW.
+              //
+              // Se baseUpdatedAt não estava definido, aí sim é um erro real
+              // (ex: tarefa deletada no servidor), e lançamos o erro normalmente.
+              if (mutation.baseUpdatedAt) {
+                console.warn(
+                  `[sync] LWW conflict: mutation ${mutation.id} descartada — ` +
+                  `servidor mais novo que baseUpdatedAt=${mutation.baseUpdatedAt}`
+                );
+                store.removeMutation(mutation.id);
+                continue;
+              }
+              throw new Error(`Task ${mutation.entityId} nao foi atualizada - zero rows`);
+            }
+
             replaceLocalTask(data as Task);
           } else if (mutation.operation === 'delete') {
             const { data, error } = await supabase.from('tasks')
@@ -172,7 +211,18 @@ export async function processSyncQueue() {
               .maybeSingle();
 
             if (error) throw error;
-            if (!data) throw new Error(`Task ${mutation.entityId} nao foi deletada - zero rows`);
+
+            if (!data) {
+              // Zero rows num delete significa que a tarefa já não existe no servidor
+              // (deletada por outro device ou nunca existiu). O servidor já está no
+              // estado correto — descartar a mutation silenciosamente, sem retry.
+              console.warn(
+                `[sync] delete ignorado: mutation ${mutation.id} — tarefa ${mutation.entityId} já inexistente no servidor`
+              );
+              store.removeMutation(mutation.id);
+              continue;
+            }
+
             replaceLocalTask(data as Task);
           }
         } else if (mutation.entity === 'task_event') {
