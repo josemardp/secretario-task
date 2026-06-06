@@ -164,7 +164,7 @@ export function parseTaskInput(rawText: string, defaultContext: ContextType): Pa
   }
 
   // Parse Recurrence (antigo fallback em string)
-  const recurrenceRegexes = [
+  const recurrenceRegexes: { regex: RegExp; rule: string }[] = [
     { regex: /\btodos os dias\b|\btodo dia\b/i, rule: 'daily' },
     { regex: /\btoda semana\b/i, rule: 'weekly' },
     { regex: /\btodo mes\b|\btodo mês\b/i, rule: 'monthly' },

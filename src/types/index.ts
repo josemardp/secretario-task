@@ -1,5 +1,9 @@
 export type ContextType = 'PM' | 'Esdra' | 'Pessoal' | 'Familia' | 'CCB' | 'Estudo' | 'Saude';
 
+/** Valores suportados pelo seletor de UI. O campo no banco é text, portanto
+ * o tipo no modelo Task permanece string | null para compatibilidade com
+ * o parser (que produz dias individuais como 'monday', 'tuesday', etc.).
+ * Use RecurrenceRule apenas para tipar o estado do formulário de edição. */
 export type RecurrenceRule =
   | 'daily'
   | 'monday,tuesday,wednesday,thursday,friday'
@@ -28,7 +32,7 @@ export interface Task {
   estimated_minutes?: number | null;
   actual_minutes?: number | null;
   started_at?: string | null;
-  recurrence_rule?: RecurrenceRule;
+  recurrence_rule?: string | null;
   recurrence_origin_id?: string | null;
   postponed_count?: number | null;
 }
