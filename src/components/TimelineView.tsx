@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { formatDateTime, rescheduleToDate, postponeToTomorrow, wasEdited } from '../lib/datetime';
 import { Calendar as CalIcon, Flag, Repeat, X, Edit3, Trash2 } from 'lucide-react';
 import type { Task, ContextType } from '../types';
@@ -451,9 +452,9 @@ export function TimelineView({ tasks }: TimelineViewProps) {
       </div>
 
       {/* Edit modal */}
-      {editingTask && (
+      {editingTask && createPortal(
         <div
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-[rgba(26,24,20,0.45)] animate-fade-in"
+          className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-[rgba(26,24,20,0.45)] animate-fade-in"
           onClick={() => setEditingTask(null)}
         >
           <div
@@ -585,7 +586,7 @@ export function TimelineView({ tasks }: TimelineViewProps) {
             </div>
           </div>
         </div>
-      )}
+      , document.body)}
     </div>
   );
 }
