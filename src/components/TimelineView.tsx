@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { formatDateTime, rescheduleToDate, postponeToTomorrow, wasEdited } from '../lib/datetime';
+import { WEEKDAY_PILLS, RECURRENCE_PRESETS, getNextOccurrenceFromNow, toggleWeekday, togglePreset } from '../lib/recurrence';
 import { Calendar as CalIcon, Flag, Repeat, X, Edit3, Trash2 } from 'lucide-react';
 import type { Task, ContextType, RecurrenceRule } from '../types';
 import { CONTEXTS_LIST } from '../types';
@@ -32,81 +33,7 @@ function toLocalDatetimeInput(iso: string | null | undefined): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-// ─── Recurrence helpers ────────────────────────────────────────
-
-const WEEKDAY_PILLS: { label: string; key: string }[] = [
-  { label: 'Dom', key: 'sunday' },
-  { label: 'Seg', key: 'monday' },
-  { label: 'Ter', key: 'tuesday' },
-  { label: 'Qua', key: 'wednesday' },
-  { label: 'Qui', key: 'thursday' },
-  { label: 'Sex', key: 'friday' },
-  { label: 'Sab', key: 'saturday' },
-];
-
-const RECURRENCE_PRESETS: { label: string; value: string }[] = [
-  { label: 'Diario',      value: 'daily' },
-  { label: 'Dias uteis',  value: 'monday,tuesday,wednesday,thursday,friday' },
-  { label: 'Semanal',     value: 'weekly' },
-  { label: 'Mensal',      value: 'monthly' },
-  { label: 'Impares',     value: 'odd_days' },
-  { label: 'Pares',       value: 'even_days' },
-];
-
-/** Retorna a próxima data válida para a regra a partir de agora,
- * preservando o horário original da tarefa. */
-function getNextOccurrenceFromNow(
-  baseDateStr: string | null,
-  rule: string,
-): string | null {
-  const base = baseDateStr ? new Date(baseDateStr) : new Date();
-  const now = new Date();
-
-  // Candidato inicial = hoje (ou amanhã se já passou hoje)
-  const candidate = new Date(now);
-  candidate.setHours(base.getHours(), base.getMinutes(), 0, 0);
-  if (candidate <= now) candidate.setDate(candidate.getDate() + 1);
-
-  if (rule === 'daily') return candidate.toISOString();
-
-  if (rule === 'weekly') {
-    // Próxima ocorrência no mesmo dia da semana do base
-    const targetDow = base.getDay();
-    while (candidate.getDay() !== targetDow) candidate.setDate(candidate.getDate() + 1);
-    return candidate.toISOString();
-  }
-
-  if (rule === 'monthly') {
-    candidate.setDate(base.getDate());
-    if (candidate <= now) candidate.setMonth(candidate.getMonth() + 1);
-    return candidate.toISOString();
-  }
-
-  if (rule === 'odd_days') {
-    while (candidate.getDate() % 2 === 0) candidate.setDate(candidate.getDate() + 1);
-    return candidate.toISOString();
-  }
-
-  if (rule === 'even_days') {
-    while (candidate.getDate() % 2 !== 0) candidate.setDate(candidate.getDate() + 1);
-    return candidate.toISOString();
-  }
-
-  // Lista de dias da semana (ex: 'monday,friday')
-  const daysMap: Record<string, number> = {
-    sunday: 0, monday: 1, tuesday: 2, wednesday: 3,
-    thursday: 4, friday: 5, saturday: 6,
-  };
-  const validDows = rule.split(',').map(r => daysMap[r.trim()]).filter(n => n !== undefined);
-  if (validDows.length > 0) {
-    for (let i = 0; i < 7; i++) {
-      if (validDows.includes(candidate.getDay())) return candidate.toISOString();
-      candidate.setDate(candidate.getDate() + 1);
-    }
-  }
-
-  return null;
-}
+// ─── Recurrence helpers (importados de src/lib/recurrence.ts) ───
 
 // ─── Task card ──────────────────────────────────────────────────
 
@@ -651,23 +578,10 @@ export function TimelineView({ tasks }: TimelineViewProps) {
                       key={key}
                       type="button"
                       onClick={() => {
-                        setEditForm((f) => {
-                          const current = f.recurrence_rule;
-                          if (current === 'daily') {
-                            // daily → remove este dia (passa para lista sem ele)
-                            const next = WEEKDAY_PILLS.map(d => d.key).filter(k => k !== key).join(',');
-                            return { ...f, recurrence_rule: (next || null) as RecurrenceRule };
-                          }
-                          const days = typeof current === 'string'
-                            ? current.split(',').filter(Boolean)
-                            : [];
-                          const next = days.includes(key)
-                            ? days.filter(k => k !== key)
-                            : [...days, key];
-                          // Ordena pela ordem canônica da semana
-                          const ordered = WEEKDAY_PILLS.map(d => d.key).filter(k => next.includes(k));
-                          return { ...f, recurrence_rule: (ordered.length ? ordered.join(',') : null) as RecurrenceRule };
-                        });
+                        setEditForm((f) => ({
+                          ...f,
+                          recurrence_rule: toggleWeekday(f.recurrence_rule, key),
+                        }));
                       }}
                       className={`h-9 rounded-xl text-[11px] font-extrabold transition-colors ${
                         active
@@ -692,7 +606,7 @@ export function TimelineView({ tasks }: TimelineViewProps) {
                       onClick={() =>
                         setEditForm((f) => ({
                           ...f,
-                          recurrence_rule: (f.recurrence_rule === value ? null : value) as RecurrenceRule,
+                          recurrence_rule: togglePreset(f.recurrence_rule, value),
                         }))
                       }
                       className={`px-3 py-1.5 rounded-xl text-[11px] font-extrabold transition-colors ${
