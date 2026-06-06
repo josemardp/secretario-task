@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import type { Task } from '../types';
 
@@ -95,9 +96,9 @@ export function CalendarWidget({ selectedDate, onSelectDate, onClose, tasks }: C
     return els;
   };
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-[rgba(26,24,20,0.45)] animate-fade-in"
+      className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-[rgba(26,24,20,0.45)] animate-fade-in"
       onClick={onClose}
     >
       <div
@@ -166,5 +167,5 @@ export function CalendarWidget({ selectedDate, onSelectDate, onClose, tasks }: C
         </div>
       </div>
     </div>
-  );
+  , document.body);
 }
