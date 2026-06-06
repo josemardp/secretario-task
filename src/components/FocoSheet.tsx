@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom';
 import { Sparkles, Clock, Flag, ArrowRight, X } from 'lucide-react';
 import type { Task, ContextType } from '../types';
 
@@ -48,8 +49,8 @@ export function FocoSheet({
   const top1 = topTasks[0];
   const rest = topTasks.slice(1, 3);
 
-  return (
-    <div className="fixed inset-0 z-50 animate-fade-in" onClick={onClose}>
+  return createPortal(
+    <div className="fixed inset-0 z-[9999] animate-fade-in" onClick={onClose}>
       {/* backdrop */}
       <div className="absolute inset-0 bg-[rgba(26,24,20,0.45)]" />
 
@@ -173,5 +174,5 @@ export function FocoSheet({
         </div>{/* fim corpo rolável */}
       </div>
     </div>
-  );
+  , document.body);
 }
