@@ -55,15 +55,16 @@ export function FocoSheet({
 
       {/* sheet */}
       <div
-        className="absolute left-0 right-0 bottom-0 bg-paper rounded-t-3xl shadow-soft animate-sheet-up safe-bottom"
+        className="absolute left-0 right-0 bottom-0 bg-paper rounded-t-3xl shadow-soft animate-sheet-up flex flex-col max-h-[90dvh]"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex justify-center pt-2 pb-3">
+        {/* drag handle — fora do scroll */}
+        <div className="flex justify-center pt-2 pb-3 flex-shrink-0">
           <div className="w-10 h-1 rounded-full bg-paper3" />
         </div>
 
-        {/* header */}
-        <div className="px-5 flex items-start justify-between">
+        {/* header — fora do scroll */}
+        <div className="px-5 flex items-start justify-between flex-shrink-0">
           <div>
             <div className="text-[10px] font-extrabold tracking-[0.06em] uppercase text-ink-3">
               Foco · Top 3
@@ -90,6 +91,12 @@ export function FocoSheet({
             </button>
           </div>
         </div>
+
+        {/* corpo rolável */}
+        <div
+          className="flex-1 overflow-y-auto"
+          style={{ paddingBottom: 'calc(16px + env(safe-area-inset-bottom))' }}
+        >
 
         {/* briefing card */}
         {briefingText && (
@@ -140,7 +147,7 @@ export function FocoSheet({
 
         {/* Top 2/3 */}
         {rest.length > 0 && (
-          <div className="px-5 mt-2 flex flex-col gap-1.5 pb-4">
+          <div className="px-5 mt-2 flex flex-col gap-1.5 pb-2">
             {rest.map((t, i) => (
               <div
                 key={t.id}
@@ -162,6 +169,8 @@ export function FocoSheet({
             ))}
           </div>
         )}
+
+        </div>{/* fim corpo rolável */}
       </div>
     </div>
   );
