@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { formatDateTime, rescheduleToDate, postponeToTomorrow, wasEdited } from '../lib/datetime';
 import { Calendar as CalIcon, Flag, Repeat, X, Edit3, Trash2 } from 'lucide-react';
-import type { Task, ContextType } from '../types';
+import type { Task, ContextType, RecurrenceRule } from '../types';
 import { CONTEXTS_LIST } from '../types';
 import { useContextStore } from '../stores/contextStore';
 import { useTaskStore } from '../stores/taskStore';
@@ -234,9 +234,18 @@ export function TimelineView({ tasks }: TimelineViewProps) {
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [dismissedBreaks, setDismissedBreaks] = useState<string[]>([]);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [editForm, setEditForm] = useState({
+  const [editForm, setEditForm] = useState<{
+    title: string;
+    due_at: string;
+    estimated_minutes: number;
+    context: ContextType;
+    priority: number;
+    energy: number;
+    recurrence_rule: RecurrenceRule;
+  }>({
     title: '', due_at: '', estimated_minutes: 30,
     context: 'Pessoal' as ContextType, priority: 0, energy: 0,
+    recurrence_rule: null,
   });
 
   const anchorRef = useRef<HTMLDivElement>(null);
@@ -263,6 +272,7 @@ export function TimelineView({ tasks }: TimelineViewProps) {
       context: task.context,
       priority: task.priority,
       energy: task.energy,
+      recurrence_rule: (task.recurrence_rule ?? null) as RecurrenceRule,
     });
   };
 
@@ -275,6 +285,7 @@ export function TimelineView({ tasks }: TimelineViewProps) {
       context: editForm.context,
       priority: editForm.priority,
       energy: editForm.energy,
+      recurrence_rule: editForm.recurrence_rule,
     });
     setEditingTask(null);
   };
@@ -530,6 +541,26 @@ export function TimelineView({ tasks }: TimelineViewProps) {
                 className="bg-paper2 rounded-xl px-3 py-2.5 text-[13px] font-semibold text-ink outline-none border-0"
               >
                 {CONTEXTS_LIST.map((ctx) => (<option key={ctx} value={ctx}>{ctx}</option>))}
+              </select>
+            </label>
+
+            <label className="flex flex-col gap-1">
+              <span className="text-[10px] font-bold uppercase tracking-wide text-ink-3">Recorrência</span>
+              <select
+                value={editForm.recurrence_rule ?? ''}
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setEditForm((f) => ({ ...f, recurrence_rule: (v === '' ? null : v) as RecurrenceRule }));
+                }}
+                className="bg-paper2 rounded-xl px-3 py-2.5 text-[13px] font-semibold text-ink outline-none border-0"
+              >
+                <option value="">Não se repete</option>
+                <option value="daily">Diariamente</option>
+                <option value="monday,tuesday,wednesday,thursday,friday">Dias úteis (seg–sex)</option>
+                <option value="weekly">Semanal</option>
+                <option value="monthly">Mensal</option>
+                <option value="odd_days">Dias ímpares</option>
+                <option value="even_days">Dias pares</option>
               </select>
             </label>
 

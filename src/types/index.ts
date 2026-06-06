@@ -1,4 +1,14 @@
 export type ContextType = 'PM' | 'Esdra' | 'Pessoal' | 'Familia' | 'CCB' | 'Estudo' | 'Saude';
+
+export type RecurrenceRule =
+  | 'daily'
+  | 'monday,tuesday,wednesday,thursday,friday'
+  | 'weekly'
+  | 'monthly'
+  | 'odd_days'
+  | 'even_days'
+  | null;
+
 export const CONTEXTS_LIST: ContextType[] = ['PM', 'Esdra', 'Pessoal', 'Familia', 'CCB', 'Estudo', 'Saude'];
 export type TaskStatus = 'todo' | 'doing' | 'done';
 
@@ -18,7 +28,7 @@ export interface Task {
   estimated_minutes?: number | null;
   actual_minutes?: number | null;
   started_at?: string | null;
-  recurrence_rule?: string | null;
+  recurrence_rule?: RecurrenceRule;
   recurrence_origin_id?: string | null;
   postponed_count?: number | null;
 }
