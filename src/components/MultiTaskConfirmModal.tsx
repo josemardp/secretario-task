@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Sparkles, Repeat, Trash2, Flag } from 'lucide-react';
 import type { Task, ContextType } from '../types';
 import { CONTEXTS_LIST } from '../types';
@@ -54,9 +55,9 @@ export function MultiTaskConfirmModal({
     setTasks(tasks.filter((_, i) => i !== idx));
   };
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-[rgba(26,24,20,0.45)] animate-fade-in"
+      className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-[rgba(26,24,20,0.45)] animate-fade-in"
       onClick={onCancel}
     >
       <div
@@ -214,5 +215,5 @@ export function MultiTaskConfirmModal({
         </div>
       </div>
     </div>
-  );
+  , document.body);
 }
