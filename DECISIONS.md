@@ -1,6 +1,6 @@
 # DECISIONS.md — SecretárioTask
 
-Última atualização: 2026-05-31
+Última atualização: 2026-06-06
 Status: registro vivo de decisões técnicas e operacionais
 
 ---
@@ -289,3 +289,43 @@ Decisão: Utilizar duplo `requestAnimationFrame` aninhado no lugar de `setTimeou
 Motivo: Um `setTimeout` com valor mágico resolve a race condition entre a hidratação da timeline e a atribuição da `ref` na maioria dos aparelhos rápidos, mas pode falhar (anchor falho) em devices lentos (Android de entrada) onde a pintura completa do layout demora. O duplo `rAF` não usa valor mágico, garantindo estritamente dois frames de renderização para que o alvo de scroll esteja 100% pronto na árvore DOM antes de repuxar a tela.
 Alternativas descartadas: `setTimeout(..., 100)` — descartada para evitar valores temporais arbitrários que variam de aparelho para aparelho e que causam falhas de scroll intermitentes.
 Contexto: Resolução do bug de "scroll/exibição da Agenda fixado no passado em vez de no presente".
+
+## 2026-06-06 — createPortal para todos os overlays do app
+
+Decisão: todos os modais, sheets e drawers do app (modal de edição da Agenda em `TimelineView`, `FocoSheet`, `MultiTaskConfirmModal`, `SettingsModal`, `CalendarWidget`) são montados via `createPortal(jsx, document.body)` com `z-[9999]`.
+Motivo: o `<main>` do layout raiz tem `overflowX: clip` no estilo inline, o que cria um stacking context CSS independente. Qualquer overlay com `position: fixed` dentro desse contexto fica confinado a ele — a tab bar de navegação, que está no stacking context raiz com `z-50`, sempre ficava por cima do rodapé dos modais, cortando botões e conteúdo. O `createPortal` monta o overlay diretamente no `<body>`, escapando de qualquer stacking context intermediário.
+Alternativas descartadas: remover `overflowX: clip` do `<main>` — descartada pois causaria overflow horizontal visível em mobile; usar `z-index` ainda mais alto sem portal — descartada pois o stacking context confina o z-index independentemente do valor.
+Contexto: correção do problema crônico de modais cortados na parte inferior no mobile (06/06/2026).
+
+## 2026-06-06 — RecurrenceRule como tipo auxiliar de UI, distinto de Task.recurrence_rule
+
+Decisão: o tipo `RecurrenceRule` em `src/types/index.ts` é um union type auxiliar usado exclusivamente no estado do formulário de edição. O campo `Task.recurrence_rule` permanece tipado como `string | null` para compatibilidade com o `parser.ts`, que produz strings compostas dinâmicas (ex: `foundDays.join(',')`) que não fazem parte do union.
+Motivo: tipar `Task.recurrence_rule` diretamente com o union causava erros `TS2322` no build da Vercel porque o parser atribui valores de dias individuais (`'monday'`, `'tuesday'`, etc.) e strings dinâmicas que não estão no union. A separação preserva a segurança de tipos na UI sem quebrar o parser existente.
+Alternativas descartadas: ampliar o union para incluir todos os dias individuais — descartada por criar um union excessivamente longo e fraco semanticamente; usar `as RecurrenceRule` no parser — descartada por introduzir cast inseguro em código de produção.
+Contexto: implementação do seletor visual de recorrência no modal de edição (06/06/2026).
+
+## 2026-06-06 — Extração de lógica de recorrência para src/lib/recurrence.ts
+
+Decisão: as constantes `WEEKDAY_PILLS`, `RECURRENCE_PRESETS` e as funções `toggleWeekday`, `togglePreset` e `getNextOccurrenceFromNow` foram extraídas de `TimelineView.tsx` para `src/lib/recurrence.ts` e importadas em ambos `TimelineView.tsx` e `TaskBoard.tsx`.
+Motivo: evitar duplicação de lógica entre os dois editores de tarefa (Agenda e Kanban). A função `toggleWeekday` inclui promoção automática bidirecional: selecionar os 7 dias individualmente promove para `daily`; qualquer correção futura é herdada automaticamente pelos dois componentes.
+Alternativas descartadas: copiar o bloco de UI sem extrair a lógica — descartada por criar dois pontos de manutenção divergentes.
+Contexto: replicação do seletor de recorrência no Kanban (06/06/2026).
+
+## 2026-06-06 — Sem reagendamento automático de due_at no Kanban ao mudar recorrência
+
+Decisão: no editor inline do Kanban (`TaskBoard`), mudar a regra de recorrência não recomputa `due_at` automaticamente. O usuário ajusta o campo "Quando" manualmente se necessário.
+Motivo: no Kanban, a edição é inline e imediata (sem botão Salvar explícito). Reagendar `due_at` automaticamente ao clicar numa pill seria inesperado e poderia sobrescrever um horário intencional. Na Agenda, o reagendamento é feito apenas ao clicar em "Salvar", onde a intenção é explícita.
+Alternativas descartadas: reagendar automaticamente em ambos os editores — descartada pelo risco de sobrescrever horários intencionais no fluxo inline do Kanban.
+Contexto: replicação do seletor de recorrência no Kanban (06/06/2026).
+
+## 2026-06-06 — Correção dos 5 bugs de sincronização crônicos
+
+Decisão: cinco bugs de sincronização foram corrigidos em `sync.ts` e `App.tsx`, com migration `0009` aplicada no banco em produção.
+1. **Bug 1 — LWW update loop:** mutation descartada silenciosamente com `removeMutation + continue` quando `data` é null e `baseUpdatedAt` estava definido (servidor mais novo que o cliente).
+2. **Bug 2 — Race condition fetchRemoteTasks:** flag module-level `isFetchingRemote` com guard no início da função e reset no `finally`.
+3. **Bug 3 — Realtime sem reconexão:** `.on('system', { event: 'disconnect' }, ...)` (API inválida no Supabase JS v2) substituído por callback de status no `.subscribe((status) => {...})` com guard `visibilityState === 'visible'` e `setTimeout` de 2000ms.
+4. **Bug 4 — Clock skew INSERT:** `stripReadonlyTaskFields` aplicado também no INSERT; trigger `BEFORE INSERT` (migration `0009_trigger_insert_updated_at.sql`) garante `created_at`/`updated_at` gerados pelo servidor.
+5. **Bug 5 — Delete loop:** zero rows num delete descarta mutation silenciosamente (sem `baseUpdatedAt` condicional, pois zero rows num delete é sempre estado correto no servidor).
+Motivo: esses bugs causavam perda de dados silenciosa, mutations zumbi na fila e falha de sincronização crônica entre PC e mobile.
+Alternativas descartadas: force-merge no cliente quando servidor mais novo — descartada por sobrescrever dados mais recentes com dados obsoletos; throw no bloco delete — descartada por incrementar `retryCount` desnecessariamente e poluir o `sync_log`.
+Contexto: diagnóstico profundo da camada de sync solicitado pelo usuário em 06/06/2026. Migration `0009` aplicada via SQL Editor do Supabase Dashboard em 06/06/2026.
