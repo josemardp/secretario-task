@@ -32,6 +32,82 @@ function toLocalDatetimeInput(iso: string | null | undefined): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
+// ─── Recurrence helpers ────────────────────────────────────────
+
+const WEEKDAY_PILLS: { label: string; key: string }[] = [
+  { label: 'Dom', key: 'sunday' },
+  { label: 'Seg', key: 'monday' },
+  { label: 'Ter', key: 'tuesday' },
+  { label: 'Qua', key: 'wednesday' },
+  { label: 'Qui', key: 'thursday' },
+  { label: 'Sex', key: 'friday' },
+  { label: 'Sab', key: 'saturday' },
+];
+
+const RECURRENCE_PRESETS: { label: string; value: string }[] = [
+  { label: 'Diario',      value: 'daily' },
+  { label: 'Dias uteis',  value: 'monday,tuesday,wednesday,thursday,friday' },
+  { label: 'Semanal',     value: 'weekly' },
+  { label: 'Mensal',      value: 'monthly' },
+  { label: 'Impares',     value: 'odd_days' },
+  { label: 'Pares',       value: 'even_days' },
+];
+
+/** Retorna a próxima data válida para a regra a partir de agora,
+ * preservando o horário original da tarefa. */
+function getNextOccurrenceFromNow(
+  baseDateStr: string | null,
+  rule: string,
+): string | null {
+  const base = baseDateStr ? new Date(baseDateStr) : new Date();
+  const now = new Date();
+
+  // Candidato inicial = hoje (ou amanhã se já passou hoje)
+  const candidate = new Date(now);
+  candidate.setHours(base.getHours(), base.getMinutes(), 0, 0);
+  if (candidate <= now) candidate.setDate(candidate.getDate() + 1);
+
+  if (rule === 'daily') return candidate.toISOString();
+
+  if (rule === 'weekly') {
+    // Próxima ocorrência no mesmo dia da semana do base
+    const targetDow = base.getDay();
+    while (candidate.getDay() !== targetDow) candidate.setDate(candidate.getDate() + 1);
+    return candidate.toISOString();
+  }
+
+  if (rule === 'monthly') {
+    candidate.setDate(base.getDate());
+    if (candidate <= now) candidate.setMonth(candidate.getMonth() + 1);
+    return candidate.toISOString();
+  }
+
+  if (rule === 'odd_days') {
+    while (candidate.getDate() % 2 === 0) candidate.setDate(candidate.getDate() + 1);
+    return candidate.toISOString();
+  }
+
+  if (rule === 'even_days') {
+    while (candidate.getDate() % 2 !== 0) candidate.setDate(candidate.getDate() + 1);
+    return candidate.toISOString();
+  }
+
+  // Lista de dias da semana (ex: 'monday,friday')
+  const daysMap: Record<string, number> = {
+    sunday: 0, monday: 1, tuesday: 2, wednesday: 3,
+    thursday: 4, friday: 5, saturday: 6,
+  };
+  const validDows = rule.split(',').map(r => daysMap[r.trim()]).filter(n => n !== undefined);
+  if (validDows.length > 0) {
+    for (let i = 0; i < 7; i++) {
+      if (validDows.includes(candidate.getDay())) return candidate.toISOString();
+      candidate.setDate(candidate.getDate() + 1);
+    }
+  }
+
+  return null;
+}
+
 // ─── Task card ──────────────────────────────────────────────────
 
 interface TimelineTaskCardProps {
@@ -278,9 +354,24 @@ export function TimelineView({ tasks }: TimelineViewProps) {
 
   const saveEdit = () => {
     if (!editingTask) return;
+
+    // Reagendamento automático: se a regra mudou e a tarefa ainda não foi
+    // concluída, recalcula due_at para a próxima ocorrência válida a partir
+    // de agora, evitando que ela fique presa em um dia inválido (ex: sábado
+    // com regra de dias úteis).
+    const ruleChanged = editForm.recurrence_rule !== (editingTask.recurrence_rule ?? null);
+    let newDueAt = editForm.due_at ? new Date(editForm.due_at).toISOString() : null;
+    if (ruleChanged && editForm.recurrence_rule && editingTask.status !== 'done') {
+      const candidate = getNextOccurrenceFromNow(
+        newDueAt ?? editingTask.due_at,
+        editForm.recurrence_rule,
+      );
+      if (candidate) newDueAt = candidate;
+    }
+
     updateTask(editingTask.id, {
       title: editForm.title,
-      due_at: editForm.due_at ? new Date(editForm.due_at).toISOString() : null,
+      due_at: newDueAt,
       estimated_minutes: editForm.estimated_minutes,
       context: editForm.context,
       priority: editForm.priority,
@@ -544,25 +635,78 @@ export function TimelineView({ tasks }: TimelineViewProps) {
               </select>
             </label>
 
-            <label className="flex flex-col gap-1">
+            <div className="flex flex-col gap-2">
               <span className="text-[10px] font-bold uppercase tracking-wide text-ink-3">Recorrência</span>
-              <select
-                value={editForm.recurrence_rule ?? ''}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  setEditForm((f) => ({ ...f, recurrence_rule: (v === '' ? null : v) as RecurrenceRule }));
-                }}
-                className="bg-paper2 rounded-xl px-3 py-2.5 text-[13px] font-semibold text-ink outline-none border-0"
-              >
-                <option value="">Não se repete</option>
-                <option value="daily">Diariamente</option>
-                <option value="monday,tuesday,wednesday,thursday,friday">Dias úteis (seg–sex)</option>
-                <option value="weekly">Semanal</option>
-                <option value="monthly">Mensal</option>
-                <option value="odd_days">Dias ímpares</option>
-                <option value="even_days">Dias pares</option>
-              </select>
-            </label>
+
+              {/* Linha 1: quadradinhos dos dias da semana */}
+              <div className="grid grid-cols-7 gap-1.5">
+                {WEEKDAY_PILLS.map(({ label, key }) => {
+                  const active = editForm.recurrence_rule === 'daily'
+                    ? true
+                    : typeof editForm.recurrence_rule === 'string'
+                      ? editForm.recurrence_rule.split(',').includes(key)
+                      : false;
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => {
+                        setEditForm((f) => {
+                          const current = f.recurrence_rule;
+                          if (current === 'daily') {
+                            // daily → remove este dia (passa para lista sem ele)
+                            const next = WEEKDAY_PILLS.map(d => d.key).filter(k => k !== key).join(',');
+                            return { ...f, recurrence_rule: (next || null) as RecurrenceRule };
+                          }
+                          const days = typeof current === 'string'
+                            ? current.split(',').filter(Boolean)
+                            : [];
+                          const next = days.includes(key)
+                            ? days.filter(k => k !== key)
+                            : [...days, key];
+                          // Ordena pela ordem canônica da semana
+                          const ordered = WEEKDAY_PILLS.map(d => d.key).filter(k => next.includes(k));
+                          return { ...f, recurrence_rule: (ordered.length ? ordered.join(',') : null) as RecurrenceRule };
+                        });
+                      }}
+                      className={`h-9 rounded-xl text-[11px] font-extrabold transition-colors ${
+                        active
+                          ? 'bg-ink text-white'
+                          : 'bg-paper2 text-ink-2'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Linha 2: atalhos rápidos */}
+              <div className="flex flex-wrap gap-1.5">
+                {RECURRENCE_PRESETS.map(({ label, value }) => {
+                  const active = editForm.recurrence_rule === value;
+                  return (
+                    <button
+                      key={label}
+                      type="button"
+                      onClick={() =>
+                        setEditForm((f) => ({
+                          ...f,
+                          recurrence_rule: (f.recurrence_rule === value ? null : value) as RecurrenceRule,
+                        }))
+                      }
+                      className={`px-3 py-1.5 rounded-xl text-[11px] font-extrabold transition-colors ${
+                        active
+                          ? 'bg-ink text-white'
+                          : 'bg-paper2 text-ink-2'
+                      }`}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
 
             <div className="grid grid-cols-2 gap-2">
               <label className="flex flex-col gap-1">
