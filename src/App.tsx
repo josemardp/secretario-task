@@ -72,7 +72,7 @@ function App() {
     let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
     const unsubscribe = useContextStore.subscribe((state, prev) => {
-      if (state.currentEnergy === prev.currentEnergy && state.activeContext === prev.activeContext) return;
+      if (!prev || (state.currentEnergy === prev.currentEnergy && state.activeContext === prev.activeContext)) return;
       if (debounceTimer) clearTimeout(debounceTimer);
       debounceTimer = setTimeout(() => {
         const { currentEnergy, activeContext, energyUpdatedAt } = useContextStore.getState();
