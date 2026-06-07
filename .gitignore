@@ -29,3 +29,4 @@ supabase/.temp/
 
 # Migration runner scripts with hardcoded credentials
 run_migration.cjs
+.vercel
