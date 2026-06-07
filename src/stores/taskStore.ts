@@ -170,6 +170,7 @@ export const useTaskStore = create<TaskState>()(
           updateMutation(existingPendingMutation.id, {
             payload: mergedPayload,
             baseUpdatedAt: existingPendingMutation.baseUpdatedAt ?? taskToUpdate?.updated_at ?? null,
+            baseVersion: existingPendingMutation.baseVersion ?? taskToUpdate?.version,
           });
           addRecurringCloneIfMissing();
           return;
@@ -180,7 +181,8 @@ export const useTaskStore = create<TaskState>()(
           operation: 'update',
           entityId: id,
           payload,
-          baseUpdatedAt: taskToUpdate?.updated_at ?? null
+          baseUpdatedAt: taskToUpdate?.updated_at ?? null,
+          baseVersion: taskToUpdate?.version,
         });
 
         addRecurringCloneIfMissing();
