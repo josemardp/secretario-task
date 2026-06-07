@@ -52,10 +52,14 @@ function App() {
   useEffect(() => {
     if (!session || !isOnline) return;
 
-    const runSync = () =>
-      Promise.all([fetchProfileFromCloud(), fetchRemoteTasks()])
+    const runSync = () => {
+      void fetchProfileFromCloud()
+        .catch((err) => console.error('[sync] fetchProfileFromCloud falhou:', err));
+
+      return fetchRemoteTasks()
         .then(() => processSyncQueue())
-        .catch((err) => console.error('[sync] ciclo falhou:', err));
+        .catch((err) => console.error('[sync] ciclo de tasks falhou:', err));
+    };
 
     runSync();
     const interval = setInterval(runSync, 30000);

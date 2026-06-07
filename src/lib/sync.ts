@@ -174,9 +174,15 @@ export async function processSyncQueue() {
               if (error.code === '23505') {
                 // Unique constraint violation = another device already inserted
                 // the next recurrence occurrence. This is expected under the new
-                // server-authoritative dedup model — discard silently, no retry.
+                // server-authoritative dedup model. Remove the local loser too,
+                // otherwise it remains visible forever because the server never
+                // gets a row with this client-generated id.
                 console.warn(`[sync] recorrência duplicada bloqueada pelo banco: mutation ${mutation.id} descartada`);
                 store.removeMutation(mutation.id);
+                useTaskStore.getState().setTasks(
+                  useTaskStore.getState().tasks.filter((task) => task.id !== mutation.entityId)
+                );
+                await fetchRemoteTasks();
                 continue;
               }
               throw error;
