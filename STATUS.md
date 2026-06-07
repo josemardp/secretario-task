@@ -41,6 +41,7 @@ Foi removida a duplicação da regra de tarefa acionável para briefing, central
 Foi ajustada a barra de captura para expandir automaticamente com textos longos e preservar espaço inferior proporcional na tela.
 Foi removido o drag-and-drop por toque dos cards da Agenda para priorizar a rolagem vertical natural em mobile.
 Foi corrigida a hierarquia visual mobile para impedir que cards da Agenda cubram a barra de captura expandida.
+Foi corrigida uma regressão de sync pós-auditoria: falha ao buscar `profiles` não bloqueia mais o ciclo de tarefas, e conflitos `23505` de recorrência removem a ocorrência local rejeitada pelo banco antes do novo pull remoto.
 
 ## Checklist
 - [x] Pré-requisitos críticos (Viewport fit cover & PWA event listener cleanup).
@@ -84,15 +85,18 @@ Foi corrigida a hierarquia visual mobile para impedir que cards da Agenda cubram
 - [x] Bug 5 (sync): delete LWW → loop infinito corrigido — zero rows num delete descarta mutation silenciosamente com `removeMutation + continue`.
 - [x] Recorrência server-authoritative: índice único parcial `idx_unique_live_recurrence(user_id, recurrence_origin_id)` bloqueia duplicatas no banco; `recurrence_origin_id` aponta sempre para a raiz estável (self-reference); `23505` tratado como conflito esperado sem retry; `deduplicateFunctionalTasks` removido. Migrations `0010`, `0011`, `0012` aplicadas em produção (07/06/2026).
 - [x] Energia sincronizada: colunas `current_energy`, `active_context`, `energy_updated_at` adicionadas a `profiles`; `contextStore` persiste `energyUpdatedAt`; `fetchProfileFromCloud` e `pushEnergyToCloud` com LWW estrito; debounce 800ms no push; trigger `trg_profiles_energy_lww` fecha janela de corrida de rede.
+- [x] Diagnóstico e correção de regressão de sync: `profiles` isolado do ciclo de tasks; conflito `23505` de recorrência limpa a cópia local rejeitada e refaz pull remoto.
 
 ---
 
 # Próximo passo concreto
 
 Validar o trio após o deploy:
-1. Concluir a mesma tarefa recorrente em dois devices quase simultaneamente → deve sobrar uma próxima ocorrência.
-2. Mudar energia num device → o outro reflete em até 30s.
-3. Contagem de blocos idêntica nos 3 devices após um ciclo de sync.
+1. Publicar a correção de sync e abrir PC + celular.
+2. Criar uma tarefa simples em cada device → ambas devem aparecer no outro em até 30s.
+3. Concluir a mesma tarefa recorrente em dois devices quase simultaneamente → deve sobrar uma próxima ocorrência.
+4. Mudar energia num device → o outro reflete em até 30s.
+5. Contagem de blocos idêntica nos 3 devices após um ciclo de sync.
 
 ---
 
