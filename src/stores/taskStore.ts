@@ -275,6 +275,19 @@ export const useTaskStore = create<TaskState>()(
     }),
     {
       name: 'secretario-task:task-store',
+      version: 1,
+      // Se os dados persistidos forem de versão anterior ou corrompidos,
+      // retorna estado vazio para evitar crash de hidratação no celular.
+      migrate: (persistedState: unknown, fromVersion: number): Partial<TaskState> => {
+        if (
+          fromVersion < 1 ||
+          !persistedState ||
+          typeof persistedState !== 'object'
+        ) {
+          return { tasks: [], mutations: [], viewedRecords: {} };
+        }
+        return persistedState as Partial<TaskState>;
+      },
       partialize: (state) => ({
         tasks: state.tasks,
         mutations: state.mutations,

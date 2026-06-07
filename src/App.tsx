@@ -9,6 +9,8 @@ import { useNetwork } from './hooks/useNetwork';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import Login from './pages/Login';
 import Home from './pages/Home';
+import ClearCache from './pages/ClearCache';
+import { ErrorBoundary } from './components/ErrorBoundary';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { session, isLoading } = useAuthStore();
@@ -189,11 +191,14 @@ function App() {
       <NetworkStatus />
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/clear-cache" element={<ClearCache />} />
         <Route
           path="/"
           element={
             <ProtectedRoute>
-              <Home />
+              <ErrorBoundary>
+                <Home />
+              </ErrorBoundary>
             </ProtectedRoute>
           }
         />
