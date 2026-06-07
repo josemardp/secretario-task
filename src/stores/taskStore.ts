@@ -1,6 +1,43 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
 import type { Task, TaskInput, PendingMutation } from '../types';
+
+// Storage customizado que trata erros de quota do localStorage silenciosamente
+const safeStorage = createJSONStorage(() => ({
+  getItem: (key: string): string | null => {
+    try {
+      return localStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  },
+  setItem: (key: string, value: string): void => {
+    try {
+      localStorage.setItem(key, value);
+    } catch (e) {
+      // Quota excedida: remove o item antigo e tenta novamente com dados reduzidos
+      try {
+        localStorage.removeItem(key);
+        // Tenta salvar versão reduzida (apenas mutations pendentes, sem tasks)
+        const parsed = JSON.parse(value);
+        if (parsed?.state?.tasks) {
+          parsed.state.tasks = [];
+        }
+        localStorage.setItem(key, JSON.stringify(parsed));
+      } catch {
+        // Se ainda falhar, ignora silenciosamente — dados ficam no Supabase
+        console.warn('localStorage quota exceeded, skipping persist:', e);
+      }
+    }
+  },
+  removeItem: (key: string): void => {
+    try {
+      localStorage.removeItem(key);
+    } catch {
+      // ignora
+    }
+  },
+}));
 
 function stripReadonlyTaskFields<T extends Partial<Task>>(task: T): Omit<T, 'created_at' | 'updated_at'> {
   const { created_at: _createdAt, updated_at: _updatedAt, ...rest } = task;
@@ -275,6 +312,7 @@ export const useTaskStore = create<TaskState>()(
     }),
     {
       name: 'secretario-task:task-store',
+      storage: safeStorage,
       version: 1,
       // Se os dados persistidos forem de versão anterior ou corrompidos,
       // retorna estado vazio para evitar crash de hidratação no celular.
@@ -289,7 +327,9 @@ export const useTaskStore = create<TaskState>()(
         return persistedState as Partial<TaskState>;
       },
       partialize: (state) => ({
-        tasks: state.tasks,
+        // Salva apenas mutations pendentes e no máximo 100 tasks recentes
+        // para evitar estouro de quota no localStorage do celular
+        tasks: state.tasks.slice(0, 100),
         mutations: state.mutations,
         viewedRecords: state.viewedRecords,
       }),
