@@ -1,6 +1,6 @@
 # STATUS.md — SecretárioTask
 
-Última atualização: 2026-06-06
+Última atualização: 2026-06-07
 
 ---
 
@@ -82,15 +82,17 @@ Foi corrigida a hierarquia visual mobile para impedir que cards da Agenda cubram
 - [x] Bug 3 (sync): Realtime não reconectava após background — corrigido com callback de status correto no `.subscribe()` da API Supabase JS v2 (substituiu `.on('system', ...)` inválido).
 - [x] Bug 4 (sync): clock skew no INSERT corrigido — `stripReadonlyTaskFields` aplicado também no INSERT + migration `0009` com trigger `BEFORE INSERT` aplicada no Supabase em produção (06/06/2026).
 - [x] Bug 5 (sync): delete LWW → loop infinito corrigido — zero rows num delete descarta mutation silenciosamente com `removeMutation + continue`.
+- [x] Recorrência server-authoritative: índice único parcial `idx_unique_live_recurrence(user_id, recurrence_origin_id)` bloqueia duplicatas no banco; `recurrence_origin_id` aponta sempre para a raiz estável (self-reference); `23505` tratado como conflito esperado sem retry; `deduplicateFunctionalTasks` removido. Migrations `0010`, `0011`, `0012` aplicadas em produção (07/06/2026).
+- [x] Energia sincronizada: colunas `current_energy`, `active_context`, `energy_updated_at` adicionadas a `profiles`; `contextStore` persiste `energyUpdatedAt`; `fetchProfileFromCloud` e `pushEnergyToCloud` com LWW estrito; debounce 800ms no push; trigger `trg_profiles_energy_lww` fecha janela de corrida de rede.
 
 ---
 
 # Próximo passo concreto
 
-Validar manualmente no celular real:
-1. Editar uma tarefa no PC e verificar se aparece no mobile em até 5 segundos (Realtime reconectado).
-2. Testar seletor de recorrência no Kanban e na Agenda — verificar persistência após reload.
-3. Criar tarefa no mobile e verificar `created_at`/`updated_at` no Supabase Dashboard (devem ser do servidor, não do cliente).
+Validar o trio após o deploy:
+1. Concluir a mesma tarefa recorrente em dois devices quase simultaneamente → deve sobrar uma próxima ocorrência.
+2. Mudar energia num device → o outro reflete em até 30s.
+3. Contagem de blocos idêntica nos 3 devices após um ciclo de sync.
 
 ---
 

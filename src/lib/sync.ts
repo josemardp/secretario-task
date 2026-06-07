@@ -2,7 +2,7 @@ import { supabase } from './supabase';
 import { useTaskStore } from '../stores/taskStore';
 import { useContextStore } from '../stores/contextStore';
 import { generateEmbedding } from './ai';
-import type { Task } from '../types';
+import type { Task, ContextType } from '../types';
 
 // ─── Flags de lock ────────────────────────────────────────────────
 // Bug 2: fetchRemoteTasks precisava de guard análogo ao isSyncing para
@@ -25,30 +25,6 @@ function toTimestampOrZero(iso: string | null | undefined): number {
 function stripReadonlyTaskFields<T extends Record<string, unknown>>(payload: T): Omit<T, 'created_at' | 'updated_at'> {
   const { created_at: _createdAt, updated_at: _updatedAt, ...rest } = payload;
   return rest;
-}
-
-function deduplicateFunctionalTasks(tasks: Task[]): Task[] {
-  const dedupedTasks = tasks.map((task) => ({ ...task }));
-  const latestByFunctionalKey = new Map<string, Task>();
-  const tombstoneTimestamp = new Date().toISOString();
-
-  dedupedTasks.forEach((task) => {
-    if (task.deleted_at) return;
-
-    const key = `${task.user_id}|${task.title}|${task.due_at ?? ''}|${task.recurrence_rule ?? ''}`;
-    const current = latestByFunctionalKey.get(key);
-
-    if (!current || toTimestampOrZero(task.updated_at) > toTimestampOrZero(current.updated_at)) {
-      latestByFunctionalKey.set(key, task);
-    }
-  });
-
-  const keptIds = new Set(Array.from(latestByFunctionalKey.values()).map((task) => task.id));
-
-  return dedupedTasks.map((task) => {
-    if (task.deleted_at || keptIds.has(task.id)) return task;
-    return { ...task, deleted_at: tombstoneTimestamp };
-  });
 }
 
 export async function fetchRemoteTasks() {
@@ -78,27 +54,61 @@ export async function fetchRemoteTasks() {
       }
     });
 
-    const dedupedTasks = deduplicateFunctionalTasks(Array.from(taskMap.values()));
-
-    setTasks(dedupedTasks.filter((t) => !t.deleted_at));
+    setTasks(Array.from(taskMap.values()).filter((t) => !t.deleted_at));
   } finally {
     isFetchingRemote = false;
   }
 }
 
-export async function fetchApiKeyFromCloud(): Promise<string | null> {
+export async function fetchProfileFromCloud(): Promise<void> {
   const { data: sessionData } = await supabase.auth.getSession();
-  if (!sessionData.session) return null;
+  if (!sessionData.session) return;
 
   const { data, error } = await supabase
     .from('profiles')
-    .select('openai_api_key')
+    .select('openai_api_key, current_energy, active_context, energy_updated_at')
     .eq('id', sessionData.session.user.id)
     .maybeSingle();
 
   if (error) throw error;
-  const profile = data as { openai_api_key?: string | null } | null;
-  return profile?.openai_api_key ?? null;
+
+  const profile = data as {
+    openai_api_key?: string | null;
+    current_energy?: number | null;
+    active_context?: string | null;
+    energy_updated_at?: string | null;
+  } | null;
+
+  if (!profile) return;
+
+  useContextStore.getState().setAiApiKey(profile.openai_api_key ?? null);
+
+  // LWW: only overwrite local energy/context if the remote timestamp is strictly newer
+  const contextStore = useContextStore.getState();
+  const remoteEnergyTs = toTimestampOrZero(profile.energy_updated_at);
+  const localEnergyTs  = toTimestampOrZero(contextStore.energyUpdatedAt);
+
+  if (remoteEnergyTs > localEnergyTs && profile.current_energy != null) {
+    contextStore.setEnergyFromRemote(
+      profile.current_energy,
+      (profile.active_context as ContextType) ?? contextStore.activeContext,
+      profile.energy_updated_at!
+    );
+  }
+}
+
+export async function pushEnergyToCloud(energy: number, context: string, updatedAt: string): Promise<void> {
+  const { data: sessionData } = await supabase.auth.getSession();
+  if (!sessionData.session) return;
+
+  const { error } = await supabase.from('profiles').upsert({
+    id: sessionData.session.user.id,
+    current_energy: energy,
+    active_context: context,
+    energy_updated_at: updatedAt,
+  }, { onConflict: 'id' });
+
+  if (error) throw error;
 }
 
 export async function saveApiKeyToCloud(apiKey: string | null): Promise<void> {
@@ -160,7 +170,17 @@ export async function processSyncQueue() {
               ...payloadToSync,
               user_id: userId,
             }).select('*').single();
-            if (error) throw error;
+            if (error) {
+              if (error.code === '23505') {
+                // Unique constraint violation = another device already inserted
+                // the next recurrence occurrence. This is expected under the new
+                // server-authoritative dedup model — discard silently, no retry.
+                console.warn(`[sync] recorrência duplicada bloqueada pelo banco: mutation ${mutation.id} descartada`);
+                store.removeMutation(mutation.id);
+                continue;
+              }
+              throw error;
+            }
             // replaceLocalTask traz o updated_at/created_at gerado pelo servidor
             // de volta para o store, corrigindo o clock skew do cliente.
             if (data) replaceLocalTask(data as Task);

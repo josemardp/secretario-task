@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { supabase } from './lib/supabase';
 import { useAuthStore } from './stores/authStore';
 import { NetworkStatus } from './components/NetworkStatus';
-import { fetchRemoteTasks, processSyncQueue, fetchApiKeyFromCloud } from './lib/sync';
+import { fetchRemoteTasks, processSyncQueue, fetchProfileFromCloud, pushEnergyToCloud } from './lib/sync';
 import { useContextStore } from './stores/contextStore';
 import { useNetwork } from './hooks/useNetwork';
 import type { RealtimeChannel } from '@supabase/supabase-js';
@@ -53,20 +53,35 @@ function App() {
     if (!session || !isOnline) return;
 
     const runSync = () =>
-      fetchRemoteTasks()
+      Promise.all([fetchProfileFromCloud(), fetchRemoteTasks()])
         .then(() => processSyncQueue())
         .catch((err) => console.error('[sync] ciclo falhou:', err));
-
-    fetchApiKeyFromCloud()
-      .then(key => {
-        if (key) useContextStore.getState().setAiApiKey(key);
-      })
-      .catch((err) => console.error('[sync] falha ao carregar API key:', err));
 
     runSync();
     const interval = setInterval(runSync, 30000);
     return () => clearInterval(interval);
   }, [session, isOnline]);
+
+  useEffect(() => {
+    if (!session) return;
+
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const unsubscribe = useContextStore.subscribe((state, prev) => {
+      if (state.currentEnergy === prev.currentEnergy && state.activeContext === prev.activeContext) return;
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => {
+        const { currentEnergy, activeContext, energyUpdatedAt } = useContextStore.getState();
+        pushEnergyToCloud(currentEnergy, activeContext, energyUpdatedAt ?? new Date().toISOString())
+          .catch((err) => console.error('[sync] pushEnergyToCloud falhou:', err));
+      }, 800);
+    });
+
+    return () => {
+      unsubscribe();
+      if (debounceTimer) clearTimeout(debounceTimer);
+    };
+  }, [session]);
 
   // Bug 3: função extraída para criar/recriar o canal Realtime.
   // Reutilizada tanto na montagem inicial quanto na reconexão após queda.

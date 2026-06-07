@@ -26,3 +26,6 @@ dist-ssr
 
 # Supabase CLI local metadata
 supabase/.temp/
+
+# Migration runner scripts with hardcoded credentials
+run_migration.cjs

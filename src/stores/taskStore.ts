@@ -79,6 +79,10 @@ export const useTaskStore = create<TaskState>()(
           id,
           created_at: createdAt,
           updated_at: updatedAt,
+          // Self-reference establishes this task as the root of its series
+          ...(taskData.recurrence_rule && !taskData.recurrence_origin_id
+            ? { recurrence_origin_id: id }
+            : {}),
         };
 
         set((state) => ({
@@ -120,7 +124,7 @@ export const useTaskStore = create<TaskState>()(
             due_at: nextDueAt,
             deleted_at: null,
             recurrence_rule: taskToUpdate.recurrence_rule,
-            recurrence_origin_id: taskToUpdate.id
+            recurrence_origin_id: taskToUpdate.recurrence_origin_id ?? taskToUpdate.id
           };
         }
 
@@ -133,8 +137,9 @@ export const useTaskStore = create<TaskState>()(
         const addRecurringCloneIfMissing = () => {
           if (!recurringClone || !taskToUpdate) return;
 
+          const originId = taskToUpdate.recurrence_origin_id ?? taskToUpdate.id;
           const cloneAlreadyExists = useTaskStore.getState().tasks.some((t) =>
-            t.recurrence_origin_id === taskToUpdate.id &&
+            t.recurrence_origin_id === originId &&
             !t.deleted_at &&
             t.status !== 'done'
           );
