@@ -1,6 +1,6 @@
 # DECISIONS.md — SecretárioTask
 
-Última atualização: 2026-06-06
+Última atualização: 2026-06-07
 Status: registro vivo de decisões técnicas e operacionais
 
 ---
@@ -317,6 +317,20 @@ Decisão: no editor inline do Kanban (`TaskBoard`), mudar a regra de recorrênci
 Motivo: no Kanban, a edição é inline e imediata (sem botão Salvar explícito). Reagendar `due_at` automaticamente ao clicar numa pill seria inesperado e poderia sobrescrever um horário intencional. Na Agenda, o reagendamento é feito apenas ao clicar em "Salvar", onde a intenção é explícita.
 Alternativas descartadas: reagendar automaticamente em ambos os editores — descartada pelo risco de sobrescrever horários intencionais no fluxo inline do Kanban.
 Contexto: replicação do seletor de recorrência no Kanban (06/06/2026).
+
+## 2026-06-07 — Recorrência server-authoritative: no máximo uma ocorrência viva por série
+
+Decisão: o banco passa a ser a autoridade final sobre duplicação de tarefas recorrentes. Um índice único parcial `idx_unique_live_recurrence ON tasks(user_id, recurrence_origin_id) WHERE deleted_at IS NULL AND status <> 'done' AND recurrence_origin_id IS NOT NULL` garante que nunca haja mais de uma ocorrência viva da mesma série por usuário. Ao concluir uma tarefa recorrente, o cliente gera o clone e o insere — se outro dispositivo já inseriu primeiro, o banco retorna código `23505`, e o cliente descarta a mutation silenciosamente sem retry. O `recurrence_origin_id` agora aponta sempre para a raiz estável da série (self-reference na raiz), nunca para o pai imediato.
+Motivo: antes, cada dispositivo gerava clones com UUIDs distintos ao concluir a mesma tarefa recorrente. O banco aceitava ambos porque não havia constraint de unicidade, e a deduplicação era feita apenas em memória local por uma heurística frágil (`deduplicateFunctionalTasks`) que produzia tombstones que nunca subiam ao servidor — cada device escondia um subconjunto diferente, causando contagens de blocos divergentes e badges "2x".
+Alternativas descartadas: deduplicar no cliente após o merge remoto (abordagem anterior) — descartada por ser a causa ativa da divergência; unique constraint sem backfill — descartada por falhar em dados legados já duplicados.
+Contexto: migrations `0010_recurrence_unique_series.sql` + correções em `taskStore.ts` e `sync.ts` (07/06/2026).
+
+## 2026-06-07 — Energia e contexto sincronizados via `profiles` com LWW por trigger
+
+Decisão: `current_energy`, `active_context` e `energy_updated_at` foram adicionados à tabela `profiles`. O `contextStore` persiste `energyUpdatedAt` em localStorage. Em cada ciclo de sync (30s), `fetchProfileFromCloud` aplica o estado remoto por LWW estrito: só sobrescreve o local se `energy_updated_at` remoto for estritamente maior que o local. O push é feito por `pushEnergyToCloud` com debounce de 800ms após mudança de energia/contexto. Um trigger `BEFORE UPDATE` (`trg_profiles_energy_lww`) no banco descarta escritas com `energy_updated_at` mais antiga que a já gravada, fechando a janela de corrida de rede.
+Motivo: `currentEnergy` vivia apenas no localStorage do `contextStore`, sem coluna no banco nem push/pull. Três dispositivos mostravam energias completamente diferentes (0/10 × 10/10) sem nenhum mecanismo de convergência.
+Alternativas descartadas: `ON CONFLICT DO UPDATE WHERE energy_updated_at < excluded.energy_updated_at` via Supabase JS client — descartada porque o `.upsert()` do cliente não expõe a cláusula WHERE no conflito; delegar LWW apenas ao cliente — descartada por permitir regressão de energia em janela de corrida de rede.
+Contexto: migrations `0011_profile_energy.sql` e `0012_profiles_energy_lww_trigger.sql` + correções em `contextStore.ts`, `sync.ts` e `App.tsx` (07/06/2026).
 
 ## 2026-06-06 — Correção dos 5 bugs de sincronização crônicos
 
