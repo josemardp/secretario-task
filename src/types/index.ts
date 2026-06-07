@@ -35,6 +35,7 @@ export interface Task {
   recurrence_rule?: string | null;
   recurrence_origin_id?: string | null;
   postponed_count?: number | null;
+  version: number;
 }
 
 export type TaskInput = Omit<Task, 'id' | 'created_at' | 'updated_at'> & {
@@ -49,6 +50,7 @@ export type PendingMutation = {
   entityId: string;
   payload: any;
   baseUpdatedAt?: string | null;
+  baseVersion?: number;
   createdAt: string;
   retryCount: number;
 };

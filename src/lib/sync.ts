@@ -219,7 +219,11 @@ export async function processSyncQueue() {
               .eq('id', mutation.entityId)
               .eq('user_id', userId);
 
-            if (mutation.baseUpdatedAt) {
+            // Optimistic lock por version (primário) com fallback para updated_at
+            // (mutations órfãs que já estavam na fila antes do deploy de 0013).
+            if (mutation.baseVersion !== undefined) {
+              query = query.eq('version', mutation.baseVersion);
+            } else if (mutation.baseUpdatedAt) {
               query = query.lte('updated_at', mutation.baseUpdatedAt);
             }
 
@@ -230,19 +234,16 @@ export async function processSyncQueue() {
             if (error) throw error;
 
             if (!data) {
-              // Bug 1: "zero rows" com a cláusula .lte ativa significa que o
-              // servidor foi atualizado por outro device após o cliente ler a
-              // tarefa (conflito LWW). A versão do servidor já prevaleceu.
-              // O comportamento correto é descartar esta mutation silenciosamente
-              // (o fetchRemoteTasks já trouxe o estado correto do servidor) e
-              // NÃO fazer force-merge, pois isso violaria LWW.
-              //
-              // Se baseUpdatedAt não estava definido, aí sim é um erro real
-              // (ex: tarefa deletada no servidor), e lançamos o erro normalmente.
-              if (mutation.baseUpdatedAt) {
+              // Zero rows com guard ativo = conflito esperado (outro device editou
+              // a mesma tarefa e a version/updated_at já divergiu no servidor).
+              // Descartar silenciosamente sem incrementar retryCount — o
+              // fetchRemoteTasks já trouxe o estado reconciliado pelo servidor.
+              // Sem guard definido = erro real (tarefa sumiu do servidor).
+              const hasGuard = mutation.baseVersion !== undefined || !!mutation.baseUpdatedAt;
+              if (hasGuard) {
                 console.warn(
                   `[sync] LWW conflict: mutation ${mutation.id} descartada — ` +
-                  `servidor mais novo que baseUpdatedAt=${mutation.baseUpdatedAt}`
+                  `version/updated_at divergente no servidor`
                 );
                 store.removeMutation(mutation.id);
                 continue;
