@@ -86,17 +86,18 @@ Foi corrigida uma regressão de sync pós-auditoria: falha ao buscar `profiles` 
 - [x] Recorrência server-authoritative: índice único parcial `idx_unique_live_recurrence(user_id, recurrence_origin_id)` bloqueia duplicatas no banco; `recurrence_origin_id` aponta sempre para a raiz estável (self-reference); `23505` tratado como conflito esperado sem retry; `deduplicateFunctionalTasks` removido. Migrations `0010`, `0011`, `0012` aplicadas em produção (07/06/2026).
 - [x] Energia sincronizada: colunas `current_energy`, `active_context`, `energy_updated_at` adicionadas a `profiles`; `contextStore` persiste `energyUpdatedAt`; `fetchProfileFromCloud` e `pushEnergyToCloud` com LWW estrito; debounce 800ms no push; trigger `trg_profiles_energy_lww` fecha janela de corrida de rede.
 - [x] Diagnóstico e correção de regressão de sync: `profiles` isolado do ciclo de tasks; conflito `23505` de recorrência limpa a cópia local rejeitada e refaz pull remoto.
+- [x] Bug tarefa-zumbi corrigido: `fetchRemoteTasks` agora usa `pendingTaskIds` para decidir merge — tasks com mutation pendente mantêm a versão local (evita ressurreição por clock skew); tasks sem mutation pendente aceitam sempre o servidor; tasks locais ausentes no remoto sem mutation são descartadas (deletadas em outro device).
 
 ---
 
 # Próximo passo concreto
 
-Validar o trio após o deploy:
-1. Publicar a correção de sync e abrir PC + celular.
-2. Criar uma tarefa simples em cada device → ambas devem aparecer no outro em até 30s.
-3. Concluir a mesma tarefa recorrente em dois devices quase simultaneamente → deve sobrar uma próxima ocorrência.
+Fazer deploy e validar os 4 itens do sprint 07/06/2026:
+1. Publicar (`vercel --prod`) e abrir PC + celular simultaneamente.
+2. Concluir uma tarefa no celular → no PC ela deve sumir (não ressuscitar) dentro de 30s sem nenhuma interação.
+3. Concluir a mesma tarefa recorrente em dois devices quase simultaneamente → deve sobrar uma próxima ocorrência (não duas).
 4. Mudar energia num device → o outro reflete em até 30s.
-5. Contagem de blocos idêntica nos 3 devices após um ciclo de sync.
+5. Criar uma tarefa offline → ela deve aparecer no outro device após reconectar, sem duplicatas.
 
 ---
 

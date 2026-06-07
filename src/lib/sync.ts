@@ -29,28 +29,51 @@ function stripReadonlyTaskFields<T extends Record<string, unknown>>(payload: T):
 
 export async function fetchRemoteTasks() {
   // Bug 2: guard para evitar merges paralelos.
-  // Se já há um fetch em andamento, retorna early sem fazer nada.
   if (isFetchingRemote) return;
   isFetchingRemote = true;
 
   try {
     const { data: remoteTasks, error } = await supabase
       .from('tasks')
-      .select('*'); // fetch tombstones too
+      .select('*'); // tombstones incluídos
 
     if (error) throw error;
     if (!remoteTasks) return;
 
-    const { tasks: localTasks, setTasks } = useTaskStore.getState();
+    const { tasks: localTasks, mutations, setTasks } = useTaskStore.getState();
+
+    // IDs com mutation pendente: a versão local é autoritativa enquanto
+    // a mutation não subiu — o servidor reconcilia após o push.
+    // Isso evita que um fetch com clock-skew ressuscite tarefas já concluídas
+    // ou sobrescreva edições offline que ainda não sincronizaram.
+    const pendingTaskIds = new Set(
+      mutations
+        .filter(m => m.entity === 'task')
+        .map(m => m.entityId)
+    );
+
+    const remoteMap = new Map<string, Task>();
+    remoteTasks.forEach((r) => remoteMap.set(r.id, r as Task));
 
     const taskMap = new Map<string, Task>();
 
-    localTasks.forEach((t) => taskMap.set(t.id, t));
-
+    // Tarefas remotas: servidor é a verdade reconciliada, exceto quando
+    // há mutation pendente (nesse caso a versão local prevalece).
     remoteTasks.forEach((remote) => {
-      const local = taskMap.get(remote.id);
-      if (!local || toTimestampOrZero(remote.updated_at) >= toTimestampOrZero(local.updated_at)) {
+      if (pendingTaskIds.has(remote.id)) {
+        const local = localTasks.find(t => t.id === remote.id);
+        if (local) taskMap.set(remote.id, local);
+      } else {
         taskMap.set(remote.id, remote as Task);
+      }
+    });
+
+    // Tarefas locais ausentes no remoto:
+    // - com mutation pendente (ex: insert ainda não sincronizado) → manter
+    // - sem mutation pendente → foram deletadas em outro device; descartar
+    localTasks.forEach((local) => {
+      if (!remoteMap.has(local.id) && pendingTaskIds.has(local.id)) {
+        taskMap.set(local.id, local);
       }
     });
 
