@@ -33,11 +33,25 @@ function App() {
   const realtimeChannelRef = useRef<RealtimeChannel | null>(null);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    // Timeout de segurança: se getSession demorar mais de 8s (rede lenta/celular),
+    // libera a tela para evitar tela branca infinita.
+    const timeout = setTimeout(() => {
+      console.warn('[auth] getSession timeout — liberando tela');
       setIsLoading(false);
-    });
+    }, 8000);
+
+    supabase.auth.getSession()
+      .then(({ data: { session } }) => {
+        clearTimeout(timeout);
+        setSession(session);
+        setUser(session?.user ?? null);
+        setIsLoading(false);
+      })
+      .catch((err) => {
+        clearTimeout(timeout);
+        console.error('[auth] getSession falhou:', err);
+        setIsLoading(false);
+      });
 
     const {
       data: { subscription },
@@ -46,7 +60,10 @@ function App() {
       setUser(session?.user ?? null);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      clearTimeout(timeout);
+      subscription.unsubscribe();
+    };
   }, [setSession, setUser, setIsLoading]);
 
   useEffect(() => {
