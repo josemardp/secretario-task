@@ -45,6 +45,16 @@ export default defineConfig({
           }
         ]
       },
+      workbox: {
+        // Força o novo SW a tomar controle imediatamente sem esperar reload
+        skipWaiting: true,
+        clientsClaim: true,
+        // Remove caches de versões antigas do SW
+        cleanupOutdatedCaches: true,
+        // Garante que qualquer rota sirva o index.html (SPA)
+        navigateFallback: 'index.html',
+        navigateFallbackAllowlist: [/^(?!\/__).*/],
+      },
       devOptions: {
         enabled: true
       }
