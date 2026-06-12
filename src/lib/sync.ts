@@ -4,6 +4,8 @@ import { useContextStore } from '../stores/contextStore';
 import { generateEmbedding } from './ai';
 import type { Task, ContextType } from '../types';
 
+const TASK_COLUMNS = 'id, user_id, title, description, context, priority, energy, status, due_at, deleted_at, created_at, updated_at, estimated_minutes, actual_minutes, started_at, recurrence_rule, recurrence_origin_id, postponed_count, version';
+
 // ─── Flags de lock ────────────────────────────────────────────────
 // Bug 2: fetchRemoteTasks precisava de guard análogo ao isSyncing para
 // evitar merges paralelos que sobrescrevem o resultado um do outro.
@@ -35,7 +37,7 @@ export async function fetchRemoteTasks() {
   try {
     const { data: remoteTasks, error } = await supabase
       .from('tasks')
-      .select('*'); // tombstones incluídos
+      .select(TASK_COLUMNS); // tombstones incluídos — sem embedding para reduzir egress
 
     if (error) throw error;
     if (!remoteTasks) return;
@@ -192,7 +194,7 @@ export async function processSyncQueue() {
             const { data, error } = await supabase.from('tasks').insert({
               ...payloadToSync,
               user_id: userId,
-            }).select('*').single();
+            }).select(TASK_COLUMNS).single();
             if (error) {
               if (error.code === '23505') {
                 // Unique constraint violation = another device already inserted
@@ -228,7 +230,7 @@ export async function processSyncQueue() {
             }
 
             const { data, error } = await query
-              .select('*')
+              .select(TASK_COLUMNS)
               .maybeSingle();
 
             if (error) throw error;
@@ -257,7 +259,7 @@ export async function processSyncQueue() {
               .update(payloadToSync)
               .eq('id', mutation.entityId)
               .eq('user_id', userId)
-              .select('*')
+              .select(TASK_COLUMNS)
               .maybeSingle();
 
             if (error) throw error;

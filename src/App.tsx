@@ -81,7 +81,7 @@ function App() {
     };
 
     runSync();
-    const interval = setInterval(runSync, 30000);
+    const interval = setInterval(runSync, 120_000);
     return () => clearInterval(interval);
   }, [session, isOnline]);
 
