@@ -13,6 +13,18 @@ export type RecurrenceRule =
   | 'even_days'
   | null;
 
+/** Regra de recorrência estruturada (V2). Serializada como JSON compacto no campo
+ * tasks.recurrence_rule (TEXT). Detectada pelo prefixo `{` em parseRecurrenceRule.
+ * Retrocompatível: strings sem esse prefixo continuam tratadas como regras legadas. */
+export type RecurrenceRuleV2 = {
+  freq: 'daily' | 'weekly' | 'monthly' | 'yearly';
+  interval: number;
+  byMonthDay?: number | 'last';
+  byDay?: 'SU' | 'MO' | 'TU' | 'WE' | 'TH' | 'FR' | 'SA';
+  bySetPos?: 1 | 2 | 3 | 4 | -1;
+  end: null | { type: 'date'; value: string } | { type: 'count'; value: number };
+};
+
 export const CONTEXTS_LIST: ContextType[] = ['PM', 'Esdra', 'Pessoal', 'Familia', 'CCB', 'Estudo', 'Saude'];
 export type TaskStatus = 'todo' | 'doing' | 'done';
 

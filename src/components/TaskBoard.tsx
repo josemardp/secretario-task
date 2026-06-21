@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { formatDateTime, rescheduleToDate, postponeToTomorrow, wasEdited } from '../lib/datetime';
-import { WEEKDAY_PILLS, RECURRENCE_PRESETS, toggleWeekday, togglePreset } from '../lib/recurrence';
-import type { Task, TaskStatus, ContextType, RecurrenceRule } from '../types';
+import { describeRecurrenceRule } from '../lib/recurrence';
+import type { Task, TaskStatus, ContextType } from '../types';
 import { CONTEXTS_LIST } from '../types';
+import { RecurrenceModal } from './RecurrenceModal';
 import { useTaskStore } from '../stores/taskStore';
 import { useContextStore } from '../stores/contextStore';
 import { calculateTaskScore } from '../lib/ranking';
@@ -64,14 +65,7 @@ function TaskRow({
   isDone, isFirstInColumn, isLastInColumn,
 }: TaskRowProps) {
   const { updateTask, deleteTask } = useTaskStore();
-  const [localRecurrence, setLocalRecurrence] = useState<RecurrenceRule>(
-    (task.recurrence_rule ?? null) as RecurrenceRule,
-  );
-
-  // Sincroniza quando a tarefa muda (ex: outra aba atualizou)
-  useEffect(() => {
-    setLocalRecurrence((task.recurrence_rule ?? null) as RecurrenceRule);
-  }, [task.recurrence_rule]);
+  const [showRecurrenceModal, setShowRecurrenceModal] = useState(false);
 
   const timeText = formatTime(task.due_at);
   const durText  = task.actual_minutes != null
@@ -195,60 +189,40 @@ function TaskRow({
               />
             </label>
 
-            <div className="col-span-2 flex flex-col gap-2">
-              <span className="text-[10px] font-bold uppercase tracking-wide text-ink-3">Recorrência</span>
-
-              {/* Linha 1: quadradinhos dos dias da semana */}
-              <div className="grid grid-cols-7 gap-1.5">
-                {WEEKDAY_PILLS.map(({ label, key }) => {
-                  const active = localRecurrence === 'daily'
-                    ? true
-                    : typeof localRecurrence === 'string'
-                      ? localRecurrence.split(',').includes(key)
-                      : false;
-                  return (
-                    <button
-                      key={key}
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const next = toggleWeekday(localRecurrence, key);
-                        setLocalRecurrence(next);
-                        updateTask(task.id, { recurrence_rule: next });
-                      }}
-                      className={`h-9 rounded-xl text-[11px] font-extrabold transition-colors ${
-                        active ? 'bg-ink text-white' : 'bg-paper2 text-ink-2'
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  );
-                })}
+            <div className="col-span-2 flex flex-col gap-1.5">
+              <span className="text-[10px] font-bold uppercase tracking-wide text-ink-3">Recorrencia</span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setShowRecurrenceModal(true); }}
+                  className="flex-1 h-9 bg-paper2 rounded-xl px-3 text-left text-[12px] font-semibold text-ink truncate"
+                >
+                  {describeRecurrenceRule(task.recurrence_rule ?? null)}
+                </button>
+                {task.recurrence_rule && (
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); updateTask(task.id, { recurrence_rule: null }); }}
+                    className="w-9 h-9 shrink-0 flex items-center justify-center bg-paper2 rounded-xl text-ink-3 text-[14px] font-bold hover:text-danger"
+                    aria-label="Remover recorrencia"
+                  >
+                    ×
+                  </button>
+                )}
               </div>
-
-              {/* Linha 2: atalhos rápidos */}
-              <div className="flex flex-wrap gap-1.5">
-                {RECURRENCE_PRESETS.map(({ label, value }) => {
-                  const active = localRecurrence === value;
-                  return (
-                    <button
-                      key={label}
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const next = togglePreset(localRecurrence, value);
-                        setLocalRecurrence(next);
-                        updateTask(task.id, { recurrence_rule: next });
-                      }}
-                      className={`px-3 py-1.5 rounded-xl text-[11px] font-extrabold transition-colors ${
-                        active ? 'bg-ink text-white' : 'bg-paper2 text-ink-2'
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  );
-                })}
-              </div>
+              {showRecurrenceModal && (
+                <RecurrenceModal
+                  dueAt={task.due_at}
+                  currentRule={task.recurrence_rule ?? null}
+                  onSave={(rule, newDueAt) => {
+                    const updates: Partial<Task> = { recurrence_rule: rule };
+                    if (newDueAt) updates.due_at = newDueAt;
+                    updateTask(task.id, updates);
+                    setShowRecurrenceModal(false);
+                  }}
+                  onClose={() => setShowRecurrenceModal(false)}
+                />
+              )}
             </div>
 
             <label className="text-[10px] font-bold uppercase tracking-wide text-ink-3 flex flex-col gap-1 col-span-2">

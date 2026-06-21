@@ -325,6 +325,17 @@ Motivo: antes, cada dispositivo gerava clones com UUIDs distintos ao concluir a 
 Alternativas descartadas: deduplicar no cliente após o merge remoto (abordagem anterior) — descartada por ser a causa ativa da divergência; unique constraint sem backfill — descartada por falhar em dados legados já duplicados.
 Contexto: migrations `0010_recurrence_unique_series.sql` + correções em `taskStore.ts` e `sync.ts` (07/06/2026).
 
+## 2026-06-21 — Formato estruturado JSON para regras de recorrência avançada (RecurrenceRuleV2)
+
+Decisão: adotar JSON compacto serializado no campo TEXT existente `tasks.recurrence_rule` para suportar regras avançadas: intervalo customizável (a cada N dias/semanas/meses/anos), posição ordinal no mês (3o Sábado), horário, término por data ou contagem. O tipo `RecurrenceRuleV2` é detectado pelo prefixo `{` em `parseRecurrenceRule`. Strings sem esse prefixo continuam tratadas como regras legadas.
+Motivo: colunas estruturadas exigiriam migration + down-time + retrocompatibilidade de schema em todos os dispositivos. O campo TEXT já existia e aceita JSON compacto sem mudança de schema. A serialização JSON é parseable e extensível sem migration futura.
+Alternativas descartadas:
+- Colunas separadas (`recurrence_interval`, `recurrence_byDay`, etc.) — descartada por exigir migration e reescrita do sync para novos campos.
+- iCalendar RRULE como string (`RRULE:FREQ=MONTHLY;BYDAY=SA;BYSETPOS=3`) — descartada por exigir parser dedicado e adicionar lib de calendário.
+- Substituir o tipo legado por V2 imediatamente — descartada por quebrar tarefas recorrentes ativas em produção.
+Retrocompatibilidade: `parseRecurrenceRule()` detecta o formato. Regras legadas continuam no motor legado em `getNextLegacyOccurrence`. O modal mapeia `daily/weekly/monthly` para V2; `odd_days`, `even_days` e listas de dias abrem com defaults.
+Contexto: modal de configuração avançada de recorrência (21/06/2026).
+
 ## 2026-06-07 — Optimistic locking por version no push (substitui guard updated_at)
 
 Decisão: adicionada coluna `version integer NOT NULL DEFAULT 1` à tabela `tasks`. O `processSyncQueue` usa `.eq('version', baseVersion)` como árbitro de conflito no UPDATE, em substituição ao `.lte('updated_at', baseUpdatedAt)`. O `taskStore` grava `baseVersion: taskToUpdate?.version` em cada nova mutation de update; no merge de mutation existente, preserva a `baseVersion` da primeira leitura. O servidor incrementa `version` atomicamente via `set_updated_at()` (BEFORE UPDATE) — o trigger `tasks_set_updated_at` não foi recriado, apenas a função foi estendida com `NEW.version = OLD.version + 1`. O INSERT fixa `version = 1` via `set_timestamps_on_insert()` (BEFORE INSERT), impedindo injeção de valor arbitrário pelo cliente. Fallback de transição: mutations sem `baseVersion` (já estavam na fila antes do deploy) caem no comportamento antigo `.lte('updated_at')` — a janela fecha sozinha no primeiro `fetchRemoteTasks` pós-migration, que traz a coluna `version` via `.select('*')`.
