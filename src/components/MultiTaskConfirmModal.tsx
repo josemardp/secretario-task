@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { X, Sparkles, Repeat, Trash2, Flag } from 'lucide-react';
 import type { Task, ContextType } from '../types';
 import { CONTEXTS_LIST } from '../types';
+import { describeRecurrenceRule } from '../lib/recurrence';
 
 interface MultiTaskConfirmModalProps {
   initialTasks: Partial<Task>[];
@@ -134,7 +135,7 @@ export function MultiTaskConfirmModal({
                 {task.recurrence_rule && (
                   <div className="mt-1.5">
                     <span className="inline-flex items-center gap-1 text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-soft text-ink">
-                      <Repeat size={10} strokeWidth={2.4} /> Recorrente
+                      <Repeat size={10} strokeWidth={2.4} /> {describeRecurrenceRule(task.recurrence_rule)}
                     </span>
                   </div>
                 )}
