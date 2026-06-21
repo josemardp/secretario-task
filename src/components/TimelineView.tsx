@@ -1,14 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { formatDateTime, rescheduleToDate, postponeToTomorrow, wasEdited } from '../lib/datetime';
-import { WEEKDAY_PILLS, RECURRENCE_PRESETS, getNextOccurrenceFromNow, toggleWeekday, togglePreset } from '../lib/recurrence';
+import { describeRecurrenceRule, getNextOccurrenceFromNow } from '../lib/recurrence';
 import { Calendar as CalIcon, Flag, Repeat, X, Edit3, Trash2 } from 'lucide-react';
-import type { Task, ContextType, RecurrenceRule } from '../types';
+import type { Task, ContextType } from '../types';
 import { CONTEXTS_LIST } from '../types';
 import { useContextStore } from '../stores/contextStore';
 import { useTaskStore } from '../stores/taskStore';
 import { TaskActions } from './TaskActions';
 import { CalendarWidget } from './CalendarWidget';
+import { RecurrenceModal } from './RecurrenceModal';
 import { useAgendaPositions, type TimelineBlock } from '../hooks/useAgendaPositions';
 
 
@@ -237,6 +238,7 @@ export function TimelineView({ tasks }: TimelineViewProps) {
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [dismissedBreaks, setDismissedBreaks] = useState<string[]>([]);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [showRecurrenceModal, setShowRecurrenceModal] = useState(false);
   const [editForm, setEditForm] = useState<{
     title: string;
     due_at: string;
@@ -244,7 +246,7 @@ export function TimelineView({ tasks }: TimelineViewProps) {
     context: ContextType;
     priority: number;
     energy: number;
-    recurrence_rule: RecurrenceRule;
+    recurrence_rule: string | null;
   }>({
     title: '', due_at: '', estimated_minutes: 30,
     context: 'Pessoal' as ContextType, priority: 0, energy: 0,
@@ -275,7 +277,7 @@ export function TimelineView({ tasks }: TimelineViewProps) {
       context: task.context,
       priority: task.priority,
       energy: task.energy,
-      recurrence_rule: (task.recurrence_rule ?? null) as RecurrenceRule | null,
+      recurrence_rule: task.recurrence_rule ?? null,
     });
   };
 
@@ -562,64 +564,42 @@ export function TimelineView({ tasks }: TimelineViewProps) {
               </select>
             </label>
 
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-1.5">
               <span className="text-[10px] font-bold uppercase tracking-wide text-ink-3">Recorrência</span>
-
-              {/* Linha 1: quadradinhos dos dias da semana */}
-              <div className="grid grid-cols-7 gap-1.5">
-                {WEEKDAY_PILLS.map(({ label, key }) => {
-                  const active = editForm.recurrence_rule === 'daily'
-                    ? true
-                    : typeof editForm.recurrence_rule === 'string'
-                      ? editForm.recurrence_rule.split(',').includes(key)
-                      : false;
-                  return (
-                    <button
-                      key={key}
-                      type="button"
-                      onClick={() => {
-                        setEditForm((f) => ({
-                          ...f,
-                          recurrence_rule: toggleWeekday(f.recurrence_rule, key),
-                        }));
-                      }}
-                      className={`h-9 rounded-xl text-[11px] font-extrabold transition-colors ${
-                        active
-                          ? 'bg-ink text-white'
-                          : 'bg-paper2 text-ink-2'
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  );
-                })}
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setShowRecurrenceModal(true)}
+                  className="flex-1 h-9 bg-paper2 rounded-xl px-3 text-left text-[12px] font-semibold text-ink truncate"
+                >
+                  {describeRecurrenceRule(editForm.recurrence_rule)}
+                </button>
+                {editForm.recurrence_rule && (
+                  <button
+                    type="button"
+                    onClick={() => setEditForm((f) => ({ ...f, recurrence_rule: null }))}
+                    className="w-9 h-9 shrink-0 flex items-center justify-center bg-paper2 rounded-xl text-ink-3 text-[14px] font-bold hover:text-danger"
+                    aria-label="Remover recorrência"
+                  >
+                    ×
+                  </button>
+                )}
               </div>
-
-              {/* Linha 2: atalhos rápidos */}
-              <div className="flex flex-wrap gap-1.5">
-                {RECURRENCE_PRESETS.map(({ label, value }) => {
-                  const active = editForm.recurrence_rule === value;
-                  return (
-                    <button
-                      key={label}
-                      type="button"
-                      onClick={() =>
-                        setEditForm((f) => ({
-                          ...f,
-                          recurrence_rule: togglePreset(f.recurrence_rule, value),
-                        }))
-                      }
-                      className={`px-3 py-1.5 rounded-xl text-[11px] font-extrabold transition-colors ${
-                        active
-                          ? 'bg-ink text-white'
-                          : 'bg-paper2 text-ink-2'
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  );
-                })}
-              </div>
+              {showRecurrenceModal && (
+                <RecurrenceModal
+                  dueAt={editForm.due_at ? new Date(editForm.due_at).toISOString() : null}
+                  currentRule={editForm.recurrence_rule}
+                  onSave={(rule, newDueAt) => {
+                    setEditForm((f) => ({
+                      ...f,
+                      recurrence_rule: rule,
+                      ...(newDueAt ? { due_at: new Date(newDueAt).toLocaleString('sv').replace(' ', 'T').slice(0, 16) } : {}),
+                    }));
+                    setShowRecurrenceModal(false);
+                  }}
+                  onClose={() => setShowRecurrenceModal(false)}
+                />
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-2">
