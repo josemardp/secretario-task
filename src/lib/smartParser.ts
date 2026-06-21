@@ -1,5 +1,6 @@
 import type { Task, ContextType } from '../types';
 import { parseTaskInput } from './parser';
+import { getNextOccurrenceFromNow } from './recurrence';
 
 const OPENAI_API_URL = 'https://api.openai.com/v1';
 const CONTEXTS = ['PM', 'Esdra', 'Pessoal', 'Familia', 'CCB', 'Estudo', 'Saude'];
@@ -255,6 +256,11 @@ Responda APENAS com JSON válido com array "tasks".`;
           || extractRecurrenceRule(originalLine)
           || globalRecurrence
           || undefined;
+
+        // Se há recorrência mas a AI não forneceu due_at, calcula a próxima ocorrência
+        if (recurrence && !finalDueAt) {
+          finalDueAt = getNextOccurrenceFromNow(null, recurrence) ?? undefined;
+        }
 
         return {
           title: String(t.title || rawText),
