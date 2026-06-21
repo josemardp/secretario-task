@@ -277,7 +277,7 @@ export function TimelineView({ tasks }: TimelineViewProps) {
       context: task.context,
       priority: task.priority,
       energy: task.energy,
-      recurrence_rule: task.recurrence_rule ?? null,
+      recurrence_rule: typeof task.recurrence_rule === 'string' ? task.recurrence_rule : null,
     });
   };
 

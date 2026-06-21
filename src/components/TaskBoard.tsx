@@ -197,7 +197,7 @@ function TaskRow({
                   onClick={(e) => { e.stopPropagation(); setShowRecurrenceModal(true); }}
                   className="flex-1 h-9 bg-paper2 rounded-xl px-3 text-left text-[12px] font-semibold text-ink truncate"
                 >
-                  {describeRecurrenceRule(task.recurrence_rule ?? null)}
+                  {describeRecurrenceRule(typeof task.recurrence_rule === 'string' ? task.recurrence_rule : null)}
                 </button>
                 {task.recurrence_rule && (
                   <button
@@ -213,7 +213,7 @@ function TaskRow({
               {showRecurrenceModal && (
                 <RecurrenceModal
                   dueAt={task.due_at}
-                  currentRule={task.recurrence_rule ?? null}
+                  currentRule={typeof task.recurrence_rule === 'string' ? task.recurrence_rule : null}
                   onSave={(rule, newDueAt) => {
                     const updates: Partial<Task> = { recurrence_rule: rule };
                     if (newDueAt) updates.due_at = newDueAt;
