@@ -278,7 +278,7 @@ export const useTaskStore = create<TaskState>()(
     {
       name: 'secretario-task:task-store',
       storage: safeStorage,
-      version: 1,
+      version: 2,
       // Se os dados persistidos forem de versão anterior ou corrompidos,
       // retorna estado vazio para evitar crash de hidratação no celular.
       migrate: (persistedState: unknown, fromVersion: number): Partial<TaskState> => {
@@ -289,7 +289,23 @@ export const useTaskStore = create<TaskState>()(
         ) {
           return { tasks: [], mutations: [], viewedRecords: {} };
         }
-        return persistedState as Partial<TaskState>;
+        const state = persistedState as { tasks?: unknown[]; mutations?: PendingMutation[]; viewedRecords?: Record<string, string> };
+        // v1→v2: normaliza recurrence_rule que a AI possa ter devolvido como objeto JSON
+        if (fromVersion < 2 && Array.isArray(state.tasks)) {
+          state.tasks = state.tasks.map((t) => {
+            if (!t || typeof t !== 'object') return t;
+            const task = t as Record<string, unknown>;
+            const raw = task.recurrence_rule;
+            return {
+              ...task,
+              recurrence_rule:
+                typeof raw === 'string' ? raw
+                : raw != null && typeof raw === 'object' ? JSON.stringify(raw)
+                : null,
+            };
+          });
+        }
+        return state as Partial<TaskState>;
       },
       partialize: (state) => ({
         // Salva apenas mutations pendentes e no máximo 100 tasks recentes

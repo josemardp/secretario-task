@@ -145,7 +145,7 @@ export function MultiTaskConfirmModal({
                       className="flex-1 h-11 bg-paper rounded-xl px-3 text-left text-[11px] font-semibold text-ink truncate inline-flex items-center gap-1.5"
                     >
                       <Repeat size={10} strokeWidth={2.4} className="shrink-0 text-ink-3" />
-                      {describeRecurrenceRule(task.recurrence_rule ?? null)}
+                      {describeRecurrenceRule(typeof task.recurrence_rule === 'string' ? task.recurrence_rule : null)}
                     </button>
                     {task.recurrence_rule && (
                       <button
@@ -161,7 +161,7 @@ export function MultiTaskConfirmModal({
                   {recurrenceModalIdx === idx && (
                     <RecurrenceModal
                       dueAt={task.due_at ?? null}
-                      currentRule={task.recurrence_rule ?? null}
+                      currentRule={typeof task.recurrence_rule === 'string' ? task.recurrence_rule : null}
                       onSave={(rule, newDueAt) => {
                         updateTask(idx, {
                           recurrence_rule: rule,

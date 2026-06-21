@@ -193,7 +193,7 @@ Para cada tarefa extraia:
 - priority: 0-10 (urgente=10, alta=8, média=5, baixa=2, padrão=0)
 - energy: 0-10 (alta=8, média=5, baixa=2, padrão=0)
 - due_at: ISO 8601 UTC ou null (data/hora local atual: ${localISOTime}, UTC-3)
-- recurrence_rule: string | null. Use strings legadas simples ("daily","weekly","monthly","monday,tuesday,...") para recorrências simples. Para recorrências avançadas (intervalo N, ordinal, término), use JSON compacto: {"freq":"monthly","interval":3,"byDay":"SA","bySetPos":3,"end":{"type":"count","value":12}}. bySetPos: 1=primeiro, 2=segundo, 3=terceiro, 4=quarto, -1=último. byDay: SU MO TU WE TH FR SA.
+- recurrence_rule: SEMPRE string ou null — NUNCA um objeto JSON. Simples: "daily","weekly","monthly","monday,tuesday,...". Avançado (intervalo N>1, ordinal, término): serializar como string JSON, ex: '{"freq":"monthly","interval":3,"byDay":"SA","bySetPos":3,"end":{"type":"count","value":12}}'. bySetPos: 1=primeiro,2=segundo,3=terceiro,4=quarto,-1=último. byDay: SU MO TU WE TH FR SA.
 
 Responda APENAS com JSON válido com array "tasks".`;
 
@@ -243,7 +243,15 @@ Responda APENAS com JSON válido com array "tasks".`;
         }
 
         // ── Pós-processamento determinístico de RECORRÊNCIA ───────────────
-        const recurrence = t.recurrence_rule
+        // A AI pode devolver recurrence_rule como objeto JSON em vez de string —
+        // normalizamos aqui para garantir que só strings entrem no store.
+        const rawAIRecurrence: unknown = t.recurrence_rule;
+        const aiRecurrenceStr: string | null =
+          typeof rawAIRecurrence === 'string' ? rawAIRecurrence
+          : rawAIRecurrence != null && typeof rawAIRecurrence === 'object'
+            ? JSON.stringify(rawAIRecurrence)
+            : null;
+        const recurrence = aiRecurrenceStr
           || extractRecurrenceRule(originalLine)
           || globalRecurrence
           || undefined;
