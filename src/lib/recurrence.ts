@@ -173,11 +173,13 @@ export function getNextOccurrenceV2(
 
     case 'monthly': {
       next = new Date(base);
-      next.setMonth(next.getMonth() + rule.interval);
+      const targetMonth = next.getMonth() + rule.interval;
+      next.setDate(1); // evita overflow de dia ao avançar meses (ex: jan 31 → fev)
+      next.setMonth(targetMonth);
 
       if (rule.byMonthDay != null) {
         if (rule.byMonthDay === 'last') {
-          next.setDate(1);
+          // next está no dia 1 do mês alvo; avança 1 mês e volta ao dia 0 (= último dia do mês alvo)
           next.setMonth(next.getMonth() + 1);
           next.setDate(0);
         } else {
