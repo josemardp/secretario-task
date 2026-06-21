@@ -15,22 +15,131 @@ function extractBrazilianTime(text: string): { hour: number; minute: number } | 
   return null;
 }
 
-// Extrai regra de recorrência de um texto em português
+// Extrai regra de recorrência de um texto em português — retorna string legada ou JSON V2
 function extractRecurrenceRule(text: string): string | null {
-  if (/segunda[- ]a[- ]sexta|dias?\s+út(?:e|ei)is?|todo\s+dia\s+út(?:e|ei)l/i.test(text))
+  const t = text.toLowerCase();
+
+  // ── Padrões legados simples (sem intervalo, sem ordinal) ──────────────
+  if (/segunda[- ]a[- ]sexta|dias?\s+út(?:e|ei)is?|todo\s+dia\s+út(?:e|ei)l/i.test(t))
     return 'monday,tuesday,wednesday,thursday,friday';
-  if (/todo\s+dia|diariamente|todos\s+os\s+dias/i.test(text))
-    return 'daily';
-  if (/toda\s+semana|semanalmente/i.test(text))
-    return 'weekly';
-  if (/todo\s+m[eê]s|mensalmente/i.test(text))
-    return 'monthly';
-  if (/toda(?:s)?\s+segunda/i.test(text)) return 'monday';
-  if (/toda(?:s)?\s+ter[cç]a/i.test(text)) return 'tuesday';
-  if (/toda(?:s)?\s+quarta/i.test(text)) return 'wednesday';
-  if (/toda(?:s)?\s+quinta/i.test(text)) return 'thursday';
-  if (/toda(?:s)?\s+sexta/i.test(text)) return 'friday';
-  return null;
+  if (/toda\s+segunda/i.test(t)) return 'monday';
+  if (/toda\s+ter[cç]a/i.test(t)) return 'tuesday';
+  if (/toda\s+quarta/i.test(t)) return 'wednesday';
+  if (/toda\s+quinta/i.test(t)) return 'thursday';
+  if (/toda\s+sexta/i.test(t)) return 'friday';
+  if (/todo\s+s[aá]bado/i.test(t)) return 'saturday';
+  if (/todo\s+domingo/i.test(t)) return 'sunday';
+
+  // ── Detecta intervalo numérico ─────────────────────────────────────────
+  const intervalMatch =
+    t.match(/a\s+cada\s+(\d+)\s+(dia|semana|m[eê]s|ano)s?/i) ??
+    t.match(/(todo|toda)\s+(dia|semana|m[eê]s|ano)/i);
+
+  let freq: 'daily' | 'weekly' | 'monthly' | 'yearly' | null = null;
+  let interval = 1;
+
+  if (intervalMatch) {
+    if (intervalMatch[0].toLowerCase().startsWith('a cada')) {
+      interval = parseInt(intervalMatch[1], 10);
+    }
+    const unit = intervalMatch[2].toLowerCase();
+    if (unit.startsWith('dia')) freq = 'daily';
+    else if (unit.startsWith('semana')) freq = 'weekly';
+    else if (unit.startsWith('m')) freq = 'monthly';
+    else if (unit.startsWith('ano')) freq = 'yearly';
+  } else {
+    if (/todo\s+dia|diariamente|todos\s+os\s+dias/i.test(t)) freq = 'daily';
+    else if (/toda\s+semana|semanalmente/i.test(t)) freq = 'weekly';
+    else if (/todo\s+m[eê]s|mensalmente/i.test(t)) freq = 'monthly';
+    else if (/todo\s+ano|anualmente/i.test(t)) freq = 'yearly';
+  }
+
+  if (!freq) return null;
+
+  // ── Detecta ordinal + dia da semana (apenas para monthly) ─────────────
+  type DayCode = 'SU' | 'MO' | 'TU' | 'WE' | 'TH' | 'FR' | 'SA';
+  type SetPos = 1 | 2 | 3 | 4 | -1;
+
+  let byDay: DayCode | undefined;
+  let bySetPos: SetPos | undefined;
+  let byMonthDay: number | 'last' | undefined;
+
+  if (freq === 'monthly') {
+    const ordinalMap: Record<string, number> = {
+      'primeiro': 1, 'primeira': 1, '1o': 1, '1º': 1,
+      'segundo': 2, 'segunda': 2, '2o': 2, '2º': 2,
+      'terceiro': 3, 'terceira': 3, '3o': 3, '3º': 3,
+      'quarto': 4, 'quarta': 4, '4o': 4, '4º': 4,
+      'último': -1, 'ultima': -1,
+    };
+    const dowMap: Record<string, DayCode> = {
+      'domingo': 'SU', 'segunda': 'MO', 'terca': 'TU', 'terça': 'TU',
+      'quarta': 'WE', 'quinta': 'TH', 'sexta': 'FR',
+      'sabado': 'SA', 'sábado': 'SA',
+    };
+
+    const ordinalRegex = new RegExp(
+      `(${Object.keys(ordinalMap).join('|')})[a-z()]*\\s+(${Object.keys(dowMap).join('|')})`,
+      'i',
+    );
+    const ordinalMatch = t.match(ordinalRegex);
+    if (ordinalMatch) {
+      const posVal = ordinalMap[ordinalMatch[1].toLowerCase().replace(/[()]/g, '')];
+      const dayVal = dowMap[ordinalMatch[2].toLowerCase().replace(/[()]/g, '')];
+      if (posVal !== undefined && dayVal !== undefined) {
+        bySetPos = posVal as SetPos;
+        byDay = dayVal;
+      }
+    } else if (/[uú]ltimo\s+dia/i.test(t)) {
+      byMonthDay = 'last';
+    } else {
+      const dayNumMatch = t.match(/\bdia\s+(\d{1,2})\b/i);
+      if (dayNumMatch) byMonthDay = parseInt(dayNumMatch[1], 10);
+    }
+  }
+
+  // ── Detecta término ───────────────────────────────────────────────────
+  type EndRule = { type: 'count'; value: number } | { type: 'date'; value: string } | null;
+  let end: EndRule = null;
+
+  const countMatch =
+    t.match(/ap[oó]s\s+(\d+)\s+ocorr[eê]ncia/i) ??
+    t.match(/(\d+)\s+vezes/i) ??
+    t.match(/(\d+)\s+repeti[cç][oõ]es/i);
+  if (countMatch) {
+    end = { type: 'count', value: parseInt(countMatch[1], 10) };
+  }
+
+  if (!end) {
+    const dateEndMatch = t.match(/at[eé]\s+(\d{1,2}\/\d{1,2}\/\d{2,4})/i);
+    if (dateEndMatch) {
+      const [d, m, y] = dateEndMatch[1].split('/');
+      const year = y.length === 2 ? `20${y}` : y;
+      end = { type: 'date', value: `${year}-${m.padStart(2, '0')}-${d.padStart(2, '0')}` };
+    }
+  }
+
+  // ── Monta regra V2 ou retorna legada se não há nada V2-específico ──────
+  const isSimple =
+    interval === 1 &&
+    byDay === undefined &&
+    bySetPos === undefined &&
+    byMonthDay === undefined &&
+    !end;
+  if (isSimple) {
+    const legacyMap: Record<string, string> = {
+      daily: 'daily', weekly: 'weekly', monthly: 'monthly', yearly: 'yearly',
+    };
+    return legacyMap[freq] ?? null;
+  }
+
+  return JSON.stringify({
+    freq,
+    interval,
+    ...(byDay !== undefined && bySetPos !== undefined ? { byDay, bySetPos } : {}),
+    ...(byMonthDay !== undefined ? { byMonthDay } : {}),
+    end,
+  });
 }
 
 // Dado um due_at retornado pela AI e o tempo correto, reaplica hora e minuto locais em UTC
@@ -84,7 +193,7 @@ Para cada tarefa extraia:
 - priority: 0-10 (urgente=10, alta=8, média=5, baixa=2, padrão=0)
 - energy: 0-10 (alta=8, média=5, baixa=2, padrão=0)
 - due_at: ISO 8601 UTC ou null (data/hora local atual: ${localISOTime}, UTC-3)
-- recurrence_rule: "daily"|"weekly"|"monthly"|"monday,tuesday,..."|null
+- recurrence_rule: string | null. Use strings legadas simples ("daily","weekly","monthly","monday,tuesday,...") para recorrências simples. Para recorrências avançadas (intervalo N, ordinal, término), use JSON compacto: {"freq":"monthly","interval":3,"byDay":"SA","bySetPos":3,"end":{"type":"count","value":12}}. bySetPos: 1=primeiro, 2=segundo, 3=terceiro, 4=quarto, -1=último. byDay: SU MO TU WE TH FR SA.
 
 Responda APENAS com JSON válido com array "tasks".`;
 

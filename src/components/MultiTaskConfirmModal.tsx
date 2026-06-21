@@ -4,6 +4,7 @@ import { X, Sparkles, Repeat, Trash2, Flag } from 'lucide-react';
 import type { Task, ContextType } from '../types';
 import { CONTEXTS_LIST } from '../types';
 import { describeRecurrenceRule } from '../lib/recurrence';
+import { RecurrenceModal } from './RecurrenceModal';
 
 interface MultiTaskConfirmModalProps {
   initialTasks: Partial<Task>[];
@@ -45,6 +46,7 @@ export function MultiTaskConfirmModal({
   initialTasks, onConfirm, onCancel,
 }: MultiTaskConfirmModalProps) {
   const [tasks, setTasks] = useState<Partial<Task>[]>(initialTasks);
+  const [recurrenceModalIdx, setRecurrenceModalIdx] = useState<number | null>(null);
 
   const updateTask = (idx: number, updates: Partial<Task>) => {
     const next = [...tasks];
@@ -131,14 +133,46 @@ export function MultiTaskConfirmModal({
                   </button>
                 </div>
 
-                {/* tags row */}
-                {task.recurrence_rule && (
-                  <div className="mt-1.5">
-                    <span className="inline-flex items-center gap-1 text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-amber-soft text-ink">
-                      <Repeat size={10} strokeWidth={2.4} /> {describeRecurrenceRule(task.recurrence_rule)}
-                    </span>
+                {/* recurrence row */}
+                <div className="mt-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wide text-ink-3 block mb-1">
+                    Recorrência
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setRecurrenceModalIdx(idx)}
+                      className="flex-1 h-11 bg-paper rounded-xl px-3 text-left text-[11px] font-semibold text-ink truncate inline-flex items-center gap-1.5"
+                    >
+                      <Repeat size={10} strokeWidth={2.4} className="shrink-0 text-ink-3" />
+                      {describeRecurrenceRule(task.recurrence_rule ?? null)}
+                    </button>
+                    {task.recurrence_rule && (
+                      <button
+                        type="button"
+                        onClick={() => updateTask(idx, { recurrence_rule: null })}
+                        className="w-11 h-11 shrink-0 flex items-center justify-center bg-paper rounded-xl text-ink-3 text-[14px] font-bold hover:text-danger"
+                        aria-label="Remover recorrência"
+                      >
+                        ×
+                      </button>
+                    )}
                   </div>
-                )}
+                  {recurrenceModalIdx === idx && (
+                    <RecurrenceModal
+                      dueAt={task.due_at ?? null}
+                      currentRule={task.recurrence_rule ?? null}
+                      onSave={(rule, newDueAt) => {
+                        updateTask(idx, {
+                          recurrence_rule: rule,
+                          ...(newDueAt ? { due_at: newDueAt } : {}),
+                        });
+                        setRecurrenceModalIdx(null);
+                      }}
+                      onClose={() => setRecurrenceModalIdx(null)}
+                    />
+                  )}
+                </div>
 
                 {/* row 2: date + context */}
                 <div className="grid grid-cols-2 gap-2 mt-2.5">
