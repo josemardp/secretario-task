@@ -170,6 +170,9 @@ CREATE TABLE tasks (
   actual_minutes_source TEXT CHECK (
     actual_minutes_source IN ('timer', 'manual', 'retroactive', 'unknown')
   ),
+  blocker_type TEXT CHECK (
+    blocker_type IN ('waiting_third_party', 'no_time', 'priority_changed', 'needs_split', 'dependency')
+  ),
   started_at TIMESTAMPTZ,
   recurrence_rule TEXT,
   recurrence_origin_id UUID REFERENCES tasks(id) ON DELETE SET NULL,
@@ -251,6 +254,32 @@ Nem toda resolução é conclusão: quando `resolution_type` é `cancelled`, `de
 Dados legados de `estimated_minutes` permanecem com origem `NULL` quando não é possível distinguir IA, default ou edição manual. Dados legados de `actual_minutes` são marcados como `timer` quando possuem `started_at`, ou `unknown` quando não há âncora suficiente.
 
 Esses campos são metadados de confiabilidade. Eles não alteram `TaskStatus`, não acionam diagnóstico comportamental e não devem ser exibidos como score.
+
+Ao concluir uma tarefa com `started_at`, o cliente calcula `actual_minutes`. Se o timer aberto ultrapassar 8 horas, o valor é preservado, mas `actual_minutes_source` passa a ser `unknown`, sinalizando dado suspeito para leituras futuras.
+
+## Campo `blocker_type`
+
+`blocker_type` registra o motivo opcional do adiamento:
+- `waiting_third_party`: aguardando terceiro.
+- `no_time`: sem tempo.
+- `priority_changed`: prioridade mudou.
+- `needs_split`: precisa dividir.
+- `dependency`: depende de outra ação.
+
+Adiamentos sem motivo continuam válidos e ficam com `blocker_type=NULL`. Isso preserva baixo atrito e permite identificar dado incompleto sem bloquear captura ou reagendamento.
+
+## Reabertura limpa
+
+Reabrir tarefa concluída ou encerrada sem execução limpa a resolução corrente:
+- `completed_at=NULL`
+- `completed_at_confidence=NULL`
+- `resolution_type=NULL`
+- `resolved_at=NULL`
+- `started_at=NULL`
+- `actual_minutes=NULL`
+- `actual_minutes_source=NULL`
+
+Eventos antigos em `task_events` permanecem preservados; a reabertura adiciona um novo evento `reopened` best-effort.
 
 ## Campo `recurrence_origin_id`
 

@@ -31,6 +31,8 @@ export type CompletedAtConfidence = 'confirmed' | 'legacy_approx';
 export type ResolutionType = 'completed' | 'cancelled' | 'delegated' | 'obsolete';
 export type EstimatedMinutesSource = 'default_30' | 'manual' | 'ai' | 'parser';
 export type ActualMinutesSource = 'timer' | 'manual' | 'retroactive' | 'unknown';
+export type BlockerType = 'waiting_third_party' | 'no_time' | 'priority_changed' | 'needs_split' | 'dependency';
+export const BLOCKER_TYPES: BlockerType[] = ['waiting_third_party', 'no_time', 'priority_changed', 'needs_split', 'dependency'];
 export type TaskEventType =
   | 'created'
   | 'updated'
@@ -62,6 +64,7 @@ export interface Task {
   actual_minutes?: number | null;
   estimated_minutes_source?: EstimatedMinutesSource | null;
   actual_minutes_source?: ActualMinutesSource | null;
+  blocker_type?: BlockerType | null;
   started_at?: string | null;
   recurrence_rule?: string | null;
   recurrence_origin_id?: string | null;

@@ -4,7 +4,7 @@ import { useContextStore } from '../stores/contextStore';
 import { generateEmbedding } from './ai';
 import type { Task, ContextType } from '../types';
 
-const TASK_COLUMNS = 'id, user_id, title, description, context, priority, energy, status, due_at, deleted_at, created_at, updated_at, completed_at, completed_at_confidence, resolution_type, resolved_at, estimated_minutes, actual_minutes, estimated_minutes_source, actual_minutes_source, started_at, recurrence_rule, recurrence_origin_id, postponed_count, version';
+const TASK_COLUMNS = 'id, user_id, title, description, context, priority, energy, status, due_at, deleted_at, created_at, updated_at, completed_at, completed_at_confidence, resolution_type, resolved_at, estimated_minutes, actual_minutes, estimated_minutes_source, actual_minutes_source, blocker_type, started_at, recurrence_rule, recurrence_origin_id, postponed_count, version';
 
 // ─── Flags de lock ────────────────────────────────────────────────
 // Bug 2: fetchRemoteTasks precisava de guard análogo ao isSyncing para

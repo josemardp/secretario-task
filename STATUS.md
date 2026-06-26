@@ -23,7 +23,44 @@
 
 # Sprint atual
 
-Coach de Produtividade — Sprint 5 concluído
+Coach de Produtividade — Sprint 6 concluído
+
+---
+
+# Coach de Produtividade — Sprint 6 — Fase 2: Ajustes nos fluxos existentes
+
+Data: 2026-06-26
+
+## Objetivo
+Corrigir reabertura, impedir que timers antigos inflem tempo real confiável e permitir motivo opcional em adiamentos, preservando baixo atrito, recorrência, sync/offline-first e sem alterar `TaskStatus`.
+
+## Resultado
+- Criada migration `0018_postpone_blocker_type.sql`.
+- Adicionado `blocker_type` opcional em `tasks`.
+- Valores permitidos para `blocker_type`: `waiting_third_party`, `no_time`, `priority_changed`, `needs_split`, `dependency`.
+- Adiamentos no Kanban e na Agenda continuam permitidos sem motivo; nesse caso `blocker_type=NULL` identifica dado incompleto.
+- Adiamentos com motivo registram `blocker_type` na tarefa e no payload do evento `postponed`.
+- Reabertura de tarefas concluídas limpa `completed_at`, `completed_at_confidence`, `resolution_type`, `resolved_at`, `started_at`, `actual_minutes` e `actual_minutes_source`.
+- Reabertura de tarefas encerradas sem execução limpa a resolução e emite evento `reopened` best-effort.
+- Timer aberto por mais de 8 horas passa a gravar `actual_minutes_source='unknown'`, mantendo o valor calculado como dado suspeito, não confiável.
+- Eventos continuam best-effort e não bloqueiam concluir, iniciar, adiar, resolver, reabrir ou sync.
+- `TaskStatus` não foi alterado.
+- `deleted_at` não foi usado para semântica.
+- `BehavioralSuggestion` permanece desativado.
+- Nenhum diagnóstico comportamental novo foi criado.
+
+## Migration remota
+- `supabase migration list --linked`: executado antes da aplicação; remoto estava alinhado até `0017` e `0018` aparecia pendente apenas localmente.
+- `supabase db push --dry-run`: passou; listou somente `0018_postpone_blocker_type.sql`.
+- `supabase db push --linked`: passou; `0018` aplicada no Supabase remoto.
+- `supabase migration list --linked`: confirmado após aplicação; remoto alinhado até `0018`.
+
+## Validações
+- `npm run lint`: passou.
+- `npm run build`: passou; Vite manteve aviso de chunk maior que 500 kB.
+
+## Próximo sprint recomendado
+Sprint 7 — Fase 3A: Dashboard confiável mínimo.
 
 ---
 
@@ -57,6 +94,7 @@ Introduzir origem explícita para `estimated_minutes` e `actual_minutes`, impedi
 - `supabase db push --dry-run`: passou; listou somente `0017_data_source_fields.sql`.
 - `supabase db push --linked`: passou; `0017` aplicada no Supabase remoto.
 - `supabase migration list --linked`: confirmado após aplicação; remoto alinhado até `0017`.
+- Commit/push: `4ec04b2 feat: rastrear origem dos tempos (Sprint 5)` enviado para `origin/main`.
 
 ## Validações
 - `npm run lint`: passou.

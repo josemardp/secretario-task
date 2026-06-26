@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { formatDateTime, rescheduleToDate, postponeToTomorrow, wasEdited } from '../lib/datetime';
 import { describeRecurrenceRule } from '../lib/recurrence';
-import type { Task, TaskStatus, ContextType, ResolutionType } from '../types';
+import { buildActualMinutesFromStartedAt, buildReopenUpdates } from '../lib/timeTracking';
+import type { Task, TaskStatus, ContextType, ResolutionType, BlockerType } from '../types';
 import { CONTEXTS_LIST } from '../types';
 import { RecurrenceModal } from './RecurrenceModal';
 import { useTaskStore } from '../stores/taskStore';
@@ -11,7 +12,7 @@ import { isActiveTask, isClosedWithoutExecution } from '../lib/taskFilters';
 import { TaskActions } from './TaskActions';
 import { EmptyState } from './EmptyState';
 import {
-  Check, Flag, Clock, Repeat, ChevronDown, Trash2, ArrowRight,
+  Check, Flag, Clock, Repeat, ChevronDown, Trash2, ArrowRight, RotateCcw,
 } from 'lucide-react';
 
 interface TaskBoardProps {
@@ -60,8 +61,7 @@ function buildCompleteUpdates(task: Task): Partial<Task> {
     updates.resolved_at = completedAt;
   }
   if (task.status !== 'done' && task.started_at) {
-    updates.actual_minutes = Math.round((Date.now() - new Date(task.started_at).getTime()) / 60_000);
-    updates.actual_minutes_source = 'timer';
+    Object.assign(updates, buildActualMinutesFromStartedAt(task.started_at));
   }
   return updates;
 }
@@ -141,8 +141,8 @@ interface TaskRowProps {
   onComplete: () => void;
   onStart: () => void;
   onRevert: () => void;
-  onPostponeTomorrow: () => void;
-  onPostponeDate: (d: string) => void;
+  onPostponeTomorrow: (blockerType?: BlockerType | null) => void;
+  onPostponeDate: (d: string, blockerType?: BlockerType | null) => void;
   onResolve: (type: Exclude<ResolutionType, 'completed'>) => void;
   isDone: boolean;
 }
@@ -447,39 +447,50 @@ export function TaskBoard({ tasks, topTasks = [] }: TaskBoardProps) {
     });
   };
 
-  const handleStatusRevert = (task: Task) => {
-    const prevStatus = task.status === 'done' ? 'doing' : task.status === 'doing' ? 'todo' : null;
-    if (prevStatus) {
-      updateTask(task.id, { status: prevStatus });
-      if (task.status === 'done') {
-        recordTaskEvent(task.id, 'reopened', {
-          from_status: task.status,
-          to_status: prevStatus,
-          source: 'task_board',
-        });
-      }
-    }
-  };
-
-  const handlePostponeTomorrow = (task: Task) => {
-    updateTask(task.id, {
-      due_at: postponeToTomorrow(task.due_at ?? null),
-      postponed_count: (task.postponed_count || 0) + 1,
-    });
-    recordTaskEvent(task.id, 'postponed', {
-      mode: 'tomorrow',
+  const reopenTask = (task: Task, status?: TaskStatus) => {
+    updateTask(task.id, buildReopenUpdates(status));
+    recordTaskEvent(task.id, 'reopened', {
+      from_status: task.status,
+      to_status: status ?? task.status,
+      from_resolution_type: task.resolution_type ?? null,
       source: 'task_board',
     });
   };
 
-  const handlePostponeDate = (task: Task, dateString: string) => {
+  const handleStatusRevert = (task: Task) => {
+    const prevStatus = task.status === 'done' ? 'doing' : task.status === 'doing' ? 'todo' : null;
+    if (prevStatus) {
+      if (task.status === 'done') {
+        reopenTask(task, prevStatus);
+      } else {
+        updateTask(task.id, { status: prevStatus });
+      }
+    }
+  };
+
+  const handlePostponeTomorrow = (task: Task, blockerType?: BlockerType | null) => {
+    updateTask(task.id, {
+      due_at: postponeToTomorrow(task.due_at ?? null),
+      postponed_count: (task.postponed_count || 0) + 1,
+      blocker_type: blockerType ?? null,
+    });
+    recordTaskEvent(task.id, 'postponed', {
+      mode: 'tomorrow',
+      blocker_type: blockerType ?? null,
+      source: 'task_board',
+    });
+  };
+
+  const handlePostponeDate = (task: Task, dateString: string, blockerType?: BlockerType | null) => {
     updateTask(task.id, {
       due_at: rescheduleToDate(dateString, task.due_at ?? null),
       postponed_count: (task.postponed_count || 0) + 1,
+      blocker_type: blockerType ?? null,
     });
     recordTaskEvent(task.id, 'postponed', {
       mode: 'date',
       date: dateString,
+      blocker_type: blockerType ?? null,
       source: 'task_board',
     });
   };
@@ -542,8 +553,8 @@ export function TaskBoard({ tasks, topTasks = [] }: TaskBoardProps) {
                     onComplete={() => completeTask(task)}
                     onStart={() => startTask(task)}
                     onRevert={() => handleStatusRevert(task)}
-                    onPostponeTomorrow={() => handlePostponeTomorrow(task)}
-                    onPostponeDate={(date) => handlePostponeDate(task, date)}
+                    onPostponeTomorrow={(blockerType) => handlePostponeTomorrow(task, blockerType)}
+                    onPostponeDate={(date, blockerType) => handlePostponeDate(task, date, blockerType)}
                     onResolve={(type) => resolveTask(task, type)}
                     isDone={false}
                   />
@@ -581,8 +592,8 @@ export function TaskBoard({ tasks, topTasks = [] }: TaskBoardProps) {
                   onComplete={() => completeTask(task)}
                   onStart={() => startTask(task)}
                   onRevert={() => handleStatusRevert(task)}
-                  onPostponeTomorrow={() => handlePostponeTomorrow(task)}
-                  onPostponeDate={(date) => handlePostponeDate(task, date)}
+                  onPostponeTomorrow={(blockerType) => handlePostponeTomorrow(task, blockerType)}
+                  onPostponeDate={(date, blockerType) => handlePostponeDate(task, date, blockerType)}
                   onResolve={(type) => resolveTask(task, type)}
                   isDone
                 />
@@ -611,7 +622,7 @@ export function TaskBoard({ tasks, topTasks = [] }: TaskBoardProps) {
               {resolvedTasks.map((task) => (
                 <div
                   key={task.id}
-                  className={`bg-paper border border-line border-l-4 rounded-2xl px-3 py-2.5 opacity-75 ${CTX_BAR[task.context]}`}
+                  className={`bg-paper border border-line border-l-4 rounded-2xl px-3 py-2.5 opacity-75 flex items-center justify-between gap-3 ${CTX_BAR[task.context]}`}
                 >
                   <div className="min-w-0">
                     <div className="text-[14px] font-semibold text-ink truncate">{task.title}</div>
@@ -619,6 +630,15 @@ export function TaskBoard({ tasks, topTasks = [] }: TaskBoardProps) {
                       {resolutionLabel(task.resolution_type)} sem conclusão
                     </div>
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => reopenTask(task, task.status === 'done' ? 'todo' : task.status)}
+                    className="w-11 h-11 shrink-0 inline-flex items-center justify-center rounded-lg bg-paper2 text-ink-2 hover:text-accent transition-colors"
+                    title="Reabrir tarefa"
+                    aria-label="Reabrir tarefa"
+                  >
+                    <RotateCcw size={15} strokeWidth={2.2} />
+                  </button>
                 </div>
               ))}
             </div>

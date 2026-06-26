@@ -80,8 +80,20 @@ Entregas:
 - `TASK_COLUMNS` e tipos TypeScript atualizados.
 - Nenhum diagnóstico comportamental foi criado.
 
+## Sprint 6 — Fase 2: Ajustes nos fluxos existentes
+Status: concluído em 2026-06-26.
+
+Entregas:
+- Migration `0018_postpone_blocker_type.sql`.
+- Campo opcional `blocker_type` adicionado a `tasks`.
+- Reabertura limpa remove conclusão/resolução/timer atuais e emite `reopened` best-effort.
+- Timer aberto por mais de 8 horas deixa de ser tratado como tempo confiável e passa a receber `actual_minutes_source='unknown'`.
+- Adiamento continua sem fricção, mas pode receber motivo opcional.
+- Eventos de adiamento carregam `blocker_type` no payload quando informado.
+- Nenhum diagnóstico comportamental foi criado.
+
 ## Próximo sprint
-Sprint 6 — Fase 2: reabertura limpa, teto de timer e adiar com motivo.
+Sprint 7 — Fase 3A: Dashboard confiável mínimo.
 
 ---
 
