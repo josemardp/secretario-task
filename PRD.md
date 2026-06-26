@@ -287,6 +287,19 @@ Reabrir uma tarefa remove a conclusão/resolução atual e o timer aberto, prese
 
 Adiamento pode ser feito sem motivo para preservar velocidade. Quando houver motivo, ele é registrado em `blocker_type`; quando não houver, o dado permanece nulo e identificável como incompleto.
 
+## Coach de Produtividade — IA governada
+
+As funcionalidades de IA existentes permanecem opcionais e não-bloqueantes.
+
+O briefing com IA deve narrar sinais operacionais e ranking determinístico, sem produzir diagnóstico psicológico, score global ou julgamento pessoal.
+
+Quando a IA falhar ou retornar linguagem proibida, o produto exibe fallback operacional cauteloso em vez de bloquear o fluxo.
+
+Dados frágeis aparecem como limitação:
+- `legacy_approx` não vira conclusão confirmada;
+- `actual_minutes_source='unknown'` não vira tempo real confiável;
+- cancelada, delegada e obsoleta não contam como conclusão executada.
+
 ---
 
 ## Tabela `task_events`

@@ -23,7 +23,38 @@
 
 # Sprint atual
 
-Coach de Produtividade — Sprint 8 concluído
+Coach de Produtividade — Sprint 9 concluído
+
+---
+
+# Coach de Produtividade — Sprint 9 — Fase 5A: Governança da IA existente
+
+Data: 2026-06-26
+
+## Objetivo
+Governar o uso da IA já existente no Coach de Produtividade, impedindo que IA origine diagnóstico, julgamento pessoal ou escrita de campos semânticos, e mantendo fallback determinístico.
+
+## Resultado
+- Criada a camada pura `src/lib/coachAIGuardrails.ts`.
+- Criado payload governado para IA baseado em tarefas acionáveis e sinais determinísticos de `analyzeCoachSignals`.
+- O payload não envia histórico bruto completo nem campo `updated_at` como evidência.
+- Criado contrato de prompt e saída JSON para narrativa segura.
+- Respostas com termos proibidos são bloqueadas e substituídas por fallback cauteloso.
+- `generateSmartBriefing` passou a usar payload governado e fallback determinístico sem cache, `input_hash` ou versionamento.
+- `transcribeAudio` passou a falhar de forma não-crítica, retornando `null` em erro.
+- `estimateTaskTime` permanece com fallback `default_30` e origem marcada.
+- `parseMultipleTasks` permanece com fallback determinístico para `parseTaskInput`.
+- `generateEmbedding` permanece não-bloqueante no sync por `try/catch`.
+- `BehavioralSuggestion` permanece desativado.
+- Nenhuma migration foi criada.
+
+## Validações
+- `npm run test`: passou; fixtures do motor e 8 fixtures de guardrails passaram.
+- `npm run lint`: passou.
+- `npm run build`: passou; Vite manteve aviso de chunk maior que 500 kB.
+
+## Próximo sprint recomendado
+Sprint 10 — Fase 5B: IA narrativa cacheada e segura.
 
 ---
 

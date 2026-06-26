@@ -118,8 +118,21 @@ Entregas:
 - Nenhum diagnóstico psicológico, score único, IA, rede, Supabase ou localStorage no motor.
 - Nenhuma migration foi criada.
 
+## Sprint 9 — Fase 5A: Governança da IA existente
+Status: concluído em 2026-06-26.
+
+Entregas:
+- Inventário das rotas de IA existentes: estimativa, parser inteligente, embedding, briefing e transcrição.
+- Camada `src/lib/coachAIGuardrails.ts` com payload governado, prompt seguro, contrato de saída e sanitização.
+- Briefing passa a consumir sinais determinísticos do Sprint 8 por payload mínimo, sem histórico bruto completo.
+- `updated_at` não é enviado como evidência de conclusão.
+- `legacy_approx`, `actual_minutes_source='unknown'` e encerradas sem execução aparecem como limitações de confiança.
+- Termos proibidos e linguagem diagnóstica são bloqueados com fallback determinístico.
+- `BehavioralSuggestion` permanece desativado.
+- Nenhuma migration foi criada.
+
 ## Próximo sprint
-Sprint 9 — Fase 5A: Governança da IA existente.
+Sprint 10 — Fase 5B: IA narrativa cacheada e segura.
 
 ---
 

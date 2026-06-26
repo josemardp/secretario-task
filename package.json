@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "test": "tsc -p tsconfig.coach-tests.json && node --experimental-specifier-resolution=node dist-coach-tests/scripts/coachSignals.fixtures.js",
+    "test": "tsc -p tsconfig.coach-tests.json && node --experimental-specifier-resolution=node dist-coach-tests/scripts/coachSignals.fixtures.js && node --experimental-specifier-resolution=node dist-coach-tests/scripts/coachAIGuardrails.fixtures.js",
     "preview": "vite preview"
   },
   "dependencies": {

@@ -19,6 +19,66 @@ Este documento define:
 
 ---
 
+# Coach de Produtividade — Sprint 9 — Fase 5A: Governança da IA existente
+
+Data: 2026-06-26
+
+## Objetivo
+Inventariar e conter as rotas de IA existentes, garantindo fallback determinístico, origem marcada nos dados influenciados por IA e ausência de diagnóstico psicológico ou escrita de campos semânticos pela IA.
+
+## Resumo do que foi feito
+- Criado `src/lib/coachAIGuardrails.ts`.
+- Criado contrato de entrada `GovernedCoachAIPayload`, com tarefas acionáveis mínimas, sinais determinísticos do motor do Sprint 8, limitações e política de dados.
+- Criado contrato de saída `GovernedCoachAIResponse`, com resumo, evidências, limitações, recomendação e confiança textual.
+- `generateSmartBriefing` passou a montar prompt governado e validar/sanitizar a resposta antes de exibir narrativa.
+- O briefing usa fallback determinístico quando a API falha, quando a resposta não é JSON útil ou quando contém linguagem proibida.
+- `transcribeAudio` deixou de lançar erro para o fluxo principal e retorna `null` em falha, com tratamento local na captura.
+- Fixtures de guardrails foram adicionadas ao `npm run test`.
+- `BehavioralSuggestion` permanece desativado.
+- Nenhuma migration foi criada.
+
+## Inventário de IA
+- `estimateTaskTime`: influencia `estimated_minutes`; fallback `default_30`; origem `ai` ou `default_30`.
+- `parseMultipleTasks`: influencia campos de captura; fallback determinístico em `parseTaskInput`.
+- `generateEmbedding`: influencia busca/sync semântico; no sync fica em `try/catch` e não bloqueia mutation.
+- `generateSmartBriefing`: agora consome payload governado e sinais determinísticos; não escreve dados.
+- `transcribeAudio`: converte voz em texto de captura; falha retorna `null` e não grava tarefa automaticamente.
+
+## Arquivos alterados
+- `package.json`
+- `tsconfig.coach-tests.json`
+- `scripts/coachAIGuardrails.fixtures.ts`
+- `src/lib/coachAIGuardrails.ts`
+- `src/lib/ai.ts`
+- `src/lib/briefing.ts`
+- `src/pages/Home.tsx`
+- `STATUS.md`
+- `SPRINT_LOG.md`
+- `ROADMAP.md`
+- `DECISIONS.md`
+- `ARCHITECTURE.md`
+- `PRD.md`
+
+## Validações executadas
+- `npm run test`: passou; fixtures do motor e 8 fixtures de guardrails passaram.
+- `npm run lint`: passou.
+- `npm run build`: passou; Vite manteve aviso de chunk maior que 500 kB.
+
+## Decisões tomadas
+- IA narrativa só pode consumir payload governado, não histórico bruto completo.
+- Resposta de IA com linguagem proibida é bloqueada e substituída por fallback determinístico.
+- `updated_at` pode ser citado apenas como proibição/política, nunca como evidência de conclusão.
+- `legacy_approx`, `actual_minutes_source='unknown'` e encerramentos sem execução entram como limitações, não como produtividade.
+
+## Pendências
+- Sprint 10 deve tratar cache por `input_hash` e versionamento de prompt.
+- Eventos históricos não são enviados ao payload do briefing neste sprint; o uso completo de eventos pode ser refinado depois sem quebrar o contrato.
+
+## Resultado
+Sprint 9 implementado com lint/build/test verdes e sem migration.
+
+---
+
 # Coach de Produtividade — Sprint 8 — Fase 4: Motor determinístico testável
 
 Data: 2026-06-26

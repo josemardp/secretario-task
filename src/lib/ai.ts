@@ -1,4 +1,12 @@
 import type { Task } from '../types';
+import {
+  buildDeterministicCoachNarrative,
+  buildGovernedCoachAIPayload,
+  buildGovernedCoachPrompt,
+  formatGovernedCoachNarrative,
+  parseGovernedCoachAIResponse,
+  type GovernedCoachAIPayload,
+} from './coachAIGuardrails';
 import { isActionableBriefingTask } from './taskFilters';
 
 const OPENAI_API_URL = 'https://api.openai.com/v1';
@@ -7,19 +15,6 @@ export type EstimatedTimeResult = {
   minutes: number;
   source: 'ai' | 'default_30';
 };
-
-function formatBriefingDateTime(date: Date): string {
-  return new Intl.DateTimeFormat('pt-BR', {
-    dateStyle: 'full',
-    timeStyle: 'short',
-  }).format(date);
-}
-
-function formatTaskDueAt(dueAt: string | null): string {
-  if (!dueAt) return 'sem horario definido';
-
-  return formatBriefingDateTime(new Date(dueAt));
-}
 
 export async function generateEmbedding(text: string, apiKey: string): Promise<number[]> {
   const response = await fetch(`${OPENAI_API_URL}/embeddings`, {
@@ -45,48 +40,45 @@ export async function generateEmbedding(text: string, apiKey: string): Promise<n
 export async function generateSmartBriefing(
   tasks: Task[], 
   energy: number, 
-  apiKey: string
+  apiKey: string,
+  governedPayload?: GovernedCoachAIPayload,
 ): Promise<string> {
   const now = new Date();
-  const formattedNow = formatBriefingDateTime(now);
-  const tasksListText = tasks
-    .filter((task) => isActionableBriefingTask(task, now))
-    .slice(0, 10) // Limit context to top 10 tasks to save tokens
-    .map(t => `- ${t.title} (Status: ${t.status}, Horario: ${formatTaskDueAt(t.due_at)}, Prioridade: ${t.priority}, Energia exigida: ${t.energy}, Contexto: ${t.context})`)
-    .join('\n');
-
-  const systemPrompt = `Você é o SecretárioTask, um chefe de gabinete digital.
-Produza um resumo objetivo das prioridades do usuário. Sem motivação, sem elogios, sem antropomorfizar.
-Agora é ${formattedNow}. Nível de energia atual do usuário: ${energy}/10.
-Use a energia apenas para ordenar: energia alta favorece tarefas exigentes; energia baixa favorece tarefas leves.
-Em no máximo 3 frases, diga o que fazer, em que ordem e por quê. Tom direto e profissional, em português.
-Não cite tarefas concluídas, deletadas ou com horário anterior ao momento atual.
-
-Tarefas do Top Ranking atual:
-${tasksListText || '(Nenhuma tarefa acionável no momento.)'}
-
-Responda em um parágrafo único.`;
-
-  const response = await fetch(`${OPENAI_API_URL}/chat/completions`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: 'gpt-4o-mini',
-      messages: [{ role: 'system', content: systemPrompt }],
-      temperature: 0,
-      max_tokens: 150,
-    }),
+  const payload = governedPayload ?? buildGovernedCoachAIPayload({
+    topTasks: tasks.filter((task) => isActionableBriefingTask(task, now)),
+    allTasks: tasks,
+    energy,
+    now,
   });
+  const systemPrompt = buildGovernedCoachPrompt(payload);
 
-  if (!response.ok) {
-    throw new Error('Falha ao gerar briefing inteligente');
+  try {
+    const response = await fetch(`${OPENAI_API_URL}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [{ role: 'system', content: systemPrompt }],
+        temperature: 0,
+        max_tokens: 220,
+      }),
+    });
+
+    if (!response.ok) {
+      return buildDeterministicCoachNarrative(payload);
+    }
+
+    const data = await response.json();
+    const rawText = String(data.choices?.[0]?.message?.content ?? '').trim();
+    const governedResponse = parseGovernedCoachAIResponse(rawText, payload);
+    return formatGovernedCoachNarrative(governedResponse);
+  } catch (err) {
+    console.warn('Fallback deterministico do briefing ativado:', err);
+    return buildDeterministicCoachNarrative(payload);
   }
-
-  const data = await response.json();
-  return data.choices[0].message.content.trim();
 }
 
 export async function estimateTaskTime(
@@ -144,27 +136,32 @@ ${historyText || "(Sem histórico ainda. Assuma tempos normais: emails=15m, coda
   }
 }
 
-export async function transcribeAudio(audioBlob: Blob, apiKey: string): Promise<string> {
+export async function transcribeAudio(audioBlob: Blob, apiKey: string): Promise<string | null> {
   const formData = new FormData();
   // Whisper requires a file name with an extension to guess the format
   formData.append('file', audioBlob, 'audio.webm');
   formData.append('model', 'whisper-1');
   formData.append('language', 'pt'); // Force Portuguese to improve accuracy for neurodivergent stutters/accents
 
-  const response = await fetch(`${OPENAI_API_URL}/audio/transcriptions`, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: formData,
-  });
+  try {
+    const response = await fetch(`${OPENAI_API_URL}/audio/transcriptions`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: formData,
+    });
 
-  if (!response.ok) {
-    const errorBody = await response.text();
-    console.error('Whisper API Error:', errorBody);
-    throw new Error('Falha ao transcrever o áudio');
+    if (!response.ok) {
+      const errorBody = await response.text();
+      console.warn('Whisper API Error:', errorBody);
+      return null;
+    }
+
+    const data = await response.json();
+    return String(data.text ?? '').trim() || null;
+  } catch (err) {
+    console.warn('Falha nao-critica ao transcrever audio:', err);
+    return null;
   }
-
-  const data = await response.json();
-  return data.text.trim();
 }
