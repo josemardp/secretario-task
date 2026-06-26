@@ -35,7 +35,7 @@ Confirmar a integridade do repositório antes da evolução do Coach de Produtiv
 - Mapeados os pontos atuais em que `updated_at` é usado como aproximação de conclusão.
 - Nenhuma migration foi criada.
 - Nenhum código funcional foi alterado.
-- Nenhum push ou commit foi feito.
+- O Sprint 0 foi posteriormente commitado e enviado para `origin/main` em `cca1f1e chore: organiza plano executor do coach`.
 
 ## Arquivos alterados
 - `STATUS.md`
@@ -47,14 +47,14 @@ Confirmar a integridade do repositório antes da evolução do Coach de Produtiv
 - `npm run build`: passou.
 
 ## Bugs ou achados
-- A árvore Git já estava suja antes das alterações deste sprint: `AGENTS.md` modificado e `docs/` não rastreado.
+- A árvore Git já estava suja antes das alterações deste sprint: `AGENTS.md` modificado e `docs/` não rastreado. Pendência resolvida pelo commit `cca1f1e`.
 - `npm ci` reportou 2 vulnerabilidades no audit (1 low, 1 high). Correção não aplicada por estar fora do escopo do Sprint 0.
 - `npm run build` reportou aviso de chunk maior que 500 kB. Build permaneceu verde.
 - `updated_at` ainda alimenta conclusão em `behaviorEngine.ts` e em blocos do `DashboardView.tsx`, exatamente o alvo do Sprint 1.
 
 ## Decisões tomadas
 - Nenhuma decisão nova de arquitetura/produto foi tomada neste sprint.
-- A árvore suja pré-existente foi preservada e registrada como condição de baseline.
+- A árvore suja pré-existente foi preservada durante a execução do Sprint 0 e depois saneada pelo commit `cca1f1e`.
 
 ## Pendências
 - Aplicar o Sprint 1 para conter imediatamente a sugestão comportamental e rotular métricas derivadas de `updated_at`.
@@ -62,7 +62,7 @@ Confirmar a integridade do repositório antes da evolução do Coach de Produtiv
 - Confirmar operacionalmente se a migration `0013` já foi aplicada no Supabase remoto, conforme pendência anterior do `STATUS.md`.
 
 ## Resultado
-Sprint 0 concluído com lint/build verdes e baseline registrada.
+Sprint 0 concluído com lint/build verdes, baseline registrada, commitada e enviada para `origin/main` em `cca1f1e`.
 
 ---
 
