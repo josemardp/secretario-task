@@ -40,11 +40,13 @@ function AgendaQuickActions({
   onPostponeTomorrow,
   onPostponeDate,
   onEdit,
+  onDelete,
 }: {
   onComplete: () => void;
   onPostponeTomorrow: () => void;
   onPostponeDate: (dateString: string) => void;
   onEdit: () => void;
+  onDelete: () => void;
 }) {
   const dateInputRef = useRef<HTMLInputElement>(null);
 
@@ -101,6 +103,17 @@ function AgendaQuickActions({
         title="Editar"
       >
         <Edit3 size={12} /> Editar
+      </button>
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onDelete();
+        }}
+        className="h-8 px-2.5 rounded-lg bg-danger-light text-danger text-[12px] font-bold inline-flex items-center gap-1"
+        title="Excluir"
+      >
+        <Trash2 size={12} /> Excluir
       </button>
     </div>
   );
@@ -175,6 +188,7 @@ function TimelineTaskCard({
             onPostponeTomorrow={() => handlePostponeTomorrow(t.id)}
             onPostponeDate={(d) => handlePostponeDate(t.id, d)}
             onEdit={() => openEdit(t)}
+            onDelete={() => deleteTask(t.id)}
           />
         </div>
 
@@ -192,21 +206,6 @@ function TimelineTaskCard({
           </div>
         )}
 
-        {/* secondary actions */}
-        <div
-          className="mt-2 pt-2 border-t border-line2 flex items-center justify-end gap-2"
-          onMouseDown={(e) => e.stopPropagation()}
-        >
-          <div className="flex items-center gap-1 shrink-0">
-            <button
-              onClick={(e) => { e.stopPropagation(); deleteTask(t.id); }}
-              className="text-danger w-11 h-11 inline-flex items-center justify-center rounded-lg hover:bg-danger-light"
-              title="Excluir"
-            >
-              <Trash2 size={13} />
-            </button>
-          </div>
-        </div>
       </div>
     </div>
   );
@@ -232,7 +231,7 @@ function TimelineSlot({
   const onHourBoundary = slot.dateObj.getMinutes() === 0;
   const slotMinHeight = slotBlocksCount === 0
     ? 28
-    : Math.max(112, slotBlocksCount * 156 + Math.max(0, slotBlocksCount - 1) * 8 + 16);
+    : Math.max(104, slotBlocksCount * 118 + Math.max(0, slotBlocksCount - 1) * 8 + 16);
 
   return (
     <div
