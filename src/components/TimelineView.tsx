@@ -2,13 +2,14 @@ import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { formatDateTime, rescheduleToDate, postponeToTomorrow, wasEdited } from '../lib/datetime';
 import { describeRecurrenceRule, getNextOccurrenceFromNow } from '../lib/recurrence';
-import { Calendar as CalIcon, Flag, Repeat, X, Edit3, Trash2 } from 'lucide-react';
+import { Calendar as CalIcon, Check, Flag, Repeat, X, Edit3, Trash2 } from 'lucide-react';
 import type { Task, ContextType } from '../types';
 import { CONTEXTS_LIST } from '../types';
 import { useContextStore } from '../stores/contextStore';
 import { useTaskStore } from '../stores/taskStore';
 import { CalendarWidget } from './CalendarWidget';
 import { RecurrenceModal } from './RecurrenceModal';
+import { useToast } from './toastContext';
 import { useAgendaPositions, type TimelineBlock } from '../hooks/useAgendaPositions';
 
 
@@ -128,7 +129,7 @@ function AgendaQuickActions({
 interface TimelineTaskCardProps {
   block: TimelineBlock;
   now: Date;
-  deleteTask: (id: string) => void;
+  requestDelete: (task: Task) => void;
   openEdit: (task: Task) => void;
   handleComplete: (id: string) => void;
   handlePostponeTomorrow: (id: string) => void;
@@ -137,10 +138,14 @@ interface TimelineTaskCardProps {
 }
 
 function TimelineTaskCard({
-  block, now, deleteTask, openEdit,
+  block, now, requestDelete, openEdit,
   handleComplete, handlePostponeTomorrow, handlePostponeDate, formatTime,
 }: TimelineTaskCardProps) {
   const t = block.task!;
+  const [dragX, setDragX] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragXRef = useRef(0);
+  const gestureStartRef = useRef<{ x: number; y: number; active: boolean } | null>(null);
   const isLate =
     (t.due_at && new Date(t.due_at) < now) ||
     (!t.due_at &&
@@ -151,65 +156,150 @@ function TimelineTaskCard({
     touchAction: 'pan-y',
   };
 
+  const resetGesture = () => {
+    gestureStartRef.current = null;
+    setIsDragging(false);
+    dragXRef.current = 0;
+    setDragX(0);
+  };
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType === 'mouse') return;
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+    gestureStartRef.current = { x: e.clientX, y: e.clientY, active: false };
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const start = gestureStartRef.current;
+    if (!start) return;
+
+    const dx = e.clientX - start.x;
+    const dy = e.clientY - start.y;
+    if (!start.active && Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy) * 1.2) {
+      start.active = true;
+      setIsDragging(true);
+    }
+    if (!start.active) return;
+
+    const nextX = Math.max(-116, Math.min(116, dx));
+    dragXRef.current = nextX;
+    setDragX(nextX);
+  };
+
+  const handlePointerUp = () => {
+    const finalX = dragXRef.current;
+    resetGesture();
+    if (finalX > 72) {
+      handlePostponeTomorrow(t.id);
+    } else if (finalX < -72) {
+      requestDelete(t);
+    }
+  };
+
   return (
     <div
       style={style}
-      className={[
-        'relative z-20 w-full min-w-0 overflow-hidden flex flex-col bg-paper rounded-xl border border-line border-l-4',
-        CTX_BAR[t.context],
-        'shadow-card',
-      ].join(' ')}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={resetGesture}
+      className="relative z-20 w-full min-w-0 overflow-hidden rounded-2xl"
     >
-      <div className="px-3 pt-2.5 pb-2.5">
-        {/* time + duration controls */}
-        <div className="flex items-center justify-between gap-2 mb-1.5">
-          <span className="text-[12px] font-bold tnum text-ink-2 tracking-wide">
-            {formatTime(block.startTime)} – {formatTime(block.endTime)}
-          </span>
-          <div className="flex items-center gap-1.5">
-            {isLate && (
-              <span className="text-[11px] font-bold px-1.5 py-0.5 rounded bg-danger-light text-danger tracking-[0.05em]">
-                ATRASADA
+      <div className="absolute inset-0 flex items-center justify-between px-4 bg-paper2">
+        <span className="text-[12px] font-bold text-success">Amanhã</span>
+        <span className="text-[12px] font-bold text-danger">Excluir</span>
+      </div>
+
+      <div
+        className={[
+          'relative min-w-0 flex flex-col bg-paper border border-line border-l-4 rounded-2xl',
+          CTX_BAR[t.context],
+          'shadow-card transition-transform active:shadow-none',
+          isDragging ? 'duration-0' : 'duration-200',
+        ].join(' ')}
+        style={{ transform: `translateX(${dragX}px)` }}
+      >
+      <div className="px-2.5 py-2.5 sm:px-3">
+        <div className="flex items-start gap-2">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleComplete(t.id);
+            }}
+            className="w-11 h-11 -ml-1.5 -mt-1.5 shrink-0 inline-flex items-center justify-center rounded-full text-success"
+            aria-label="Concluir tarefa"
+            title="Concluir"
+          >
+            <span className="w-6 h-6 rounded-full border-2 border-current inline-flex items-center justify-center">
+              <Check size={14} strokeWidth={2.6} className="opacity-0" />
+            </span>
+          </button>
+
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[12px] font-bold tnum text-ink-2 tracking-wide">
+                {formatTime(block.startTime)} – {formatTime(block.endTime)}
               </span>
+              <div className="flex items-center gap-1.5 shrink-0">
+                {isLate && (
+                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-danger-light text-danger tracking-[0.05em]">
+                    ATRASADA
+                  </span>
+                )}
+                {t.priority > 0 && (
+                  <span
+                    className={
+                      'inline-flex items-center gap-1 text-[11px] font-bold tnum ' +
+                      (t.priority >= 8 ? 'text-danger' : t.priority >= 5 ? 'text-warning' : 'text-ink-2')
+                    }
+                  >
+                    <Flag size={10} strokeWidth={2.4} /> P{t.priority}
+                  </span>
+                )}
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openEdit(t);
+                  }}
+                  className="w-8 h-8 -mr-1.5 rounded-full inline-flex items-center justify-center text-ink-2 hover:text-ink sm:hidden"
+                  aria-label="Editar tarefa"
+                  title="Editar"
+                >
+                  <Edit3 size={15} strokeWidth={2.2} />
+                </button>
+              </div>
+            </div>
+
+            <h3 className="mt-1 text-[15px] font-bold text-ink leading-snug tracking-tight break-words flex items-start gap-1.5">
+              {t.recurrence_rule && <Repeat size={13} className="mt-0.5 shrink-0 text-ink-2" />}
+              <span className="min-w-0">{block.title}</span>
+            </h3>
+
+            {(t.postponed_count ?? 0) > 0 && (
+              <div className="mt-1">
+                <span title={`${t.postponed_count}x adiada`} className="inline-flex text-[11px] font-bold bg-warning-light text-warning px-1.5 py-0.5 rounded">
+                  Adiada {t.postponed_count}x
+                </span>
+              </div>
             )}
           </div>
         </div>
 
-        {/* title row */}
-        <h3 className="text-[14px] font-bold text-ink leading-snug tracking-tight break-words flex items-center gap-1.5">
-          {t.recurrence_rule && <Repeat size={12} className="shrink-0 text-ink-2" />}
-          {(t.postponed_count ?? 0) > 0 && (
-            <span title={`${t.postponed_count}× adiada`} className="shrink-0 text-[11px] font-bold bg-warning-light text-warning px-1.5 py-0.5 rounded">
-              Adiada {t.postponed_count}×
-            </span>
-          )}
-          <span className="min-w-0">{block.title}</span>
-        </h3>
-
-        <div className="mt-2" onMouseDown={(e) => e.stopPropagation()}>
+        <div
+          className="hidden sm:mt-2 sm:grid"
+          onMouseDown={(e) => e.stopPropagation()}
+        >
           <AgendaQuickActions
             onComplete={() => handleComplete(t.id)}
             onPostponeTomorrow={() => handlePostponeTomorrow(t.id)}
             onPostponeDate={(d) => handlePostponeDate(t.id, d)}
             onEdit={() => openEdit(t)}
-            onDelete={() => deleteTask(t.id)}
+            onDelete={() => requestDelete(t)}
           />
         </div>
-
-        {/* priority chip */}
-        {t.priority > 0 && (
-          <div className="mt-1.5">
-            <span
-              className={
-                'inline-flex items-center gap-1 text-[12px] font-bold tnum ' +
-                (t.priority >= 8 ? 'text-danger' : t.priority >= 5 ? 'text-warning' : 'text-ink-2')
-              }
-            >
-              <Flag size={10} strokeWidth={2.4} /> P{t.priority}
-            </span>
-          </div>
-        )}
-
+      </div>
       </div>
     </div>
   );
@@ -235,7 +325,7 @@ function TimelineSlot({
   const onHourBoundary = slot.dateObj.getMinutes() === 0;
   const slotMinHeight = slotBlocksCount === 0
     ? 28
-    : Math.max(132, slotBlocksCount * 168 + Math.max(0, slotBlocksCount - 1) * 8 + 16);
+    : Math.max(88, slotBlocksCount * 86 + Math.max(0, slotBlocksCount - 1) * 8 + 16);
 
   return (
     <div
@@ -285,10 +375,12 @@ function TimelineSlot({
 export function TimelineView({ tasks }: TimelineViewProps) {
   const { currentEnergy, activeContext } = useContextStore();
   const { updateTask, deleteTask } = useTaskStore();
+  const toast = useToast();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [dismissedBreaks, setDismissedBreaks] = useState<string[]>([]);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [pendingDeleteTask, setPendingDeleteTask] = useState<Task | null>(null);
   const [showRecurrenceModal, setShowRecurrenceModal] = useState(false);
   const [editForm, setEditForm] = useState<{
     title: string;
@@ -378,16 +470,30 @@ export function TimelineView({ tasks }: TimelineViewProps) {
       updates.actual_minutes = Math.round((Date.now() - new Date(task.started_at).getTime()) / 60000);
     }
     updateTask(taskId, updates);
+    toast('Tarefa concluída.', 'success');
   };
 
   const handlePostponeTomorrow = (taskId: string) => {
     const task = tasks.find(t => t.id === taskId);
     updateTask(taskId, { due_at: postponeToTomorrow(task?.due_at ?? null), postponed_count: (task?.postponed_count || 0) + 1 });
+    toast('Adiada para amanhã.', 'success');
   };
 
   const handlePostponeDate = (taskId: string, dateString: string) => {
     const task = tasks.find(t => t.id === taskId);
     updateTask(taskId, { due_at: rescheduleToDate(dateString, task?.due_at ?? null), postponed_count: (task?.postponed_count || 0) + 1 });
+    toast('Tarefa adiada.', 'success');
+  };
+
+  const requestDelete = (task: Task) => {
+    setPendingDeleteTask(task);
+  };
+
+  const confirmDelete = () => {
+    if (!pendingDeleteTask) return;
+    deleteTask(pendingDeleteTask.id);
+    setPendingDeleteTask(null);
+    toast('Tarefa excluída.', 'success');
   };
 
   const { blocks, now } = useAgendaPositions(tasks, selectedDate, currentEnergy, activeContext);
@@ -532,7 +638,7 @@ export function TimelineView({ tasks }: TimelineViewProps) {
                     key={`${block.id}-${slot.timeString}`}
                     block={block}
                     now={now}
-                    deleteTask={deleteTask}
+                    requestDelete={requestDelete}
                     openEdit={openEdit}
                     handleComplete={handleComplete}
                     handlePostponeTomorrow={handlePostponeTomorrow}
@@ -578,6 +684,39 @@ export function TimelineView({ tasks }: TimelineViewProps) {
                 aria-label="Fechar"
               >
                 <X size={16} />
+              </button>
+            </div>
+
+            <div className="px-5 pt-3 grid grid-cols-3 gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  handleComplete(editingTask.id);
+                  setEditingTask(null);
+                }}
+                className="h-10 rounded-xl bg-success text-white text-[12px] font-bold"
+              >
+                Concluir
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  handlePostponeTomorrow(editingTask.id);
+                  setEditingTask(null);
+                }}
+                className="h-10 rounded-xl bg-paper2 text-ink text-[12px] font-bold"
+              >
+                Amanhã
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  requestDelete(editingTask);
+                  setEditingTask(null);
+                }}
+                className="h-10 rounded-xl bg-danger-light text-danger text-[12px] font-bold"
+              >
+                Excluir
               </button>
             </div>
 
@@ -715,6 +854,48 @@ export function TimelineView({ tasks }: TimelineViewProps) {
                 className="flex-1 py-2.5 rounded-xl bg-ink text-[13px] font-bold text-white"
               >
                 Salvar
+              </button>
+            </div>
+          </div>
+        </div>
+      , document.body)}
+
+      {pendingDeleteTask && createPortal(
+        <div
+          className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-[rgba(26,24,20,0.45)] animate-fade-in"
+          onClick={() => setPendingDeleteTask(null)}
+        >
+          <div
+            className="bg-paper w-full sm:max-w-sm rounded-t-3xl sm:rounded-3xl shadow-soft p-5"
+            style={{ paddingBottom: 'calc(20px + env(safe-area-inset-bottom))' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-center sm:hidden">
+              <div className="w-10 h-1 rounded-full bg-paper3 mb-4" />
+            </div>
+            <div className="text-[12px] font-bold uppercase tracking-[0.06em] text-danger">
+              Excluir tarefa
+            </div>
+            <h2 className="mt-1 text-[18px] font-bold text-ink leading-snug">
+              {pendingDeleteTask.title}
+            </h2>
+            <p className="mt-2 text-[13px] text-ink-2 leading-relaxed">
+              Esta tarefa será removida da agenda. A ação será sincronizada nos seus dispositivos.
+            </p>
+            <div className="mt-5 grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={() => setPendingDeleteTask(null)}
+                className="h-11 rounded-xl bg-paper2 text-[13px] font-bold text-ink"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={confirmDelete}
+                className="h-11 rounded-xl bg-danger text-[13px] font-bold text-white"
+              >
+                Excluir
               </button>
             </div>
           </div>
