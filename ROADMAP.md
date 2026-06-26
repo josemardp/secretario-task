@@ -106,8 +106,20 @@ Entregas:
 - `BehavioralSuggestion` permanece desativado.
 - Nenhuma migration foi criada.
 
+## Sprint 8 — Fase 4: Motor determinístico testável
+Status: concluído em 2026-06-26.
+
+Entregas:
+- Motor puro `src/lib/coachSignals.ts`.
+- Entrada explícita por `tasks`, `events` e `now`.
+- Sinais objetivos de qualidade do dado, adiamentos, bloqueios, encerramentos sem execução, reaberturas e diferença estimado vs. real confiável.
+- Fixtures pequenas e determinísticas em `scripts/coachSignals.fixtures.ts`.
+- Script `npm run test` sem dependência nova.
+- Nenhum diagnóstico psicológico, score único, IA, rede, Supabase ou localStorage no motor.
+- Nenhuma migration foi criada.
+
 ## Próximo sprint
-Sprint 8 — Fase 4: Motor determinístico testável.
+Sprint 9 — Fase 5A: Governança da IA existente.
 
 ---
 

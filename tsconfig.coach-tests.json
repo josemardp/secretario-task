@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    "target": "ES2023",
+    "lib": ["ES2023", "DOM"],
+    "module": "ES2022",
+    "moduleResolution": "bundler",
+    "skipLibCheck": true,
+    "outDir": "dist-coach-tests",
+    "rootDir": ".",
+    "noEmit": false,
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": [
+    "scripts/coachSignals.fixtures.ts",
+    "src/lib/coachSignals.ts",
+    "src/types/index.ts"
+  ]
+}

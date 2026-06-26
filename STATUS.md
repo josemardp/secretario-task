@@ -23,7 +23,37 @@
 
 # Sprint atual
 
-Coach de Produtividade — Sprint 7 concluído
+Coach de Produtividade — Sprint 8 concluído
+
+---
+
+# Coach de Produtividade — Sprint 8 — Fase 4: Motor determinístico testável
+
+Data: 2026-06-26
+
+## Objetivo
+Criar um motor determinístico do Coach de Produtividade para transformar dados honestos em sinais objetivos, puros, testáveis e separados da UI, da IA, da rede e do armazenamento local.
+
+## Resultado
+- Criado `src/lib/coachSignals.ts`.
+- Criado motor puro `analyzeCoachSignals({ tasks, events, now })`.
+- O motor recebe `now` por parâmetro e não usa `Date.now()` ou relógio implícito.
+- O motor não depende de UI, Supabase, localStorage, API externa ou IA.
+- Sinais implementados: baixa quantidade de conclusões confirmadas, histórico aproximado presente, adiamentos sem motivo, tempo real desconhecido, excesso de estimativas `default_30`, proporção de encerradas sem execução, bloqueios recorrentes, diferença estimado vs. real confiável, reaberturas e baixa qualidade agregada do dado.
+- Saídas usam `signal_id`, severidade simples, título, descrição objetiva, evidências, confiança, recomendação operacional e campos que enfraquecem a confiança.
+- Criadas fixtures em `scripts/coachSignals.fixtures.ts`.
+- Criado `tsconfig.coach-tests.json`.
+- Adicionado `npm run test` sem dependência nova; usa `tsc` + `node`.
+- `BehavioralSuggestion` permanece desativado.
+- Nenhuma migration foi criada.
+
+## Validações
+- `npm run lint`: passou.
+- `npm run build`: passou; Vite manteve aviso de chunk maior que 500 kB.
+- `npm run test`: passou; 12 fixtures executadas.
+
+## Próximo sprint recomendado
+Sprint 9 — Fase 5A: Governança da IA existente.
 
 ---
 
