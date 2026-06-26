@@ -1,7 +1,5 @@
 import type { Config } from 'tailwindcss'
 
-// Additive extension of the existing theme — keeps legacy tokens so old
-// components keep working while new screens migrate to the Direction B palette.
 export default {
   content: [
     "./index.html",
@@ -14,53 +12,64 @@ export default {
         serif: ['"Instrument Serif"', '"Source Serif Pro"', 'Georgia', 'serif'],
       },
       colors: {
-        // ── Legacy (unchanged from before, to keep existing JSX working) ──
-        brand: {
-          DEFAULT: '#4f46e5',
-          light:   '#6366f1',
-          subtle:  '#eef2ff',
+        bg: 'var(--bg)',
+        'surface-sunken': 'var(--surface-sunken)',
+        border: 'var(--border)',
+        'border-strong': 'var(--border-strong)',
+        accent: {
+          DEFAULT: 'var(--accent)',
+          hover: 'var(--accent-hover)',
+          subtle: 'var(--accent-subtle)',
         },
-        danger:  { DEFAULT: '#B4322B', light: '#F6E4E0' },
-        warning: { DEFAULT: '#B07A1E', light: '#F7ECD6' },
-        success: { DEFAULT: '#3F6420', light: '#E6F0D8' },
+
+        // Legacy aliases kept so existing JSX migrates through the new tokens.
+        brand: {
+          DEFAULT: 'var(--accent)',
+          light:   'var(--accent-hover)',
+          subtle:  'var(--accent-subtle)',
+        },
+        danger:  { DEFAULT: 'var(--danger)', light: 'color-mix(in srgb, var(--danger) 10%, var(--surface))' },
+        warning: { DEFAULT: 'var(--warning)', light: 'color-mix(in srgb, var(--warning) 10%, var(--surface))' },
+        success: { DEFAULT: 'var(--success)', light: 'color-mix(in srgb, var(--success) 10%, var(--surface))' },
         surface: {
-          DEFAULT: '#ffffff',
-          muted:   '#f9fafb',
-          border:  '#e5e7eb',
-          border2: '#d1d5db',
+          DEFAULT: 'var(--surface)',
+          muted:   'var(--surface-sunken)',
+          border:  'var(--border)',
+          border2: 'var(--border-strong)',
         },
         text: {
-          primary:   '#111827',
-          secondary: '#6b7280',
-          tertiary:  '#9ca3af',
-          inverse:   '#ffffff',
+          primary:   'var(--ink)',
+          secondary: 'var(--ink-secondary)',
+          tertiary:  'var(--ink-tertiary)',
+          inverse:   'var(--surface)',
         },
-        late:    '#dc2626',
-        done:    '#16a34a',
-        pending: '#9ca3af',
+        late:    'var(--danger)',
+        done:    'var(--success)',
+        pending: 'var(--ink-tertiary)',
 
-        // ── Direction B palette (new) ──
-        canvas:    '#F7F6F2',
-        paper:     '#FFFFFF',
-        paper2:    '#EFEEE8',
-        paper3:    '#E5E3DB',
+        canvas:    'var(--bg)',
+        paper:     'var(--surface)',
+        paper2:    'var(--surface-sunken)',
+        paper3:    'var(--border)',
         ink: {
-          DEFAULT: '#1A1814',
-          2:       '#6B6760',
-          3:       '#A09B91',
+          DEFAULT:   'var(--ink)',
+          2:         'var(--ink-secondary)',
+          3:         'var(--ink-tertiary)',
+          secondary: 'var(--ink-secondary)',
+          tertiary:  'var(--ink-tertiary)',
         },
-        line:  '#E5E3DB',
-        line2: '#EBE9E1',
-        amber: { soft: '#FFE9C2' },
+        line:  'var(--border)',
+        line2: 'var(--border)',
+        amber: { soft: 'var(--accent-subtle)' },
 
-        // contexts — used as left bars / soft chips
-        ctxPM:      { DEFAULT: '#3F58D9', soft: '#E6E9FF', ink: '#3046C0' },
-        ctxEsdra:   { DEFAULT: '#7C3AED', soft: '#F1E6FF', ink: '#6831B5' },
-        ctxPessoal: { DEFAULT: '#C88E2A', soft: '#FFE9C2', ink: '#7A4A0F' },
-        ctxFamilia: { DEFAULT: '#1E8590', soft: '#D6F0F2', ink: '#125F66' },
-        ctxCCB:     { DEFAULT: '#5C8A2C', soft: '#E6F0D8', ink: '#3F6420' },
-        ctxEstudo:  { DEFAULT: '#C53580', soft: '#FFE0EC', ink: '#9D2960' },
-        ctxSaude:   { DEFAULT: '#1F7A57', soft: '#D6F0E4', ink: '#155F43' },
+        // Context colors intentionally resolve to neutral tokens in the premium system.
+        ctxPM:      { DEFAULT: 'var(--border-strong)', soft: 'var(--surface-sunken)', ink: 'var(--ink-secondary)' },
+        ctxEsdra:   { DEFAULT: 'var(--border-strong)', soft: 'var(--surface-sunken)', ink: 'var(--ink-secondary)' },
+        ctxPessoal: { DEFAULT: 'var(--border-strong)', soft: 'var(--surface-sunken)', ink: 'var(--ink-secondary)' },
+        ctxFamilia: { DEFAULT: 'var(--border-strong)', soft: 'var(--surface-sunken)', ink: 'var(--ink-secondary)' },
+        ctxCCB:     { DEFAULT: 'var(--border-strong)', soft: 'var(--surface-sunken)', ink: 'var(--ink-secondary)' },
+        ctxEstudo:  { DEFAULT: 'var(--border-strong)', soft: 'var(--surface-sunken)', ink: 'var(--ink-secondary)' },
+        ctxSaude:   { DEFAULT: 'var(--border-strong)', soft: 'var(--surface-sunken)', ink: 'var(--ink-secondary)' },
       },
       borderRadius: {
         xl:    '14px',
@@ -68,9 +77,9 @@ export default {
         '3xl': '22px',
       },
       boxShadow: {
-        card: '0 1px 2px rgba(26,24,20,.04), 0 1px 0 rgba(26,24,20,.02)',
-        soft: '0 8px 24px -10px rgba(26,24,20,.18)',
-        fab:  '0 10px 22px -4px rgba(26,24,20,.45), 0 4px 10px -2px rgba(26,24,20,.18)',
+        card: 'none',
+        soft: 'none',
+        fab:  'none',
       },
     },
   },

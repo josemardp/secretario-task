@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { formatDateTime, rescheduleToDate, postponeToTomorrow, wasEdited } from '../lib/datetime';
 import { describeRecurrenceRule, getNextOccurrenceFromNow } from '../lib/recurrence';
-import { Calendar as CalIcon, Check, Flag, Repeat, X, Edit3, Trash2 } from 'lucide-react';
+import { Calendar as CalIcon, Repeat, X, Edit3, Trash2 } from 'lucide-react';
 import type { Task, ContextType } from '../types';
 import { CONTEXTS_LIST } from '../types';
 import { useContextStore } from '../stores/contextStore';
@@ -17,21 +17,17 @@ interface TimelineViewProps {
   tasks: Task[];
 }
 
-const CTX_BAR: Record<ContextType, string> = {
-  PM:      'border-l-ctxPM',
-  Esdra:   'border-l-ctxEsdra',
-  Pessoal: 'border-l-ctxPessoal',
-  Familia: 'border-l-ctxFamilia',
-  CCB:     'border-l-ctxCCB',
-  Estudo:  'border-l-ctxEstudo',
-  Saude:   'border-l-ctxSaude',
-};
-
 function toLocalDatetimeInput(iso: string | null | undefined): string {
   if (!iso) return '';
   const d = new Date(iso);
   const pad = (n: number) => n.toString().padStart(2, '0');
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+function priorityTone(priority: number): string {
+  if (priority >= 8) return 'text-danger';
+  if (priority >= 6) return 'text-warning';
+  return 'text-ink-tertiary';
 }
 
 // ─── Recurrence helpers (importados de src/lib/recurrence.ts) ───
@@ -60,7 +56,7 @@ function AgendaQuickActions({
             e.stopPropagation();
             onComplete();
           }}
-          className="h-8 min-w-0 px-2 rounded-lg bg-success text-white text-[12px] font-bold"
+          className="h-8 min-w-0 px-2 rounded-lg bg-accent text-white text-[12px] font-bold"
         >
           Concluir
         </button>
@@ -70,7 +66,7 @@ function AgendaQuickActions({
             e.stopPropagation();
             onPostponeTomorrow();
           }}
-          className="h-8 min-w-0 px-2 rounded-lg bg-paper2 text-ink text-[12px] font-bold"
+          className="h-8 min-w-0 px-2 rounded-lg border border-border-strong bg-surface text-ink text-[12px] font-bold"
         >
           Amanhã
         </button>
@@ -81,7 +77,7 @@ function AgendaQuickActions({
               e.stopPropagation();
               dateInputRef.current?.showPicker?.();
             }}
-            className="h-8 w-full min-w-0 px-2 rounded-lg bg-paper2 text-ink text-[12px] font-bold"
+            className="h-8 w-full min-w-0 px-2 rounded-lg border border-border-strong bg-surface text-ink text-[12px] font-bold"
           >
             Adiar
           </button>
@@ -103,7 +99,7 @@ function AgendaQuickActions({
             e.stopPropagation();
             onEdit();
           }}
-          className="h-8 min-w-0 px-2 rounded-lg bg-paper2 text-ink text-[12px] font-bold inline-flex items-center justify-center gap-1"
+          className="h-8 min-w-0 px-2 rounded-lg border border-border-strong bg-surface text-ink text-[12px] font-bold inline-flex items-center justify-center gap-1"
           title="Editar"
         >
           <Edit3 size={12} /> Editar
@@ -114,7 +110,7 @@ function AgendaQuickActions({
             e.stopPropagation();
             onDelete();
           }}
-          className="h-8 min-w-0 px-2 rounded-lg bg-danger-light text-danger text-[12px] font-bold inline-flex items-center justify-center gap-1"
+          className="h-8 min-w-0 px-2 rounded-lg border border-border-strong bg-surface text-danger text-[12px] font-bold inline-flex items-center justify-center gap-1"
           title="Excluir"
         >
           <Trash2 size={12} /> Excluir
@@ -203,18 +199,17 @@ function TimelineTaskCard({
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerCancel={resetGesture}
-      className="relative z-20 w-full min-w-0 overflow-hidden rounded-2xl sm:overflow-visible sm:rounded-xl"
+      className="relative z-20 w-full min-w-0 overflow-hidden rounded-xl sm:overflow-visible"
     >
-      <div className="absolute inset-0 flex items-center justify-between px-4 bg-paper2 sm:hidden">
+      <div className="absolute inset-0 flex items-center justify-between px-4 bg-surface-sunken sm:hidden">
         <span className="text-[12px] font-bold text-success">Amanhã</span>
         <span className="text-[12px] font-bold text-danger">Excluir</span>
       </div>
 
       <div
         className={[
-          'relative min-w-0 flex flex-col bg-paper border border-line border-l-4 rounded-2xl sm:rounded-xl sm:min-h-[104px]',
-          CTX_BAR[t.context],
-          'shadow-card transition-transform active:shadow-none',
+          'relative min-w-0 flex flex-col bg-surface border border-border rounded-xl sm:min-h-[104px]',
+          'transition-transform',
           isDragging ? 'duration-0' : 'duration-200',
         ].join(' ')}
         style={{ transform: `translateX(${dragX}px)` }}
@@ -227,18 +222,16 @@ function TimelineTaskCard({
               e.stopPropagation();
               handleComplete(t.id);
             }}
-            className="w-11 h-11 -ml-1.5 -mt-1.5 shrink-0 inline-flex items-center justify-center rounded-full text-success sm:hidden"
+            className="w-11 h-11 -ml-1.5 -mt-1.5 shrink-0 inline-flex items-center justify-center rounded-full text-ink-tertiary sm:hidden"
             aria-label="Concluir tarefa"
             title="Concluir"
           >
-            <span className="w-6 h-6 rounded-full border-2 border-current inline-flex items-center justify-center">
-              <Check size={14} strokeWidth={2.6} className="opacity-0" />
-            </span>
+            <span className="w-6 h-6 rounded-full border-2 border-border-strong inline-flex items-center justify-center" />
           </button>
 
           <div className="min-w-0 flex-1">
             <div className="flex items-center justify-between gap-2">
-              <span className="text-[12px] font-bold tnum text-ink-2 tracking-wide">
+              <span className="text-[12px] font-bold tnum text-ink-secondary tracking-wide">
                 {formatTime(block.startTime)} – {formatTime(block.endTime)}
               </span>
               <div className="flex items-center gap-1.5 shrink-0">
@@ -249,12 +242,10 @@ function TimelineTaskCard({
                 )}
                 {t.priority > 0 && (
                   <span
-                    className={
-                      'inline-flex items-center gap-1 text-[11px] font-bold tnum ' +
-                      (t.priority >= 8 ? 'text-danger' : t.priority >= 5 ? 'text-warning' : 'text-ink-2')
-                    }
+                    className={`inline-flex items-center gap-1.5 text-[11px] font-bold tnum ${priorityTone(t.priority)}`}
                   >
-                    <Flag size={10} strokeWidth={2.4} /> P{t.priority}
+                    <span className="w-[7px] h-[7px] rounded-full bg-current" />
+                    P{t.priority}
                   </span>
                 )}
                 <button
@@ -263,7 +254,7 @@ function TimelineTaskCard({
                     e.stopPropagation();
                     openEdit(t);
                   }}
-                  className="w-8 h-8 -mr-1.5 rounded-full inline-flex items-center justify-center text-ink-2 hover:text-ink sm:hidden"
+                  className="w-8 h-8 -mr-1.5 rounded-full inline-flex items-center justify-center text-ink-tertiary hover:text-ink sm:hidden"
                   aria-label="Editar tarefa"
                   title="Editar"
                 >
@@ -273,13 +264,13 @@ function TimelineTaskCard({
             </div>
 
             <h3 className="mt-1 text-[15px] font-bold text-ink leading-snug tracking-tight break-words flex items-start gap-1.5 sm:text-[14px] sm:leading-tight">
-              {t.recurrence_rule && <Repeat size={13} className="mt-0.5 shrink-0 text-ink-2" />}
+              {t.recurrence_rule && <Repeat size={13} className="mt-0.5 shrink-0 text-ink-tertiary" />}
               <span className="min-w-0">{block.title}</span>
             </h3>
 
             {(t.postponed_count ?? 0) > 0 && (
               <div className="mt-1">
-                <span title={`${t.postponed_count}x adiada`} className="inline-flex text-[11px] font-bold bg-warning-light text-warning px-1.5 py-0.5 rounded">
+                <span title={`${t.postponed_count}x adiada`} className="inline-flex text-[11px] font-bold bg-surface-sunken text-ink-tertiary px-1.5 py-0.5 rounded">
                   Adiada {t.postponed_count}x
                 </span>
               </div>
@@ -694,7 +685,7 @@ export function TimelineView({ tasks }: TimelineViewProps) {
                   handleComplete(editingTask.id);
                   setEditingTask(null);
                 }}
-                className="h-10 rounded-xl bg-success text-white text-[12px] font-bold"
+                className="h-10 rounded-xl bg-accent text-white text-[12px] font-bold"
               >
                 Concluir
               </button>
@@ -704,7 +695,7 @@ export function TimelineView({ tasks }: TimelineViewProps) {
                   handlePostponeTomorrow(editingTask.id);
                   setEditingTask(null);
                 }}
-                className="h-10 rounded-xl bg-paper2 text-ink text-[12px] font-bold"
+                className="h-10 rounded-xl border border-border-strong bg-surface text-ink text-[12px] font-bold"
               >
                 Amanhã
               </button>
@@ -714,7 +705,7 @@ export function TimelineView({ tasks }: TimelineViewProps) {
                   requestDelete(editingTask);
                   setEditingTask(null);
                 }}
-                className="h-10 rounded-xl bg-danger-light text-danger text-[12px] font-bold"
+                className="h-10 rounded-xl border border-border-strong bg-surface text-danger text-[12px] font-bold"
               >
                 Excluir
               </button>
@@ -845,13 +836,13 @@ export function TimelineView({ tasks }: TimelineViewProps) {
             >
               <button
                 onClick={() => setEditingTask(null)}
-                className="flex-1 py-2.5 rounded-xl bg-paper2 text-[13px] font-bold text-ink-2"
+                className="flex-1 py-2.5 rounded-xl border border-border-strong bg-surface text-[13px] font-bold text-ink"
               >
                 Cancelar
               </button>
               <button
                 onClick={saveEdit}
-                className="flex-1 py-2.5 rounded-xl bg-ink text-[13px] font-bold text-white"
+                className="flex-1 py-2.5 rounded-xl bg-accent text-[13px] font-bold text-white"
               >
                 Salvar
               </button>
@@ -886,7 +877,7 @@ export function TimelineView({ tasks }: TimelineViewProps) {
               <button
                 type="button"
                 onClick={() => setPendingDeleteTask(null)}
-                className="h-11 rounded-xl bg-paper2 text-[13px] font-bold text-ink"
+                className="h-11 rounded-xl border border-border-strong bg-surface text-[13px] font-bold text-ink"
               >
                 Cancelar
               </button>

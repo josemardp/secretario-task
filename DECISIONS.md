@@ -376,3 +376,10 @@ Decisão: no mobile, os cards da Agenda exibem apenas a ação primária de conc
 Motivo: a visualização anterior transformava cada tarefa em um bloco alto com muitos botões, reduzindo densidade, poluindo a hierarquia visual e destoando de referências maduras como Google Tasks. A nova direção prioriza leitura, escaneabilidade e ação principal imediata.
 Alternativas descartadas: manter todos os botões sempre visíveis no mobile — descartada por aparência pesada e corte em telas estreitas; esconder tudo em menu de três pontos — descartada por tornar concluir e adiar lentos demais; excluir direto no swipe — descartada por risco de perda acidental.
 Contexto: refinamento visual solicitado em 26/06/2026 após comparação direta com Google Tasks.
+
+## 2026-06-26 — Design system premium de cores por tokens CSS
+
+Decisão: centralizar a paleta visual em CSS variables (`--bg`, `--surface`, `--border`, `--ink`, `--accent`, `--success`, `--warning`, `--danger`) e fazer o Tailwind consumir esses tokens por `theme.extend.colors`. Os aliases legados (`canvas`, `paper`, `ink`, `line`, `ctx*`) permanecem por compatibilidade, mas passam a resolver para a nova paleta neutra. No escopo desta rodada, foram migrados Agenda, tab bar e slider de energia; Dashboard e demais telas ficam fora do escopo.
+Motivo: reduzir o excesso de matizes e a sensação visual de template, removendo faixas laterais coloridas dos cards e concentrando cor forte apenas em acento, prioridades P6+ e estados reais de sucesso/perigo.
+Alternativas descartadas: migrar todas as telas de uma vez — descartada por aumentar risco e fugir do escopo; manter cores de contexto por categoria — descartada por manter o efeito visual multicolorido; criar toggle manual de tema — descartada por ser feature nova fora da rodada.
+Contexto: refinamento de paleta premium solicitado em 26/06/2026 após avaliação visual da Agenda mobile.
