@@ -293,6 +293,53 @@ O Dashboard separa leitura operacional de qualidade do dado:
 
 Esses blocos não formam score de produtividade. Eles apenas declaram a confiabilidade e a composição dos dados exibidos.
 
+## Motor determinístico do Coach
+
+O motor determinístico fica em `src/lib/coachSignals.ts`.
+
+Contrato principal:
+
+```ts
+analyzeCoachSignals({ tasks, events, now })
+```
+
+Regras:
+- recebe dados por parâmetro;
+- recebe `now` por parâmetro;
+- não chama Supabase;
+- não acessa localStorage;
+- não depende de UI;
+- não chama IA;
+- não usa aleatoriedade;
+- não usa `Date.now()` na lógica central;
+- não lê `updated_at` como conclusão.
+
+As saídas são sinais operacionais objetivos:
+- `signal_id`;
+- severidade simples (`info`, `warning`, `critical`);
+- título;
+- descrição;
+- evidências;
+- confiança do sinal;
+- recomendação operacional;
+- campos que reduzem a confiança.
+
+O motor não produz score global de produtividade e não faz diagnóstico psicológico.
+
+Sinais atuais:
+- baixa quantidade de conclusões confirmadas;
+- histórico aproximado presente;
+- adiamentos sem motivo informado;
+- tempo real com origem desconhecida;
+- excesso de estimativas `default_30`;
+- proporção relevante de encerradas sem execução;
+- bloqueios recorrentes por tipo;
+- diferença relevante entre estimado e real somente em dados confiáveis;
+- reaberturas registradas em eventos;
+- baixa qualidade agregada do dado.
+
+Fixtures ficam em `scripts/coachSignals.fixtures.ts` e são executadas por `npm run test`, usando apenas `tsc` e `node`, sem runner externo.
+
 ## Campo `recurrence_origin_id`
 
 - UUID nullable referenciando `tasks(id)` com `ON DELETE SET NULL`

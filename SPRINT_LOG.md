@@ -19,6 +19,74 @@ Este documento define:
 
 ---
 
+# Coach de Produtividade — Sprint 8 — Fase 4: Motor determinístico testável
+
+Data: 2026-06-26
+
+## Objetivo
+Criar o motor determinístico do Coach de Produtividade, separado de UI/IA/rede/store, com fixtures pequenas cobrindo os principais cenários de dado honesto e frágil.
+
+## Resumo do que foi feito
+- Criado `src/lib/coachSignals.ts`.
+- Criada a função pura `analyzeCoachSignals({ tasks, events, now })`.
+- O motor gera sinais objetivos, não diagnóstico psicológico.
+- O motor não usa `updated_at` como conclusão; conclusão vem de `resolution_type='completed'` + `completed_at` + `completed_at_confidence`.
+- `legacy_approx` é tratado como histórico frágil e não como conclusão confirmada.
+- Tempos com `actual_minutes_source='unknown'` geram sinal de baixa confiança.
+- Encerradas sem execução são contadas por `resolution_type IN ('cancelled','delegated','obsolete')` e não entram como conclusão.
+- Reaberturas são lidas a partir de eventos `reopened`, preservando histórico.
+- Criado `scripts/coachSignals.fixtures.ts` com 12 fixtures.
+- Criado `tsconfig.coach-tests.json`.
+- Adicionado `npm run test` com `tsc` + `node`, sem instalar dependências.
+- `dist-coach-tests` foi adicionado ao `.gitignore`.
+- Nenhuma migration foi criada.
+
+## Arquivos alterados
+- `.gitignore`
+- `package.json`
+- `tsconfig.coach-tests.json`
+- `scripts/coachSignals.fixtures.ts`
+- `src/lib/coachSignals.ts`
+- `STATUS.md`
+- `SPRINT_LOG.md`
+- `ROADMAP.md`
+- `DECISIONS.md`
+- `ARCHITECTURE.md`
+
+## Validações executadas
+- `npm run lint`: passou.
+- `npm run build`: passou; Vite manteve aviso de chunk maior que 500 kB.
+- `npm run test`: passou; 12 fixtures executadas.
+
+## Fixtures criadas
+- Conclusão confirmada usa `completed_at` e ignora `updated_at`.
+- Histórico `legacy_approx` é sinal frágil, não confirmado.
+- Encerradas sem execução não contam como conclusão.
+- `deleted_at` não é usado como resolução semântica.
+- Aguardando terceiro não vira adiamento sem motivo.
+- Adiada 3 vezes sem motivo vira dívida de dado.
+- `actual_minutes_source='unknown'` rebaixa confiança do tempo real.
+- Estimativa `default_30` em excesso gera sinal.
+- Recorrentes concluídas contam por instância.
+- Reaberta limpa não conta como concluída e preserva evento.
+- Baixa qualidade agregada gera sinal sem afirmação forte.
+- Mesma entrada gera exatamente a mesma saída.
+
+## Decisões tomadas
+- Usar runner mínimo sem dependência nova: `tsc -p tsconfig.coach-tests.json` + `node`.
+- Manter o motor puro e parametrizado por `now`.
+- Não consumir o motor pela UI nem pela IA neste sprint.
+- Manter sinais como evidências operacionais, sem score único e sem julgamento psicológico.
+
+## Pendências
+- Sprint 9 deve inventariar e governar a IA existente.
+- Consumo do motor por narrativas/briefing fica para sprints posteriores.
+
+## Resultado
+Sprint 8 implementado com lint/build/test verdes e sem migration.
+
+---
+
 # Coach de Produtividade — Sprint 7 — Fase 3A: Dashboard confiável mínimo
 
 Data: 2026-06-26

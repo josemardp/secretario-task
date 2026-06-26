@@ -334,6 +334,27 @@ Motivo: ausência de motivo não prova procrastinação, bloqueio ou falha compo
 Alternativas descartadas: classificar adiamento sem motivo como comportamento ruim — descartada por criar diagnóstico antes do Sprint 8; esconder adiamentos sem motivo — descartada por perder sinal operacional; exigir motivo retroativo — descartada por aumentar fricção.
 Contexto: Coach de Produtividade, Sprint 7 — Fase 3A: Dashboard confiável mínimo.
 
+## 2026-06-26 — Sprint 8 Coach: runner mínimo sem dependência nova
+
+Decisão: criar `npm run test` para fixtures do motor usando apenas `tsc` e `node`, sem instalar Vitest/Jest ou qualquer dependência nova.
+Motivo: o pedido do Sprint 8 autorizou o menor arranjo possível quando não houvesse script de testes e exigiu parar antes de adicionar dependência nova. O projeto não tinha runner instalado; usar TypeScript e Node atende ao gate sem expandir a stack.
+Alternativas descartadas: instalar Vitest — descartada por exigir aprovação humana explícita; validar manualmente sem comando — descartada porque deixaria as fixtures menos reprodutíveis; reaproveitar build do Vite — descartada porque o motor deve ser testado separado da UI.
+Contexto: Coach de Produtividade, Sprint 8 — Fase 4: Motor determinístico testável.
+
+## 2026-06-26 — Sprint 8 Coach: motor puro com now injetável
+
+Decisão: o motor `analyzeCoachSignals` recebe `tasks`, `events` e `now` por parâmetro e não acessa UI, Supabase, localStorage, rede, IA ou relógio global.
+Motivo: diagnósticos/sinais precisam ser reproduzíveis por fixtures. Dependência implícita de relógio, store ou rede tornaria o resultado instável e difícil de auditar.
+Alternativas descartadas: ler direto do Zustand — descartada pela amostra parcial de 100 tasks; consultar Supabase dentro do motor — descartada por misturar coleta e regra; usar `Date.now()` internamente — descartada por quebrar determinismo.
+Contexto: Coach de Produtividade, Sprint 8 — Fase 4: Motor determinístico testável.
+
+## 2026-06-26 — Sprint 8 Coach: sinais, não julgamento psicológico
+
+Decisão: o motor retorna sinais operacionais com evidências e confiança, sem score global, julgamento de personalidade ou narrativa motivacional.
+Motivo: o objetivo é transformar dados honestos em sinais objetivos. Afirmações psicológicas exigiriam inferência que o dado atual não sustenta e pertencem a sprints/narrativas posteriores, com governança.
+Alternativas descartadas: criar score de produtividade — descartada por falsa precisão e gamificação; emitir frases motivacionais — descartada por antecipar IA narrativa; classificar adiamento como procrastinação — descartada por confundir dívida de dado com comportamento.
+Contexto: Coach de Produtividade, Sprint 8 — Fase 4: Motor determinístico testável.
+
 ## 2026-05-24 — Extração de "energia" no Parser
 Decisão: O parser agora extrai o campo `energia` através de palavras-chave (`energia alta|media|baixa`) ou prefixos explícitos (`e8`, `e2`), assim como faz com prioridade.
 Motivo: Durante testes de validação, constatamos que sem a definição da energia individual da tarefa, o algoritmo do Ranking Engine aplicava penalidades idênticas a todas as tarefas simultaneamente ao mudar a Energia Atual (já que todas as tarefas nasciam com energy=0). Isso alterava a nota, mas não reordenava as tarefas. Extrair a energia via texto resolve o problema matematicamente.
