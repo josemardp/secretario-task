@@ -383,6 +383,20 @@ Motivo: a entrada semântica do briefing deve mudar quando muda o conteúdo rele
 Alternativas descartadas: hash do payload JSON bruto — descartado porque incluiria `generated_at` minuto/segundo e poderia variar por ordem acidental; hash só das tasks — descartado porque ignoraria limitações, sinais e versões; hash da resposta da IA — descartado porque o cache deve evitar a chamada, não depender dela.
 Contexto: Coach de Produtividade, Sprint 10 — Fase 5B: IA narrativa cacheada e segura.
 
+## 2026-06-26 — Sprint 11 Coach: fechamento sem feature nova
+
+Decisão: fechar a evolução Coach de Produtividade com ajustes documentais e checklist global, sem alterar código funcional nem criar migration.
+Motivo: a auditoria final não encontrou violação estrutural nos invariantes do plano. Corrigir apenas a documentação desatualizada preserva o escopo do Sprint 11 e evita introduzir risco no fechamento.
+Alternativas descartadas: reativar `BehavioralSuggestion` — descartada por exigir gate próprio de produto; persistir cache de IA — descartada por ser feature nova; criar sprint corretivo imediato — descartada porque não houve violação que justificasse.
+Contexto: Coach de Produtividade, Sprint 11 — Auditoria final e fechamento.
+
+## 2026-06-26 — Sprint 11 Coach: limitações aceitas no estado final
+
+Decisão: manter como limitações documentadas, não bugs de fechamento, o `completed_at` escrito pelo cliente, o LWW por registro, a amostra parcial do store local, o cache de IA apenas por sessão e a baixa confiabilidade quando campos opcionais não forem preenchidos.
+Motivo: essas limitações já estavam previstas no plano v4 ou nas decisões anteriores e não violam os invariantes do Coach honesto. Resolver qualquer uma delas exigiria novo ciclo de produto/schema/sync, fora do Sprint 11.
+Alternativas descartadas: tentar reconciliar `completed_at` por evento neste sprint — descartada por exigir desenho de backfill/consulta; trocar LWW por merge campo-a-campo — descartada por complexidade pós-MVP; persistir diagnóstico/cache — descartada por risco de privacidade e nova semântica.
+Contexto: Coach de Produtividade, Sprint 11 — Auditoria final e fechamento.
+
 ## 2026-05-24 — Extração de "energia" no Parser
 Decisão: O parser agora extrai o campo `energia` através de palavras-chave (`energia alta|media|baixa`) ou prefixos explícitos (`e8`, `e2`), assim como faz com prioridade.
 Motivo: Durante testes de validação, constatamos que sem a definição da energia individual da tarefa, o algoritmo do Ranking Engine aplicava penalidades idênticas a todas as tarefas simultaneamente ao mudar a Energia Atual (já que todas as tarefas nasciam com energy=0). Isso alterava a nota, mas não reordenava as tarefas. Extrair a energia via texto resolve o problema matematicamente.
