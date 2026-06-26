@@ -123,7 +123,7 @@ CREATE TYPE context_type AS ENUM (
 - sync simples (LWW)
 - offline básico
 - RLS
-- observabilidade mínima via `task_events` (com throttling de `viewed`)
+- observabilidade mínima via `task_events` (eventos server-stamped e throttling de `viewed`)
 
 ## Coach de Produtividade — contenção provisória
 
@@ -270,7 +270,18 @@ CREATE TABLE task_events (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   task_id UUID NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  type TEXT NOT NULL CHECK (type IN ('created','updated','completed','viewed')),
+  type TEXT NOT NULL CHECK (
+    type IN (
+      'created',
+      'updated',
+      'completed',
+      'viewed',
+      'started',
+      'reopened',
+      'postponed',
+      'resolved'
+    )
+  ),
   payload JSONB,
   created_at TIMESTAMPTZ DEFAULT now()
 );
@@ -281,6 +292,13 @@ CREATE TABLE task_events (
 - `updated`
 - `completed`
 - `viewed`
+- `started`
+- `reopened`
+- `postponed`
+- `resolved`
+
+## Carimbo e confiabilidade
+Eventos de tarefa são carimbados pelo servidor em `created_at`; o cliente não envia esse campo. A emissão de eventos é best-effort: falhas de evento não bloqueiam captura, edição, conclusão, adiamento, resolução ou sincronização de tarefas.
 
 ## Throttling de `viewed`
 Eventos `viewed` são registrados no máximo uma vez por tarefa por dia.

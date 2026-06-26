@@ -264,6 +264,20 @@ Motivo: como `TaskStatus` permanece `todo/doing` em resoluções sem execução,
 Alternativas descartadas: deixar a série bloqueada até ação manual — descartada por quebrar recorrência; marcar a instância resolvida como `done` — descartada por contaminar conclusão; usar `deleted_at` — descartada pela decisão acima.
 Contexto: Coach de Produtividade, Sprint 3 — Fase 1B: Semântica de resolução.
 
+## 2026-06-26 — Sprint 4 Coach: eventos server-stamped
+
+Decisão: `task_events.created_at` passa a ser forçado no banco por trigger `BEFORE INSERT`, e o cliente deixa de enviar `created_at` em eventos.
+Motivo: eventos auditáveis precisam de carimbo temporal independente do relógio do dispositivo. O padrão anterior enviava `created_at` do cliente para `viewed`, reintroduzindo clock skew.
+Alternativas descartadas: confiar apenas em `DEFAULT now()` — descartada porque clientes antigos ou bugs futuros ainda poderiam enviar `created_at`; manter timestamp de cliente como fonte — descartada pelo mesmo problema que motivou o saneamento de `updated_at`.
+Contexto: Coach de Produtividade, Sprint 4 — Fase 1C: Eventos confiáveis.
+
+## 2026-06-26 — Sprint 4 Coach: eventos best-effort
+
+Decisão: eventos operacionais (`started`, `completed`, `reopened`, `postponed`, `resolved`, além de `viewed`) são enfileirados como mutations separadas e nunca bloqueiam a operação principal da tarefa.
+Motivo: captura, iniciar, concluir, adiar, resolver e sync de tarefas são caminho crítico. Observabilidade é importante, mas não pode impedir execução diária.
+Alternativas descartadas: gravar evento de forma síncrona antes da operação principal — descartada por criar fricção e dependência de rede; ignorar eventos em caso offline — descartada porque a fila local já permite sincronização posterior.
+Contexto: Coach de Produtividade, Sprint 4 — Fase 1C: Eventos confiáveis.
+
 ## 2026-05-24 — Extração de "energia" no Parser
 Decisão: O parser agora extrai o campo `energia` através de palavras-chave (`energia alta|media|baixa`) ou prefixos explícitos (`e8`, `e2`), assim como faz com prioridade.
 Motivo: Durante testes de validação, constatamos que sem a definição da energia individual da tarefa, o algoritmo do Ranking Engine aplicava penalidades idênticas a todas as tarefas simultaneamente ao mudar a Energia Atual (já que todas as tarefas nasciam com energy=0). Isso alterava a nota, mas não reordenava as tarefas. Extrair a energia via texto resolve o problema matematicamente.

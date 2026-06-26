@@ -62,6 +62,7 @@ export default function Home() {
   const tasks = useTaskStore((s) => s.tasks);
   const addTask = useTaskStore((s) => s.addTask);
   const updateTask = useTaskStore((s) => s.updateTask);
+  const recordTaskEvent = useTaskStore((s) => s.recordTaskEvent);
   const { activeContext, currentEnergy, setCurrentEnergy, aiApiKey } = useContextStore();
 
   const isTaskForToday = (dueAt: string | null) => {
@@ -289,6 +290,7 @@ export default function Home() {
         onGenerateBriefing={handleGenerateBriefing}
         onStartTop1={(t) => {
           updateTask(t.id, { status: 'doing', started_at: new Date().toISOString() });
+          recordTaskEvent(t.id, 'started', { source: 'focus_sheet' });
           setFocoOpen(false);
         }}
       />

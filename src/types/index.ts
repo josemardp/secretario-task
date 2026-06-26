@@ -29,6 +29,15 @@ export const CONTEXTS_LIST: ContextType[] = ['PM', 'Esdra', 'Pessoal', 'Familia'
 export type TaskStatus = 'todo' | 'doing' | 'done';
 export type CompletedAtConfidence = 'confirmed' | 'legacy_approx';
 export type ResolutionType = 'completed' | 'cancelled' | 'delegated' | 'obsolete';
+export type TaskEventType =
+  | 'created'
+  | 'updated'
+  | 'completed'
+  | 'viewed'
+  | 'started'
+  | 'reopened'
+  | 'postponed'
+  | 'resolved';
 
 export interface Task {
   id: string;

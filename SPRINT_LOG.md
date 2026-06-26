@@ -1,6 +1,6 @@
 # SPRINT_LOG.md — SecretárioTask
 
-Última revisão: 2026-05-12
+Última revisão: 2026-06-26
 Status: alinhado ao ROADMAP oficial
 Duração sugerida por sprint: 1–2 semanas
 
@@ -16,6 +16,66 @@ Este documento define:
 - critérios de conclusão
 - limites de escopo
 - direção operacional do desenvolvimento
+
+---
+
+# Coach de Produtividade — Sprint 4 — Fase 1C: Eventos confiáveis server-stamped
+
+Data: 2026-06-26
+
+## Objetivo
+Tornar `task_events` uma trilha temporal auditável, expandindo o vocabulário de eventos, garantindo carimbo server-side e emitindo eventos best-effort nos fluxos operacionais já existentes.
+
+## Resumo do que foi feito
+- Criada a migration `0016_task_events_expand_stamp.sql`.
+- A migration descobre a constraint real de `task_events.type` em `pg_constraint`, remove o CHECK antigo e recria a constraint como `task_events_type_check`.
+- O CHECK de `task_events.type` foi ampliado para `created`, `updated`, `completed`, `viewed`, `started`, `reopened`, `postponed` e `resolved`.
+- Criada função `set_task_event_created_at()` e trigger `task_events_set_created_at`, forçando `created_at=now()` no servidor.
+- O cliente deixou de enviar `created_at` em eventos; `sync.ts` remove o campo de qualquer evento antigo que ainda esteja na fila.
+- `recordTaskEvent` foi criado como ponto central best-effort para emissão de eventos.
+- Kanban, Agenda e Foco passam a emitir eventos nos fluxos existentes: iniciar, concluir, reabrir via voltar de concluída, adiar e resolver.
+- Eventos continuam desacoplados da operação principal: falha de evento não impede captura, edição, conclusão, adiamento, resolução ou sync de tarefas.
+- `TaskStatus` não foi alterado.
+- `BehavioralSuggestion` permanece desativado.
+- Origem de tempo/estimativa não foi implementada.
+
+## Arquivos alterados
+- `supabase/migrations/0016_task_events_expand_stamp.sql`
+- `src/types/index.ts`
+- `src/stores/taskStore.ts`
+- `src/lib/sync.ts`
+- `src/components/TaskBoard.tsx`
+- `src/components/TimelineView.tsx`
+- `src/pages/Home.tsx`
+- `STATUS.md`
+- `SPRINT_LOG.md`
+- `ROADMAP.md`
+- `DECISIONS.md`
+- `ARCHITECTURE.md`
+- `PRD.md`
+
+## Validações executadas
+- `npm run lint`: passou.
+- `npm run build`: passou; Vite manteve aviso de chunk maior que 500 kB.
+- `supabase migration list --linked`: antes da aplicação, remoto alinhado até `0015` e `0016` pendente localmente.
+- `supabase db push --dry-run`: passou; listou somente `0016_task_events_expand_stamp.sql`.
+- `supabase db push --linked`: passou; `0016` aplicada no Supabase remoto.
+- `supabase migration list --linked`: após aplicação, remoto alinhado até `0016`.
+
+## Bugs ou achados
+- A constraint antiga de `task_events.type` foi criada inline em `0001_initial_schema.sql`, sem nome explícito no arquivo. A migration usa `pg_constraint` para descobrir o nome real antes de alterar, evitando chute.
+
+## Decisões tomadas
+- Eventos passam a ser carimbados pelo servidor via trigger, mesmo que algum cliente antigo envie `created_at`.
+- Eventos são best-effort e não bloqueiam o fluxo principal.
+- `created_at` de eventos não é mais enviado pelo cliente.
+
+## Pendências
+- Sprint 5 deve introduzir origem de `estimated_minutes` e `actual_minutes`.
+- Sprint 6 deve tratar reabertura limpa completa; neste sprint a reabertura existente apenas emite evento.
+
+## Resultado
+Sprint 4 implementado e migration `0016` aplicada remotamente. Commit/push serão registrados no relatório final.
 
 ---
 
@@ -82,7 +142,7 @@ Introduzir `resolution_type` e `resolved_at` para separar conclusão real de enc
 - Sprint 5 deve introduzir origem de `estimated_minutes` e `actual_minutes`.
 
 ## Resultado
-Sprint 3 concluído, com migration aplicada remotamente. Commit/push serão registrados no fechamento.
+Sprint 3 concluído, com migration aplicada remotamente e enviado para `origin/main` no commit `443daaf feat: resolution_type/resolved_at sem deleted_at — Fase 1B (Sprint 3)`.
 
 ---
 

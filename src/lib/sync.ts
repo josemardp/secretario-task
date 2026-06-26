@@ -31,6 +31,12 @@ function stripReadonlyTaskFields<T extends Record<string, unknown>>(payload: T):
   return rest as Omit<T, 'created_at' | 'updated_at'>;
 }
 
+function stripReadonlyEventFields<T extends Record<string, unknown>>(payload: T): Omit<T, 'created_at'> {
+  const rest = { ...payload };
+  delete rest.created_at;
+  return rest as Omit<T, 'created_at'>;
+}
+
 export async function fetchRemoteTasks() {
   // Bug 2: guard para evitar merges paralelos.
   if (isFetchingRemote) return;
@@ -281,8 +287,9 @@ export async function processSyncQueue() {
           }
         } else if (mutation.entity === 'task_event') {
           if (mutation.operation === 'insert') {
+            const eventPayload = stripReadonlyEventFields(mutation.payload as Record<string, unknown>);
             const { error } = await supabase.from('task_events').insert({
-              ...(mutation.payload as Record<string, unknown>),
+              ...eventPayload,
               user_id: userId,
             });
             if (error) throw error;

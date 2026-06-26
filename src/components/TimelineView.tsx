@@ -388,7 +388,7 @@ function TimelineSlot({
 
 export function TimelineView({ tasks }: TimelineViewProps) {
   const { currentEnergy, activeContext } = useContextStore();
-  const { updateTask, deleteTask } = useTaskStore();
+  const { updateTask, deleteTask, recordTaskEvent } = useTaskStore();
   const toast = useToast();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
@@ -491,23 +491,40 @@ export function TimelineView({ tasks }: TimelineViewProps) {
       updates.actual_minutes = Math.round((Date.now() - new Date(task.started_at).getTime()) / 60000);
     }
     updateTask(taskId, updates);
+    recordTaskEvent(taskId, 'completed', {
+      completed_at: task && task.status !== 'done' ? updates.completed_at ?? null : task?.completed_at ?? null,
+      source: 'timeline',
+    });
     toast('Tarefa concluída.', 'success');
   };
 
   const handleResolve = (taskId: string, resolutionType: Exclude<ResolutionType, 'completed'>) => {
     updateTask(taskId, buildResolutionUpdates(resolutionType));
+    recordTaskEvent(taskId, 'resolved', {
+      resolution_type: resolutionType,
+      source: 'timeline',
+    });
     toast('Tarefa encerrada.', 'success');
   };
 
   const handlePostponeTomorrow = (taskId: string) => {
     const task = tasks.find(t => t.id === taskId);
     updateTask(taskId, { due_at: postponeToTomorrow(task?.due_at ?? null), postponed_count: (task?.postponed_count || 0) + 1 });
+    recordTaskEvent(taskId, 'postponed', {
+      mode: 'tomorrow',
+      source: 'timeline',
+    });
     toast('Adiada para amanhã.', 'success');
   };
 
   const handlePostponeDate = (taskId: string, dateString: string) => {
     const task = tasks.find(t => t.id === taskId);
     updateTask(taskId, { due_at: rescheduleToDate(dateString, task?.due_at ?? null), postponed_count: (task?.postponed_count || 0) + 1 });
+    recordTaskEvent(taskId, 'postponed', {
+      mode: 'date',
+      date: dateString,
+      source: 'timeline',
+    });
     toast('Tarefa adiada.', 'success');
   };
 
