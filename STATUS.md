@@ -45,6 +45,7 @@ Foi corrigida uma regressão de sync pós-auditoria: falha ao buscar `profiles` 
 Foi implementado o refinamento mobile hard-level solicitado a partir da auditoria de design: login em Direction B, linguagem operacional sem emojis, toasts no lugar de alerts, EmptyState padronizado, aba Hoje com bloco Agora/Top 1, concluídas colapsadas, checkbox concluindo diretamente, swipe concluir/adiar, captura restrita ao Hoje e ancorada ao teclado virtual.
 Foram aplicados ajustes de paleta semântica, contraste, alvos de toque, tipografia, Painel sem duplicação de gráfico de distribuição, Agenda com scroll calculado no contêiner e limpeza de lint em código-fonte.
 Foi refinada a Agenda mobile para abandonar a parede de botões: bolinha de conclusão no card, lápis discreto para edição/ações completas, swipe para a direita adiando para amanhã e swipe para a esquerda abrindo confirmação de exclusão.
+Foi corrigida a regressão visual no desktop da Agenda: o card desktop não herda mais a bolinha/layer de gesto do mobile e mantém os botões em fluxo estável, sem corte.
 
 ## Checklist
 - [x] Pré-requisitos críticos (Viewport fit cover & PWA event listener cleanup).
@@ -94,6 +95,7 @@ Foi refinada a Agenda mobile para abandonar a parede de botões: bolinha de conc
 - [x] Auditoria de design hard-level implementada: login Direction B, linguagem operacional, remoção de emojis, toasts, EmptyState, aba Hoje orientada por Agora/Top 1, concluídas colapsadas, checkbox concluir, swipe concluir/adiar, capture bar no Hoje com `visualViewport`.
 - [x] Ajustes P1/P2 aplicados: captura direta para tarefa única, estimativas em paralelo, Painel em PT-BR, cores semânticas quentes, Saúde afastado de CCB, Dashboard sem gráfico duplicado, Agenda com scroll em contêiner, lint limpo.
 - [x] Agenda mobile refinada com card compacto, conclusão por bolinha, edição por lápis e gestos laterais para adiar/excluir com confirmação.
+- [x] Desktop da Agenda ajustado para separar o layout operacional dos cards do padrão mobile por gestos.
 
 ---
 
