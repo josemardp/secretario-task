@@ -19,6 +19,69 @@ Este documento define:
 
 ---
 
+# Coach de Produtividade — Sprint 5 — Fase 1D: Origem dos dados e governança de campos
+
+Data: 2026-06-26
+
+## Objetivo
+Marcar a procedência de todo dado de estimativa e tempo real que possa vir de IA, fallback, parser, edição manual, timer ou origem desconhecida.
+
+## Resumo do que foi feito
+- Criada a migration `0017_data_source_fields.sql`.
+- `tasks` ganhou `estimated_minutes_source` e `actual_minutes_source`.
+- `estimated_minutes_source` aceita `default_30`, `manual`, `ai` e `parser`.
+- `actual_minutes_source` aceita `timer`, `manual`, `retroactive` e `unknown`.
+- O backfill mantém estimativas antigas com origem `NULL`, porque o legado não permite diferenciar IA, default ou edição manual com segurança.
+- O backfill marca tempo real antigo como `timer` quando há `started_at`, ou `unknown` quando há `actual_minutes` sem `started_at`.
+- `Task`, `TaskInput` e `TASK_COLUMNS` foram atualizados.
+- `estimateTaskTime` passou a retornar minutos e origem; falhas/retornos inválidos caem em `default_30`.
+- Captura nova grava origem `ai`, `default_30` ou `parser`, conforme o fluxo.
+- Stepper do Kanban e edição de duração na Agenda gravam origem `manual`.
+- Conclusões que calculam `actual_minutes` a partir de `started_at` gravam origem `timer`.
+- `TaskStatus` não foi alterado.
+- `BehavioralSuggestion` permanece desativado.
+- Reabertura limpa, teto de timer e diagnósticos permanecem fora deste sprint.
+
+## Arquivos alterados
+- `supabase/migrations/0017_data_source_fields.sql`
+- `src/types/index.ts`
+- `src/lib/sync.ts`
+- `src/lib/ai.ts`
+- `src/pages/Home.tsx`
+- `src/components/TaskBoard.tsx`
+- `src/components/TimelineView.tsx`
+- `STATUS.md`
+- `SPRINT_LOG.md`
+- `ROADMAP.md`
+- `DECISIONS.md`
+- `ARCHITECTURE.md`
+- `PRD.md`
+
+## Validações executadas
+- `npm run lint`: passou.
+- `npm run build`: passou; Vite manteve aviso de chunk maior que 500 kB.
+- `supabase migration list --linked`: antes da aplicação, remoto alinhado até `0016` e `0017` pendente localmente.
+- `supabase db push --dry-run`: passou; listou somente `0017_data_source_fields.sql`.
+- `supabase db push --linked`: passou; `0017` aplicada no Supabase remoto.
+- `supabase migration list --linked`: após aplicação, remoto alinhado até `0017`.
+
+## Bugs ou achados
+- Estimativas legadas não têm sinal confiável para distinguir `ai`, `default_30` ou `manual`; por isso a origem permanece `NULL`.
+
+## Decisões tomadas
+- Não inferir origem de estimativas antigas sem evidência.
+- Fallback fixo de estimativa é dado determinístico `default_30`, não IA.
+- Tempo real calculado de `started_at` é classificado como `timer`.
+
+## Pendências
+- Sprint 6 deve tratar reabertura limpa completa, teto plausível de timer e adiamento com motivo.
+- Sprint 7 deve consumir o eixo de confiabilidade no Dashboard honesto.
+
+## Resultado
+Sprint 5 implementado e migration `0017` aplicada remotamente. Commit/push serão registrados no relatório final.
+
+---
+
 # Coach de Produtividade — Sprint 4 — Fase 1C: Eventos confiáveis server-stamped
 
 Data: 2026-06-26
@@ -75,7 +138,7 @@ Tornar `task_events` uma trilha temporal auditável, expandindo o vocabulário d
 - Sprint 6 deve tratar reabertura limpa completa; neste sprint a reabertura existente apenas emite evento.
 
 ## Resultado
-Sprint 4 implementado e migration `0016` aplicada remotamente. Commit/push serão registrados no relatório final.
+Sprint 4 concluído, com migration `0016` aplicada remotamente e enviado para `origin/main` no commit `e0b12c8 feat: eventos confiáveis server-stamped (Sprint 4)`.
 
 ---
 

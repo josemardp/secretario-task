@@ -23,7 +23,7 @@ import { FocoSheet } from '../components/FocoSheet';
 import { useToast } from '../components/toastContext';
 import { generateBriefingFromTopTasks, getDailyBriefing } from '../lib/briefing';
 import { isOpenTask } from '../lib/taskFilters';
-import type { Task } from '../types';
+import type { EstimatedMinutesSource, Task } from '../types';
 
 function getGreeting(): string {
   const h = new Date().getHours();
@@ -187,14 +187,21 @@ export default function Home() {
       setIsAddingTask(true);
       const recent = tasks.filter(x => x.status === 'done' && !x.deleted_at);
       const tasksWithEstimates = await Promise.all(finalTasks.map(async (t) => {
-        let estimated = 30;
-        if (aiApiKey) {
-          estimated = await estimateTaskTime(t.title || 'Nova Tarefa', recent, aiApiKey);
+        let estimated = t.estimated_minutes ?? 30;
+        let estimatedSource: EstimatedMinutesSource =
+          t.estimated_minutes != null
+            ? t.estimated_minutes_source ?? 'parser'
+            : 'default_30';
+
+        if (aiApiKey && t.estimated_minutes == null) {
+          const estimate = await estimateTaskTime(t.title || 'Nova Tarefa', recent, aiApiKey);
+          estimated = estimate.minutes;
+          estimatedSource = estimate.source;
         }
-        return { task: t, estimated };
+        return { task: t, estimated, estimatedSource };
       }));
 
-      for (const { task: t, estimated } of tasksWithEstimates) {
+      for (const { task: t, estimated, estimatedSource } of tasksWithEstimates) {
         addTask({
           user_id: '',
           title: t.title || 'Nova Tarefa',
@@ -206,6 +213,7 @@ export default function Home() {
           due_at: t.due_at || null,
           deleted_at: null,
           estimated_minutes: estimated,
+          estimated_minutes_source: estimatedSource,
           recurrence_rule: t.recurrence_rule || null,
         });
       }

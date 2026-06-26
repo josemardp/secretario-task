@@ -3,6 +3,11 @@ import { isActionableBriefingTask } from './taskFilters';
 
 const OPENAI_API_URL = 'https://api.openai.com/v1';
 
+export type EstimatedTimeResult = {
+  minutes: number;
+  source: 'ai' | 'default_30';
+};
+
 function formatBriefingDateTime(date: Date): string {
   return new Intl.DateTimeFormat('pt-BR', {
     dateStyle: 'full',
@@ -88,7 +93,7 @@ export async function estimateTaskTime(
   taskTitle: string,
   recentCompletedTasks: Task[],
   apiKey: string
-): Promise<number> {
+): Promise<EstimatedTimeResult> {
   const historyText = recentCompletedTasks
     .filter(t => t.actual_minutes)
     .slice(0, 5) // Últimas 5 tarefas com tempo real
@@ -106,33 +111,37 @@ Regras:
 ${historyText || "(Sem histórico ainda. Assuma tempos normais: emails=15m, codar=60m, ler=30m, etc.)"}
 `;
 
-  const response = await fetch(`${OPENAI_API_URL}/chat/completions`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: 'gpt-4o-mini',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: `Tarefa: ${taskTitle}` }
-      ],
-      temperature: 0.3,
-      max_tokens: 10,
-    }),
-  });
+  try {
+    const response = await fetch(`${OPENAI_API_URL}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: `Tarefa: ${taskTitle}` }
+        ],
+        temperature: 0.3,
+        max_tokens: 10,
+      }),
+    });
 
-  if (!response.ok) {
-    return 30; // Fallback seguro de 30 minutos em caso de falha de rede/API
+    if (!response.ok) {
+      return { minutes: 30, source: 'default_30' };
+    }
+
+    const data = await response.json();
+    const textVal = data.choices[0].message.content.trim();
+    const parsed = parseInt(textVal, 10);
+
+    if (isNaN(parsed) || parsed <= 0) return { minutes: 30, source: 'default_30' };
+    return { minutes: parsed, source: 'ai' };
+  } catch {
+    return { minutes: 30, source: 'default_30' };
   }
-
-  const data = await response.json();
-  const textVal = data.choices[0].message.content.trim();
-  const parsed = parseInt(textVal, 10);
-  
-  if (isNaN(parsed) || parsed <= 0) return 30;
-  return parsed;
 }
 
 export async function transcribeAudio(audioBlob: Blob, apiKey: string): Promise<string> {

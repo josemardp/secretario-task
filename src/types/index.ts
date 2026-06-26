@@ -29,6 +29,8 @@ export const CONTEXTS_LIST: ContextType[] = ['PM', 'Esdra', 'Pessoal', 'Familia'
 export type TaskStatus = 'todo' | 'doing' | 'done';
 export type CompletedAtConfidence = 'confirmed' | 'legacy_approx';
 export type ResolutionType = 'completed' | 'cancelled' | 'delegated' | 'obsolete';
+export type EstimatedMinutesSource = 'default_30' | 'manual' | 'ai' | 'parser';
+export type ActualMinutesSource = 'timer' | 'manual' | 'retroactive' | 'unknown';
 export type TaskEventType =
   | 'created'
   | 'updated'
@@ -58,6 +60,8 @@ export interface Task {
   resolved_at?: string | null;
   estimated_minutes?: number | null;
   actual_minutes?: number | null;
+  estimated_minutes_source?: EstimatedMinutesSource | null;
+  actual_minutes_source?: ActualMinutesSource | null;
   started_at?: string | null;
   recurrence_rule?: string | null;
   recurrence_origin_id?: string | null;

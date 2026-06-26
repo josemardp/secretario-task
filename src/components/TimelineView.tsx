@@ -465,15 +465,21 @@ export function TimelineView({ tasks }: TimelineViewProps) {
       if (candidate) newDueAt = candidate;
     }
 
-    updateTask(editingTask.id, {
+    const updates: Partial<Task> = {
       title: editForm.title,
       due_at: newDueAt,
-      estimated_minutes: editForm.estimated_minutes,
       context: editForm.context,
       priority: editForm.priority,
       energy: editForm.energy,
       recurrence_rule: editForm.recurrence_rule,
-    });
+    };
+
+    if (editForm.estimated_minutes !== (editingTask.estimated_minutes ?? 30)) {
+      updates.estimated_minutes = editForm.estimated_minutes;
+      updates.estimated_minutes_source = 'manual';
+    }
+
+    updateTask(editingTask.id, updates);
     setEditingTask(null);
   };
 
@@ -487,8 +493,9 @@ export function TimelineView({ tasks }: TimelineViewProps) {
       updates.resolution_type = 'completed';
       updates.resolved_at = completedAt;
     }
-    if (task?.started_at) {
+    if (task && task.status !== 'done' && task.started_at) {
       updates.actual_minutes = Math.round((Date.now() - new Date(task.started_at).getTime()) / 60000);
+      updates.actual_minutes_source = 'timer';
     }
     updateTask(taskId, updates);
     recordTaskEvent(taskId, 'completed', {
