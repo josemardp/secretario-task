@@ -164,6 +164,12 @@ CREATE TABLE tasks (
   resolved_at TIMESTAMPTZ,
   estimated_minutes INTEGER,
   actual_minutes INTEGER,
+  estimated_minutes_source TEXT CHECK (
+    estimated_minutes_source IN ('default_30', 'manual', 'ai', 'parser')
+  ),
+  actual_minutes_source TEXT CHECK (
+    actual_minutes_source IN ('timer', 'manual', 'retroactive', 'unknown')
+  ),
   started_at TIMESTAMPTZ,
   recurrence_rule TEXT,
   recurrence_origin_id UUID REFERENCES tasks(id) ON DELETE SET NULL,
@@ -227,6 +233,24 @@ Toda conclusão é uma resolução: quando `resolution_type='completed'`, `resol
 Nem toda resolução é conclusão: quando `resolution_type` é `cancelled`, `delegated` ou `obsolete`, `completed_at` permanece `NULL` e a tarefa sai das listas operacionais por filtro semântico, não por `deleted_at`.
 
 `deleted_at` continua reservado exclusivamente para exclusão/remoção. Ele não deve ser usado para cancelar, delegar ou marcar uma tarefa como obsoleta.
+
+## Campos `estimated_minutes_source` e `actual_minutes_source`
+
+`estimated_minutes_source` registra a procedência de `estimated_minutes`:
+- `default_30`: fallback determinístico fixo de 30 minutos.
+- `manual`: alteração manual feita pelo usuário em UI existente.
+- `ai`: estimativa retornada por `estimateTaskTime`.
+- `parser`: estimativa extraída por parser determinístico, quando houver fluxo para isso.
+
+`actual_minutes_source` registra a procedência de `actual_minutes`:
+- `timer`: cálculo derivado de `started_at`.
+- `manual`: lançamento manual de tempo real, quando houver fluxo para isso.
+- `retroactive`: lançamento posterior de tempo real, quando houver fluxo para isso.
+- `unknown`: dado existente ou futuro cuja origem não é confiável.
+
+Dados legados de `estimated_minutes` permanecem com origem `NULL` quando não é possível distinguir IA, default ou edição manual. Dados legados de `actual_minutes` são marcados como `timer` quando possuem `started_at`, ou `unknown` quando não há âncora suficiente.
+
+Esses campos são metadados de confiabilidade. Eles não alteram `TaskStatus`, não acionam diagnóstico comportamental e não devem ser exibidos como score.
 
 ## Campo `recurrence_origin_id`
 

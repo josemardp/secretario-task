@@ -59,8 +59,9 @@ function buildCompleteUpdates(task: Task): Partial<Task> {
     updates.resolution_type = 'completed';
     updates.resolved_at = completedAt;
   }
-  if (task.started_at) {
+  if (task.status !== 'done' && task.started_at) {
     updates.actual_minutes = Math.round((Date.now() - new Date(task.started_at).getTime()) / 60_000);
+    updates.actual_minutes_source = 'timer';
   }
   return updates;
 }
@@ -352,7 +353,10 @@ function TaskRow({
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    updateTask(task.id, { estimated_minutes: Math.max(5, (task.estimated_minutes || 30) - 15) });
+                    updateTask(task.id, {
+                      estimated_minutes: Math.max(5, (task.estimated_minutes || 30) - 15),
+                      estimated_minutes_source: 'manual',
+                    });
                   }}
                   className="px-3 py-2 text-ink-2 text-[14px] font-bold"
                 >−15</button>
@@ -362,7 +366,10 @@ function TaskRow({
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    updateTask(task.id, { estimated_minutes: (task.estimated_minutes || 30) + 15 });
+                    updateTask(task.id, {
+                      estimated_minutes: (task.estimated_minutes || 30) + 15,
+                      estimated_minutes_source: 'manual',
+                    });
                   }}
                   className="px-3 py-2 text-ink-2 text-[14px] font-bold"
                 >+15</button>

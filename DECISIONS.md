@@ -278,6 +278,20 @@ Motivo: captura, iniciar, concluir, adiar, resolver e sync de tarefas são camin
 Alternativas descartadas: gravar evento de forma síncrona antes da operação principal — descartada por criar fricção e dependência de rede; ignorar eventos em caso offline — descartada porque a fila local já permite sincronização posterior.
 Contexto: Coach de Produtividade, Sprint 4 — Fase 1C: Eventos confiáveis.
 
+## 2026-06-26 — Sprint 5 Coach: origem obrigatória para novos tempos
+
+Decisão: toda nova escrita de `estimated_minutes` ou `actual_minutes` deve acompanhar a origem em `estimated_minutes_source` ou `actual_minutes_source`.
+Motivo: estimativas por IA, fallback fixo, parser, edição manual e timer têm confiabilidades diferentes. Misturar esses dados sem origem impediria qualquer métrica honesta no Dashboard e qualquer diagnóstico futuro.
+Alternativas descartadas: confiar no valor bruto de minutos — descartada porque 30 minutos podem significar fallback, retorno de IA ou decisão manual; adiar a origem para o diagnóstico — descartada porque o dado já estaria contaminado antes da análise.
+Contexto: Coach de Produtividade, Sprint 5 — Fase 1D: Origem dos dados.
+
+## 2026-06-26 — Sprint 5 Coach: legado sem inferência artificial de estimativa
+
+Decisão: `estimated_minutes_source` de estimativas antigas permanece `NULL` quando não há evidência da origem. `actual_minutes_source` legado é `timer` quando há `started_at`, e `unknown` quando há `actual_minutes` sem `started_at`.
+Motivo: estimativas antigas podem ter vindo de IA, default ou ajuste manual, e o valor em si não prova a origem. Tempo real antigo, por outro lado, só era calculado pelo app a partir de `started_at` quando essa âncora existe.
+Alternativas descartadas: marcar todo `estimated_minutes=30` como `default_30` — descartada porque a IA também pode retornar 30; marcar todo tempo real antigo como `timer` — descartada quando falta `started_at`; apagar ou recalcular tempos antigos — descartada por reescrever histórico fora do escopo.
+Contexto: Coach de Produtividade, Sprint 5 — Fase 1D: Origem dos dados.
+
 ## 2026-05-24 — Extração de "energia" no Parser
 Decisão: O parser agora extrai o campo `energia` através de palavras-chave (`energia alta|media|baixa`) ou prefixos explícitos (`e8`, `e2`), assim como faz com prioridade.
 Motivo: Durante testes de validação, constatamos que sem a definição da energia individual da tarefa, o algoritmo do Ranking Engine aplicava penalidades idênticas a todas as tarefas simultaneamente ao mudar a Energia Atual (já que todas as tarefas nasciam com energy=0). Isso alterava a nota, mas não reordenava as tarefas. Extrair a energia via texto resolve o problema matematicamente.

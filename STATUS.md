@@ -23,7 +23,47 @@
 
 # Sprint atual
 
-Coach de Produtividade — Sprint 4 concluído
+Coach de Produtividade — Sprint 5 concluído
+
+---
+
+# Coach de Produtividade — Sprint 5 — Fase 1D: Origem dos dados e governança de campos
+
+Data: 2026-06-26
+
+## Objetivo
+Introduzir origem explícita para `estimated_minutes` e `actual_minutes`, impedindo que estimativa por IA/default/manual/parser e tempo real por timer/manual/retroativo/desconhecido sejam misturados sem identificação.
+
+## Resultado
+- Criada migration `0017_data_source_fields.sql`.
+- Adicionados `estimated_minutes_source` e `actual_minutes_source` em `tasks`.
+- Valores permitidos para `estimated_minutes_source`: `default_30`, `manual`, `ai`, `parser`.
+- Valores permitidos para `actual_minutes_source`: `timer`, `manual`, `retroactive`, `unknown`.
+- Backfill legado: `estimated_minutes_source` permanece `NULL` para estimativas antigas porque não é possível distinguir com segurança IA/default/manual; `actual_minutes_source` vira `timer` quando há `started_at`, e `unknown` quando há `actual_minutes` sem `started_at`.
+- `TASK_COLUMNS` e tipos TypeScript incluem os novos campos.
+- Captura nova grava `estimated_minutes_source='ai'` quando `estimateTaskTime` retorna pela IA.
+- Fallback fixo de 30 minutos grava `estimated_minutes_source='default_30'`.
+- Valores de estimativa já presentes em objetos parseados entram como `parser` quando não trazem origem explícita.
+- Stepper do Kanban e edição de duração na Agenda gravam `estimated_minutes_source='manual'`.
+- Conclusão derivada de `started_at` grava `actual_minutes_source='timer'`.
+- `TaskStatus` não foi alterado.
+- `deleted_at` não foi usado para semântica.
+- `BehavioralSuggestion` permanece desativado.
+- Reabertura limpa completa e teto de timer não foram implementados.
+- Nenhum diagnóstico comportamental novo foi criado.
+
+## Migration remota
+- `supabase migration list --linked`: executado antes da aplicação; remoto estava alinhado até `0016` e `0017` aparecia pendente apenas localmente.
+- `supabase db push --dry-run`: passou; listou somente `0017_data_source_fields.sql`.
+- `supabase db push --linked`: passou; `0017` aplicada no Supabase remoto.
+- `supabase migration list --linked`: confirmado após aplicação; remoto alinhado até `0017`.
+
+## Validações
+- `npm run lint`: passou.
+- `npm run build`: passou; Vite manteve aviso de chunk maior que 500 kB.
+
+## Próximo sprint recomendado
+Sprint 6 — Fase 2: Reabertura limpa + teto de timer + adiar com motivo.
 
 ---
 
@@ -53,6 +93,7 @@ Tornar `task_events` uma trilha auditável útil, com vocabulário expandido, ca
 - `supabase db push --dry-run`: passou; listou somente `0016_task_events_expand_stamp.sql`.
 - `supabase db push --linked`: passou; `0016` aplicada no Supabase remoto.
 - `supabase migration list --linked`: confirmado após aplicação; remoto alinhado até `0016`.
+- Commit/push: `e0b12c8 feat: eventos confiáveis server-stamped (Sprint 4)` enviado para `origin/main`.
 
 ## Validações
 - `npm run lint`: passou.

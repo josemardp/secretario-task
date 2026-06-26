@@ -68,8 +68,20 @@ Entregas:
 - Eventos `started`, `completed`, `reopened`, `postponed` e `resolved` emitidos como best-effort.
 - Fluxos principais permanecem não-bloqueados por falha de evento.
 
+## Sprint 5 — Fase 1D: Origem dos dados e governança de campos
+Status: concluído em 2026-06-26.
+
+Entregas:
+- Migration `0017_data_source_fields.sql`.
+- Campos `estimated_minutes_source` e `actual_minutes_source` adicionados a `tasks`.
+- Estimativas novas passam a identificar origem `ai`, `default_30`, `parser` ou `manual`.
+- Tempos reais derivados de `started_at` passam a identificar origem `timer`.
+- Backfill preserva tempos existentes: estimativas legadas ficam sem inferência artificial; tempos reais legados são `timer` quando há `started_at`, ou `unknown` sem âncora.
+- `TASK_COLUMNS` e tipos TypeScript atualizados.
+- Nenhum diagnóstico comportamental foi criado.
+
 ## Próximo sprint
-Sprint 5 — Fase 1D: origem dos dados e governança de campos.
+Sprint 6 — Fase 2: reabertura limpa, teto de timer e adiar com motivo.
 
 ---
 

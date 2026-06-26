@@ -221,7 +221,11 @@ CREATE TABLE tasks (
   completed_at TIMESTAMPTZ,
   completed_at_confidence TEXT,
   resolution_type TEXT,
-  resolved_at TIMESTAMPTZ
+  resolved_at TIMESTAMPTZ,
+  estimated_minutes INTEGER,
+  actual_minutes INTEGER,
+  estimated_minutes_source TEXT,
+  actual_minutes_source TEXT
 );
 ```
 
@@ -258,8 +262,12 @@ CREATE TABLE tasks (
 - `completed_at_confidence`: diferencia conclusões confirmadas de histórico legado aproximado
 - `resolution_type`: `completed`, `cancelled`, `delegated` ou `obsolete`
 - `resolved_at`: momento em que a tarefa deixou de estar aberta
+- `estimated_minutes_source`: origem da estimativa (`default_30`, `manual`, `ai`, `parser`)
+- `actual_minutes_source`: origem do tempo real (`timer`, `manual`, `retroactive`, `unknown`)
 
 Cancelada, delegada e obsoleta mantêm `completed_at=NULL`.
+
+Estimativas e tempos reais carregam origem para evitar misturar dado manual, IA, fallback e timer como se tivessem a mesma confiabilidade.
 
 ---
 
