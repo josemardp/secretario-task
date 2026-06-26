@@ -383,3 +383,10 @@ Decisão: centralizar a paleta visual em CSS variables (`--bg`, `--surface`, `--
 Motivo: reduzir o excesso de matizes e a sensação visual de template, removendo faixas laterais coloridas dos cards e concentrando cor forte apenas em acento, prioridades P6+ e estados reais de sucesso/perigo.
 Alternativas descartadas: migrar todas as telas de uma vez — descartada por aumentar risco e fugir do escopo; manter cores de contexto por categoria — descartada por manter o efeito visual multicolorido; criar toggle manual de tema — descartada por ser feature nova fora da rodada.
 Contexto: refinamento de paleta premium solicitado em 26/06/2026 após avaliação visual da Agenda mobile.
+
+## 2026-06-26 — Dashboard migrado para tokens com exceção categórica controlada
+
+Decisão: migrar o Dashboard para o design system tokenizado, lendo os tokens CSS no runtime para alimentar os gráficos Recharts. A única exceção deliberada de HEX fora de `src/index.css` fica concentrada em `CTX_COLORS`, com 7 cores categóricas para diferenciar contextos no donut e chips.
+Motivo: eixos, grids, tooltips, barras e séries precisam acompanhar claro/escuro sem duplicar paletas hardcoded. Contextos, porém, são categorias nominais distintas; colapsar tudo em acento e cinza pioraria a leitura do donut.
+Alternativas descartadas: manter as cores antigas hardcoded — descartada por quebrar o design system no dark mode; usar apenas `--accent` para todos os contextos — descartada por eliminar distinção visual entre categorias.
+Contexto: migração final do Dashboard para o design system neutro em 26/06/2026.
