@@ -48,6 +48,7 @@ Foi refinada a Agenda mobile para abandonar a parede de botões: bolinha de conc
 Foi corrigida a regressão visual no desktop da Agenda: o card desktop não herda mais a bolinha/layer de gesto do mobile e mantém os botões em fluxo estável, sem corte.
 Foi aplicada a primeira etapa do design system premium de cores: tokens CSS globais claro/escuro, Tailwind referenciando variáveis, Agenda sem faixas laterais coloridas, tab bar em acento e slider de energia tokenizado.
 Foi corrigido o corte visual de cards na Agenda mobile: slots agora reservam altura proporcional ao conteúdo real, incluindo títulos longos e badges, e o card não corta mais a própria borda/conteúdo.
+Foi recalibrada a altura dos slots da Agenda para reduzir espaços vazios excessivos após a correção de corte dos cards.
 
 ## Checklist
 - [x] Pré-requisitos críticos (Viewport fit cover & PWA event listener cleanup).
@@ -100,6 +101,7 @@ Foi corrigido o corte visual de cards na Agenda mobile: slots agora reservam alt
 - [x] Desktop da Agenda ajustado para separar o layout operacional dos cards do padrão mobile por gestos.
 - [x] Design system de cores premium aplicado no escopo da rodada: tokens globais, Agenda, tab bar e slider de energia.
 - [x] Agenda mobile ajustada para renderizar cards completos em slots com múltiplas tarefas e títulos longos.
+- [x] Folga vertical da Agenda mobile reduzida mantendo proteção contra corte de cards.
 
 ---
 
