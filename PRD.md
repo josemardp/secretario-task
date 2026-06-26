@@ -144,6 +144,18 @@ O produto diferencia tarefas feitas de tarefas encerradas sem execução:
 - Encerramentos sem execução saem das listas operacionais sem usar `deleted_at`.
 - Tarefas encerradas permanecem preservadas para histórico e análise.
 
+## Coach de Produtividade — Dashboard confiável
+
+O Dashboard separa:
+- Concluídas confirmadas.
+- Histórico aproximado.
+- Encerradas sem execução.
+- Abertas executáveis.
+- Aguardando, bloqueadas e adiadas.
+- Qualidade do dado.
+
+Métricas de semana, hoje e horário de pico usam somente conclusões confirmadas. Histórico aproximado permanece visível como contagem rotulada, mas não vira padrão de horário. Tempo real com origem desconhecida é mostrado como baixa confiança. A qualidade do dado é textual e não vira score de produtividade.
+
 ---
 
 ## Fora do MVP (v1.1+)

@@ -313,6 +313,27 @@ Motivo: captura e reagendamento precisam continuar rápidos. A ausência de moti
 Alternativas descartadas: exigir motivo para todo adiamento — descartada por aumentar fricção; texto livre sem constraint — descartada por prejudicar agregações futuras; criar tabela separada de motivos — descartada por complexidade desnecessária neste sprint.
 Contexto: Coach de Produtividade, Sprint 6 — Fase 2: Ajustes nos fluxos existentes.
 
+## 2026-06-26 — Sprint 7 Coach: Dashboard com qualidade textual, sem score
+
+Decisão: o Dashboard exibe confiabilidade como blocos textuais e contagens segmentadas, nunca como nota ou score único.
+Motivo: fontes como IA, fallback, legado aproximado e tempo real desconhecido têm confiabilidades diferentes. Agregar tudo em uma nota criaria falsa precisão e poderia virar gamificação de produtividade.
+Alternativas descartadas: criar percentual único de qualidade — descartada por simplificar demais sinais distintos; esconder dados frágeis — descartada porque a incerteza precisa ficar visível; tratar `legacy_approx` como confirmado — descartada por repetir o problema de `updated_at`.
+Contexto: Coach de Produtividade, Sprint 7 — Fase 3A: Dashboard confiável mínimo.
+
+## 2026-06-26 — Sprint 7 Coach: BehavioralSuggestion permanece desativado
+
+Decisão: manter `BehavioralSuggestion` retornando `null` no Sprint 7, mesmo com Dashboard corrigido.
+Motivo: o pedido do sprint exige manter a sugestão desativada e não criar diagnóstico comportamental novo. A reativação depende de um gate futuro com massa suficiente de dados confirmados e motor determinístico próprio.
+Alternativas descartadas: reativar com o `behaviorEngine` atual — descartada por antecipar Sprint 8; reativar com aviso textual — descartada porque ainda recomendaria ação antes do motor diagnóstico; remover o componente — descartada por manter compatibilidade e facilitar gate futuro.
+Contexto: Coach de Produtividade, Sprint 7 — Fase 3A: Dashboard confiável mínimo.
+
+## 2026-06-26 — Sprint 7 Coach: adiamento sem motivo é dívida de dado
+
+Decisão: tarefas adiadas sem `blocker_type` aparecem no Dashboard como "Adiadas sem motivo informado".
+Motivo: ausência de motivo não prova procrastinação, bloqueio ou falha comportamental; é apenas incompletude de dado.
+Alternativas descartadas: classificar adiamento sem motivo como comportamento ruim — descartada por criar diagnóstico antes do Sprint 8; esconder adiamentos sem motivo — descartada por perder sinal operacional; exigir motivo retroativo — descartada por aumentar fricção.
+Contexto: Coach de Produtividade, Sprint 7 — Fase 3A: Dashboard confiável mínimo.
+
 ## 2026-05-24 — Extração de "energia" no Parser
 Decisão: O parser agora extrai o campo `energia` através de palavras-chave (`energia alta|media|baixa`) ou prefixos explícitos (`e8`, `e2`), assim como faz com prioridade.
 Motivo: Durante testes de validação, constatamos que sem a definição da energia individual da tarefa, o algoritmo do Ranking Engine aplicava penalidades idênticas a todas as tarefas simultaneamente ao mudar a Energia Atual (já que todas as tarefas nasciam com energy=0). Isso alterava a nota, mas não reordenava as tarefas. Extrair a energia via texto resolve o problema matematicamente.

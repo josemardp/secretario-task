@@ -92,8 +92,22 @@ Entregas:
 - Eventos de adiamento carregam `blocker_type` no payload quando informado.
 - Nenhum diagnóstico comportamental foi criado.
 
+## Sprint 7 — Fase 3A: Dashboard confiável mínimo
+Status: concluído em 2026-06-26.
+
+Entregas:
+- Dashboard separado por conclusões confirmadas, histórico aproximado e dados incompletos.
+- Semana, hoje e horário de pico usam somente `completed_at` confirmado.
+- Encerradas sem execução aparecem fora de produtividade/conclusão.
+- Fila ativa separa abertas executáveis de aguardando/bloqueadas/adiadas.
+- Adiamentos com motivo e sem motivo informado aparecem como qualidade de dado.
+- Estimado vs. real exclui tempo real de baixa confiança do gráfico e o rotula separadamente.
+- Qualidade do dado é textual e segmentada, sem score único.
+- `BehavioralSuggestion` permanece desativado.
+- Nenhuma migration foi criada.
+
 ## Próximo sprint
-Sprint 7 — Fase 3A: Dashboard confiável mínimo.
+Sprint 8 — Fase 4: Motor determinístico testável.
 
 ---
 
