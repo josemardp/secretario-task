@@ -50,6 +50,7 @@ Foi aplicada a primeira etapa do design system premium de cores: tokens CSS glob
 Foi corrigido o corte visual de cards na Agenda mobile: slots agora reservam altura proporcional ao conteúdo real, incluindo títulos longos e badges, e o card não corta mais a própria borda/conteúdo.
 Foi recalibrada a altura dos slots da Agenda para reduzir espaços vazios excessivos após a correção de corte dos cards.
 Foi migrado o Dashboard para o design system neutro: cards, textos e bordas usam tokens diretos; gráficos Recharts leem tokens CSS no runtime; contextos mantêm uma paleta categórica controlada.
+Foi corrigido novo corte de bordas dos cards na Agenda: slots com tarefa agora crescem pelo conteúdo real, o contêiner ganhou respiro interno e o auto-scroll preserva margem visual no topo.
 
 ## Checklist
 - [x] Pré-requisitos críticos (Viewport fit cover & PWA event listener cleanup).
@@ -104,6 +105,7 @@ Foi migrado o Dashboard para o design system neutro: cards, textos e bordas usam
 - [x] Agenda mobile ajustada para renderizar cards completos em slots com múltiplas tarefas e títulos longos.
 - [x] Folga vertical da Agenda mobile reduzida mantendo proteção contra corte de cards.
 - [x] Dashboard migrado para tokens neutros com paleta categórica controlada nos contextos.
+- [x] Bordas dos cards da Agenda preservadas em desktop e mobile com altura natural dos slots.
 
 ---
 

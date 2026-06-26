@@ -30,17 +30,6 @@ function priorityTone(priority: number): string {
   return 'text-ink-tertiary';
 }
 
-function estimateTimelineBlockHeight(block: TimelineBlock): number {
-  if (block.type === 'break') return 64;
-
-  const titleLength = block.title.length;
-  const estimatedLines = Math.max(1, Math.ceil(titleLength / 28));
-  const wrappedTitleExtra = Math.max(0, estimatedLines - 1) * 20;
-  const postponedExtra = (block.task?.postponed_count ?? 0) > 0 ? 20 : 0;
-
-  return 78 + wrappedTitleExtra + postponedExtra;
-}
-
 // ─── Recurrence helpers (importados de src/lib/recurrence.ts) ───
 
 function AgendaQuickActions({
@@ -326,14 +315,7 @@ function TimelineSlot({
   // half-hour vs hour boundary
   const onHourBoundary = slot.dateObj.getMinutes() === 0;
   const slotBlocksCount = slotBlocks.length;
-  const slotMinHeight = slotBlocksCount === 0
-    ? 28
-    : Math.max(
-        92,
-        slotBlocks.reduce((total, block) => total + estimateTimelineBlockHeight(block), 0) +
-          Math.max(0, slotBlocksCount - 1) * 8 +
-          10,
-      );
+  const slotMinHeight = slotBlocksCount === 0 ? 28 : undefined;
 
   return (
     <div
@@ -371,7 +353,7 @@ function TimelineSlot({
       </div>
 
       {/* Slot column */}
-      <div className={`flex-1 min-w-0 flex flex-col gap-2 relative ${slotBlocksCount === 0 ? 'py-1 pr-2' : 'p-2'}`}>
+      <div className={`flex-1 min-w-0 flex flex-col gap-2 relative ${slotBlocksCount === 0 ? 'py-1 pr-2' : 'px-2 pt-2 pb-3'}`}>
         {children}
       </div>
     </div>
@@ -418,7 +400,7 @@ export function TimelineView({ tasks }: TimelineViewProps) {
         const containerTop = container.getBoundingClientRect().top;
         const anchorTop = anchor.getBoundingClientRect().top;
         container.scrollTo({
-          top: container.scrollTop + anchorTop - containerTop,
+          top: Math.max(0, container.scrollTop + anchorTop - containerTop - 12),
           behavior: 'smooth',
         });
       });
@@ -586,7 +568,7 @@ export function TimelineView({ tasks }: TimelineViewProps) {
       {/* Timeline grid */}
       <div
         ref={timelineScrollRef}
-        className="bg-paper rounded-2xl border border-line overflow-y-auto overflow-x-hidden flex flex-col max-h-[calc(100dvh-220px)]"
+        className="bg-paper rounded-2xl border border-line overflow-y-auto overflow-x-hidden flex flex-col max-h-[calc(100dvh-220px)] py-2 scroll-py-3"
       >
         {timeGrid.map((slot, idx) => {
           const slotBlocks = blocks.filter(b => {
