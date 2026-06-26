@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   LineChart, Line, Legend,
@@ -11,50 +11,92 @@ interface DashboardViewProps {
   tasks: Task[];
 }
 
+// Excecao categorica deliberada do design system: contextos precisam manter distincao visual.
 const CTX_COLORS: Record<ContextType, string> = {
-  PM:      '#3F58D9',
-  Esdra:   '#7C3AED',
-  Pessoal: '#C88E2A',
-  Familia: '#1E8590',
-  CCB:     '#5C8A2C',
-  Estudo:  '#C53580',
-  Saude:   '#1F7A57',
+  PM: '#6366F1',
+  Esdra: '#DB5A9D',
+  Pessoal: '#C98A22',
+  Familia: '#1CA39A',
+  CCB: '#5FA052',
+  Estudo: '#9B6BEF',
+  Saude: '#2E8FD4',
 };
 
-const INK         = '#1A1814';
-const INK_3       = '#A09B91';
-const PAPER2      = '#EFEEE8';
-const PAPER3      = '#E5E3DB';
-const LINE        = '#E5E3DB';
+type ChartTheme = {
+  border: string;
+  inkSecondary: string;
+  inkTertiary: string;
+  surface: string;
+  surfaceSunken: string;
+  accent: string;
+};
 
-function StatCard({ label, value, sub, dark = false, big = false }: {
+const DEFAULT_CHART_THEME: ChartTheme = {
+  border: 'var(--border)',
+  inkSecondary: 'var(--ink-secondary)',
+  inkTertiary: 'var(--ink-tertiary)',
+  surface: 'var(--surface)',
+  surfaceSunken: 'var(--surface-sunken)',
+  accent: 'var(--accent)',
+};
+
+function readChartTheme(): ChartTheme {
+  if (typeof document === 'undefined') return DEFAULT_CHART_THEME;
+
+  const styles = getComputedStyle(document.documentElement);
+  const readToken = (token: string, fallback: string) => styles.getPropertyValue(token).trim() || fallback;
+
+  return {
+    border: readToken('--border', DEFAULT_CHART_THEME.border),
+    inkSecondary: readToken('--ink-secondary', DEFAULT_CHART_THEME.inkSecondary),
+    inkTertiary: readToken('--ink-tertiary', DEFAULT_CHART_THEME.inkTertiary),
+    surface: readToken('--surface', DEFAULT_CHART_THEME.surface),
+    surfaceSunken: readToken('--surface-sunken', DEFAULT_CHART_THEME.surfaceSunken),
+    accent: readToken('--accent', DEFAULT_CHART_THEME.accent),
+  };
+}
+
+function useChartTheme(): ChartTheme {
+  const [theme, setTheme] = useState<ChartTheme>(() => readChartTheme());
+
+  useEffect(() => {
+    const updateTheme = () => setTheme(readChartTheme());
+    updateTheme();
+
+    if (typeof window === 'undefined') return undefined;
+
+    const darkModeQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    darkModeQuery.addEventListener('change', updateTheme);
+
+    return () => {
+      darkModeQuery.removeEventListener('change', updateTheme);
+    };
+  }, []);
+
+  return theme;
+}
+
+function StatCard({ label, value, sub, big = false }: {
   label: string; value: React.ReactNode; sub?: React.ReactNode;
-  dark?: boolean; big?: boolean;
+  big?: boolean;
 }) {
   return (
-    <div
-      className={
-        'rounded-2xl px-4 py-3.5 border ' +
-        (dark
-          ? 'bg-ink text-white border-ink'
-          : 'bg-paper border-line')
-      }
-    >
-      <div className={'text-[12px] font-bold uppercase tracking-[0.06em] ' + (dark ? 'text-amber-soft' : 'text-ink-2')}>
+    <div className="rounded-2xl px-4 py-3.5 border bg-surface border-border">
+      <div className="text-[12px] font-bold uppercase tracking-[0.06em] text-ink-secondary">
         {label}
       </div>
       <div
         className={
           'mt-0.5 tnum ' +
           (big
-            ? 'font-display text-[40px] leading-[1] tracking-[-0.04em] ' + (dark ? 'text-white' : 'text-ink')
-            : 'font-bold text-[24px] leading-[1.05] tracking-[-0.02em] ' + (dark ? 'text-white' : 'text-ink'))
+            ? 'font-display text-[40px] leading-[1] tracking-[-0.04em] text-ink'
+            : 'font-bold text-[24px] leading-[1.05] tracking-[-0.02em] text-ink')
         }
       >
         {value}
       </div>
       {sub && (
-        <div className={'text-[12px] mt-1 ' + (dark ? 'text-white/60' : 'text-ink-2')}>
+        <div className="text-[12px] mt-1 text-ink-secondary">
           {sub}
         </div>
       )}
@@ -64,9 +106,9 @@ function StatCard({ label, value, sub, dark = false, big = false }: {
 
 function SectionCard({ title, eyebrow, children }: { title?: string; eyebrow?: string; children: React.ReactNode }) {
   return (
-    <div className="bg-paper border border-line rounded-2xl p-4">
+    <div className="bg-surface border border-border rounded-2xl p-4">
       {eyebrow && (
-        <div className="text-[12px] font-bold uppercase tracking-[0.06em] text-ink-2 mb-1">
+        <div className="text-[12px] font-bold uppercase tracking-[0.06em] text-ink-secondary mb-1">
           {eyebrow}
         </div>
       )}
@@ -81,6 +123,8 @@ function SectionCard({ title, eyebrow, children }: { title?: string; eyebrow?: s
 }
 
 export function DashboardView({ tasks }: DashboardViewProps) {
+  const chartTheme = useChartTheme();
+
   const doneTasks = useMemo(
     () => tasks.filter(t => t.status === 'done' && !t.deleted_at),
     [tasks]
@@ -160,15 +204,15 @@ export function DashboardView({ tasks }: DashboardViewProps) {
   return (
     <div className="flex flex-col gap-3">
       {/* Top hero */}
-      <div className="bg-paper border border-line rounded-2xl p-4">
+      <div className="bg-surface border border-border rounded-2xl p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
-            <div className="text-[12px] font-bold uppercase tracking-[0.06em] text-ink-2">
+            <div className="text-[12px] font-bold uppercase tracking-[0.06em] text-ink-secondary">
               Esta semana
             </div>
             <div className="font-display text-[44px] leading-[1] tracking-[-0.04em] text-ink mt-1 tnum">
               {weekTotal}
-              <span className="text-ink-2 text-[22px] font-sans not-italic font-normal"> concluídas</span>
+              <span className="text-ink-secondary text-[22px] font-sans not-italic font-normal"> concluídas</span>
             </div>
             <div className="mt-1.5 text-[11px] text-success font-bold inline-flex items-center gap-1">
               <ChevronUp size={11} strokeWidth={2.6} /> hoje: {todayCount}
@@ -183,14 +227,17 @@ export function DashboardView({ tasks }: DashboardViewProps) {
                 ? `conic-gradient(${contextData.map((c, i) => {
                     const pct = (c.value / weekTotal) * 100;
                     const start = contextData.slice(0, i).reduce((a, b) => a + (b.value / weekTotal) * 100, 0);
-                    return `${CTX_COLORS[c.name as ContextType] || INK_3} ${start}% ${start + pct}%`;
+                    return `${CTX_COLORS[c.name as ContextType] || chartTheme.border} ${start}% ${start + pct}%`;
                   }).join(', ')})`
-                : PAPER3,
+                : chartTheme.border,
             }}
           >
-            <div className="w-[60px] h-[60px] rounded-full bg-paper flex flex-col items-center justify-center" style={{ boxShadow: 'inset 0 0 0 1px ' + LINE }}>
+            <div
+              className="w-[60px] h-[60px] rounded-full bg-surface flex flex-col items-center justify-center"
+              style={{ boxShadow: `inset 0 0 0 1px ${chartTheme.border}` }}
+            >
               <span className="font-display text-[20px] leading-[1] text-ink tnum">{weekTotal}</span>
-              <span className="text-[11px] text-ink-2 font-semibold mt-0.5">conc.</span>
+              <span className="text-[11px] text-ink-secondary font-semibold mt-0.5">conc.</span>
             </div>
           </div>
         </div>
@@ -207,11 +254,11 @@ export function DashboardView({ tasks }: DashboardViewProps) {
                   className="w-full rounded-md"
                   style={{
                     height: `${Math.max(h, 4)}%`,
-                    background: isToday ? INK : PAPER3,
+                    background: isToday ? chartTheme.accent : chartTheme.surfaceSunken,
                     minHeight: 4,
                   }}
                 />
-                <span className={(isToday ? 'text-ink font-bold' : 'text-ink-2 font-semibold') + ' text-[11px]'}>
+                <span className={(isToday ? 'text-accent font-bold' : 'text-ink-secondary font-semibold') + ' text-[11px]'}>
                   {d.dia}
                 </span>
               </div>
@@ -224,9 +271,8 @@ export function DashboardView({ tasks }: DashboardViewProps) {
       <div className="grid grid-cols-2 gap-3">
         <StatCard label="Total" value={doneTasks.length} sub="concluídas no histórico" />
         <StatCard
-          dark
           label="Sequência"
-          value={<>{todayCount}<span className="text-white/60 font-normal text-[14px]"> hoje</span></>}
+          value={<>{todayCount}<span className="text-ink-secondary font-normal text-[14px]"> hoje</span></>}
           sub={`média semana ${(weekTotal / 7).toFixed(1)}/dia`}
         />
         <StatCard label="Prioridade média" value={avgPriority} sub="das concluídas" />
@@ -250,11 +296,11 @@ export function DashboardView({ tasks }: DashboardViewProps) {
                   <div
                     key={c.name}
                     className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-full"
-                    style={{ background: PAPER2 }}
+                    style={{ background: chartTheme.surfaceSunken }}
                   >
-                    <span className="w-2 h-2 rounded-full" style={{ background: CTX_COLORS[c.name as ContextType] || INK_3 }} />
+                    <span className="w-2 h-2 rounded-full" style={{ background: CTX_COLORS[c.name as ContextType] || chartTheme.border }} />
                     <span className="text-[11px] font-bold text-ink">{c.name}</span>
-                    <span className="text-[12px] font-bold text-ink-2 tnum">{pct}%</span>
+                    <span className="text-[12px] font-bold text-ink-secondary tnum">{pct}%</span>
                   </div>
                 );
               })}
@@ -268,13 +314,37 @@ export function DashboardView({ tasks }: DashboardViewProps) {
           <div className="h-56 -ml-3">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={timeData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={LINE} />
-                <XAxis dataKey="name" tick={{ fontSize: 10, fill: INK_3 }} interval="preserveStartEnd" axisLine={false} tickLine={false} />
-                <YAxis tick={{ fontSize: 10, fill: INK_3 }} axisLine={false} tickLine={false} width={28} />
-                <Tooltip contentStyle={{ background: 'white', border: `1px solid ${LINE}`, borderRadius: 12, fontSize: 12 }} />
-                <Legend wrapperStyle={{ fontSize: 11 }} iconType="circle" />
-                <Line type="monotone" dataKey="estimado" name="Estimado" stroke={INK_3} strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="real"     name="Real"          stroke={INK}    strokeWidth={3} activeDot={{ r: 5 }} dot={false} />
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartTheme.border} />
+                <XAxis
+                  dataKey="name"
+                  stroke={chartTheme.inkTertiary}
+                  tick={{ fontSize: 10, fill: chartTheme.inkSecondary }}
+                  interval="preserveStartEnd"
+                  axisLine={false}
+                  tickLine={false}
+                />
+                <YAxis
+                  stroke={chartTheme.inkTertiary}
+                  tick={{ fontSize: 10, fill: chartTheme.inkSecondary }}
+                  axisLine={false}
+                  tickLine={false}
+                  width={28}
+                />
+                <Tooltip
+                  cursor={{ stroke: chartTheme.surfaceSunken }}
+                  contentStyle={{
+                    backgroundColor: chartTheme.surface,
+                    border: `1px solid ${chartTheme.border}`,
+                    borderRadius: 12,
+                    color: chartTheme.inkSecondary,
+                    fontSize: 12,
+                  }}
+                  itemStyle={{ color: chartTheme.inkSecondary }}
+                  labelStyle={{ color: chartTheme.inkSecondary }}
+                />
+                <Legend wrapperStyle={{ color: chartTheme.inkSecondary, fontSize: 11 }} iconType="circle" />
+                <Line type="monotone" dataKey="estimado" name="Estimado" stroke={chartTheme.inkTertiary} strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="real" name="Real" stroke={chartTheme.accent} strokeWidth={3} activeDot={{ r: 5 }} dot={false} />
               </LineChart>
             </ResponsiveContainer>
           </div>
@@ -286,17 +356,35 @@ export function DashboardView({ tasks }: DashboardViewProps) {
         <div className="h-48 -ml-3">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={peakHourData}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={LINE} />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartTheme.border} />
               <XAxis
                 dataKey="hora"
-                tick={{ fontSize: 10, fill: INK_3 }}
+                stroke={chartTheme.inkTertiary}
+                tick={{ fontSize: 10, fill: chartTheme.inkSecondary }}
                 interval="preserveStartEnd"
                 tickFormatter={(v) => v.replace('h', '')}
                 axisLine={false} tickLine={false}
               />
-              <YAxis tick={{ fontSize: 10, fill: INK_3 }} axisLine={false} tickLine={false} width={24} />
-              <Tooltip cursor={{ fill: PAPER2 }} contentStyle={{ background: 'white', border: `1px solid ${LINE}`, borderRadius: 12, fontSize: 12 }} />
-              <Bar dataKey="concluídas" name="Tarefas concluídas" fill={INK} radius={[6, 6, 0, 0]} />
+              <YAxis
+                stroke={chartTheme.inkTertiary}
+                tick={{ fontSize: 10, fill: chartTheme.inkSecondary }}
+                axisLine={false}
+                tickLine={false}
+                width={24}
+              />
+              <Tooltip
+                cursor={{ fill: chartTheme.surfaceSunken }}
+                contentStyle={{
+                  backgroundColor: chartTheme.surface,
+                  border: `1px solid ${chartTheme.border}`,
+                  borderRadius: 12,
+                  color: chartTheme.inkSecondary,
+                  fontSize: 12,
+                }}
+                itemStyle={{ color: chartTheme.inkSecondary }}
+                labelStyle={{ color: chartTheme.inkSecondary }}
+              />
+              <Bar dataKey="concluídas" name="Tarefas concluídas" fill={chartTheme.accent} radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
