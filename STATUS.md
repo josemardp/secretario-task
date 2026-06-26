@@ -23,7 +23,37 @@
 
 # Sprint atual
 
-Coach de Produtividade — Sprint 9 concluído
+Coach de Produtividade — Sprint 10 concluído
+
+---
+
+# Coach de Produtividade — Sprint 10 — Fase 5B: IA narrativa cacheada e segura
+
+Data: 2026-06-26
+
+## Objetivo
+Tornar o briefing com IA mais eficiente e seguro, cacheando narrativas governadas por `input_hash` e versionando prompt/guardrails.
+
+## Resultado
+- Criado `src/lib/stableHash.ts` com serialização estável e hash determinístico.
+- Criado `src/lib/coachAICache.ts` com cache local em memória para narrativas seguras.
+- Criadas as versões `COACH_AI_PROMPT_VERSION='coach-briefing-v1'` e `COACH_AI_GUARDRAILS_VERSION='coach-guardrails-v1'`.
+- O `input_hash` considera versão, energia, janela temporal horária, top tasks governadas, sinais determinísticos e limitações.
+- O hash ignora `updated_at` e campos que não são enviados ao payload governado.
+- Cache hit retorna a narrativa segura sem rechamar IA.
+- Cache miss chama IA, valida guardrails e armazena apenas resposta final segura de origem `ai`.
+- Fallback por falha de API, JSON inválido ou linguagem proibida não é cacheado como resposta válida.
+- Prompt do briefing declara que a IA narra o ranking determinístico.
+- `BehavioralSuggestion` permanece desativado.
+- Nenhuma migration foi criada.
+
+## Validações
+- `npm run test`: passou; fixtures do motor e 17 fixtures de guardrails/cache passaram.
+- `npm run lint`: passou.
+- `npm run build`: passou; Vite manteve aviso de chunk maior que 500 kB.
+
+## Próximo sprint recomendado
+Sprint 11 — Auditoria final, hardening e documentação de fechamento.
 
 ---
 

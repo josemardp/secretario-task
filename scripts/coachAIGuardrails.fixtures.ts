@@ -4,6 +4,11 @@ import {
   hasProhibitedLanguage,
   parseGovernedCoachAIResponse,
 } from '../src/lib/coachAIGuardrails.js';
+import {
+  buildCoachAIInputHash,
+  clearCoachAICacheForTests,
+  resolveCachedCoachNarrative,
+} from '../src/lib/coachAICache.js';
 import type { Task } from '../src/types/index.js';
 
 const NOW = new Date('2026-06-26T12:00:00.000Z');
@@ -56,11 +61,11 @@ function completed(overrides: Partial<Task>): Task {
   });
 }
 
-function buildPayload() {
+function buildPayload(overrides: Partial<Task>[] = []) {
   const tasks = [
-    task({ id: 'open-1', estimated_minutes_source: 'ai' }),
-    completed({ id: 'legacy-1', completed_at_confidence: 'legacy_approx' }),
-    completed({ id: 'unknown-1', actual_minutes_source: 'unknown' }),
+    task({ id: 'open-1', estimated_minutes_source: 'ai', ...overrides[0] }),
+    completed({ id: 'legacy-1', completed_at_confidence: 'legacy_approx', ...overrides[1] }),
+    completed({ id: 'unknown-1', actual_minutes_source: 'unknown', ...overrides[2] }),
     task({
       id: 'cancelled-1',
       status: 'done',
@@ -68,6 +73,7 @@ function buildPayload() {
       completed_at: null,
       resolution_type: 'cancelled',
       resolved_at: '2026-06-25T13:00:00.000Z',
+      ...overrides[3],
     }),
   ];
 
@@ -109,4 +115,54 @@ const first = JSON.stringify(buildPayload());
 const second = JSON.stringify(buildPayload());
 assert(first === second, 'mesma entrada deve gerar payload deterministico');
 
-console.log('[coachAIGuardrails] 8 fixtures passaram');
+const firstHash = buildCoachAIInputHash(buildPayload());
+const secondHash = buildCoachAIInputHash(buildPayload());
+assert(firstHash === secondHash, 'mesmo payload governado deve gerar mesmo input_hash');
+
+const updatedAtHash = buildCoachAIInputHash(buildPayload([{ updated_at: '2026-06-26T23:59:00.000Z' }]));
+assert(firstHash === updatedAtHash, 'updated_at nao deve alterar input_hash');
+
+const noLegacyHash = buildCoachAIInputHash(buildPayload([
+  {},
+  { completed_at_confidence: 'confirmed' },
+]));
+assert(firstHash !== noLegacyHash, 'mudanca semantica de legacy_approx deve alterar input_hash');
+
+const trustedActualHash = buildCoachAIInputHash(buildPayload([
+  {},
+  {},
+  { actual_minutes_source: 'timer' },
+]));
+assert(firstHash !== trustedActualHash, 'mudanca semantica de unknown deve alterar input_hash');
+
+const newPromptHash = buildCoachAIInputHash(buildPayload(), { promptVersion: 'coach-briefing-v2' });
+assert(firstHash !== newPromptHash, 'mudanca de prompt_version deve invalidar cache');
+
+clearCoachAICacheForTests();
+let calls = 0;
+const cachePayload = buildPayload();
+const firstResult = await resolveCachedCoachNarrative(cachePayload, async () => {
+  calls += 1;
+  return { text: 'Pelo ranking deterministico, siga a primeira tarefa.', source: 'ai', cacheable: true };
+}, NOW);
+const secondResult = await resolveCachedCoachNarrative(cachePayload, async () => {
+  calls += 1;
+  return { text: 'nao deveria chamar', source: 'ai', cacheable: true };
+}, NOW);
+assert(calls === 1, 'cache hit deve evitar nova chamada de IA');
+assert(firstResult.metadata.source === 'ai', 'primeiro resultado cacheavel vem da IA');
+assert(secondResult.metadata.source === 'cache', 'segundo resultado deve vir do cache');
+
+clearCoachAICacheForTests();
+let fallbackCalls = 0;
+await resolveCachedCoachNarrative(cachePayload, async () => {
+  fallbackCalls += 1;
+  return { text: 'fallback seguro', source: 'fallback', fallback_reason: 'prohibited_language', cacheable: false };
+}, NOW);
+await resolveCachedCoachNarrative(cachePayload, async () => {
+  fallbackCalls += 1;
+  return { text: 'fallback seguro', source: 'fallback', fallback_reason: 'prohibited_language', cacheable: false };
+}, NOW);
+assert(fallbackCalls === 2, 'fallback nao deve ser cacheado como resposta valida');
+
+console.log('[coachAIGuardrails] 17 fixtures passaram');

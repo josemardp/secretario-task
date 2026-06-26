@@ -295,6 +295,8 @@ O briefing com IA deve narrar sinais operacionais e ranking determinístico, sem
 
 Quando a IA falhar ou retornar linguagem proibida, o produto exibe fallback operacional cauteloso em vez de bloquear o fluxo.
 
+O briefing pode reaproveitar, dentro da mesma sessão, uma narrativa segura já gerada quando a entrada governada não mudou. Mudanças relevantes no ranking, sinais, limitações, energia, janela temporal ou versão do contrato invalidam esse reaproveitamento.
+
 Dados frágeis aparecem como limitação:
 - `legacy_approx` não vira conclusão confirmada;
 - `actual_minutes_source='unknown'` não vira tempo real confiável;

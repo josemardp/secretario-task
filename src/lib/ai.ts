@@ -4,9 +4,10 @@ import {
   buildGovernedCoachAIPayload,
   buildGovernedCoachPrompt,
   formatGovernedCoachNarrative,
-  parseGovernedCoachAIResponse,
+  parseGovernedCoachAIResponseResult,
   type GovernedCoachAIPayload,
 } from './coachAIGuardrails';
+import { resolveCachedCoachNarrative } from './coachAICache';
 import { isActionableBriefingTask } from './taskFilters';
 
 const OPENAI_API_URL = 'https://api.openai.com/v1';
@@ -52,33 +53,54 @@ export async function generateSmartBriefing(
   });
   const systemPrompt = buildGovernedCoachPrompt(payload);
 
-  try {
-    const response = await fetch(`${OPENAI_API_URL}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [{ role: 'system', content: systemPrompt }],
-        temperature: 0,
-        max_tokens: 220,
-      }),
-    });
+  const result = await resolveCachedCoachNarrative(payload, async () => {
+    try {
+      const response = await fetch(`${OPENAI_API_URL}/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${apiKey}`,
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [{ role: 'system', content: systemPrompt }],
+          temperature: 0,
+          max_tokens: 220,
+        }),
+      });
 
-    if (!response.ok) {
-      return buildDeterministicCoachNarrative(payload);
+      if (!response.ok) {
+        return {
+          text: buildDeterministicCoachNarrative(payload),
+          source: 'fallback',
+          fallback_reason: 'api_error',
+          cacheable: false,
+        };
+      }
+
+      const data = await response.json();
+      const rawText = String(data.choices?.[0]?.message?.content ?? '').trim();
+      const parsed = parseGovernedCoachAIResponseResult(rawText, payload);
+      const text = formatGovernedCoachNarrative(parsed.response);
+
+      return {
+        text,
+        source: parsed.source,
+        fallback_reason: parsed.fallback_reason,
+        cacheable: parsed.source === 'ai',
+      };
+    } catch (err) {
+      console.warn('Fallback deterministico do briefing ativado:', err);
+      return {
+        text: buildDeterministicCoachNarrative(payload),
+        source: 'fallback',
+        fallback_reason: 'network_or_runtime_error',
+        cacheable: false,
+      };
     }
+  });
 
-    const data = await response.json();
-    const rawText = String(data.choices?.[0]?.message?.content ?? '').trim();
-    const governedResponse = parseGovernedCoachAIResponse(rawText, payload);
-    return formatGovernedCoachNarrative(governedResponse);
-  } catch (err) {
-    console.warn('Fallback deterministico do briefing ativado:', err);
-    return buildDeterministicCoachNarrative(payload);
-  }
+  return result.text;
 }
 
 export async function estimateTaskTime(

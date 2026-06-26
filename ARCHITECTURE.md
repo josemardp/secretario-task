@@ -351,6 +351,8 @@ buildGovernedCoachAIPayload({ topTasks, allTasks, energy, now })
 buildGovernedCoachPrompt(payload)
 parseGovernedCoachAIResponse(rawText, payload)
 buildDeterministicCoachNarrative(payload)
+resolveCachedCoachNarrative(payload, createNarrative)
+buildCoachAIInputHash(payload)
 ```
 
 O payload governado contém:
@@ -375,7 +377,41 @@ Guardrails:
 - linguagem como "procrastinador", "desorganizado", "improdutivo", "perfil psicológico", "tendência comportamental" ou "diagnóstico" bloqueia a resposta da IA.
 - `BehavioralSuggestion` permanece desativado.
 
-Este sprint não implementa cache, `input_hash` nem versionamento de prompt; esses itens pertencem ao Sprint 10.
+## Cache e versionamento da narrativa IA
+
+O briefing governado usa cache local em memória, sem migration, Supabase ou `localStorage`.
+
+Constantes de versão:
+
+```ts
+COACH_AI_PROMPT_VERSION = 'coach-briefing-v1'
+COACH_AI_GUARDRAILS_VERSION = 'coach-guardrails-v1'
+```
+
+O `input_hash` é calculado em `buildCoachAIInputHash(payload)` com serialização estável e hash determinístico.
+
+Entram no hash:
+- `prompt_version`;
+- `guardrails_version`;
+- energia atual;
+- janela temporal horária derivada de `generated_at`;
+- top tasks governadas em ordem de ranking;
+- sinais determinísticos ordenados por `signal_id`;
+- limitações ordenadas.
+
+Não entram no hash:
+- `updated_at`;
+- resposta da IA;
+- chave de API;
+- payload bruto completo;
+- campos fora do contrato governado.
+
+Fluxo:
+- cache hit: retorna a narrativa final segura sem chamar IA;
+- cache miss: chama IA com prompt versionado, valida/sanitiza e armazena apenas texto final seguro quando a origem é `ai`;
+- fallback: falha de API, erro de rede, JSON inválido ou linguagem proibida retorna narrativa determinística e não é armazenada como resposta válida.
+
+Alterar `COACH_AI_PROMPT_VERSION` ou `COACH_AI_GUARDRAILS_VERSION` invalida o cache anterior por mudar a chave.
 
 ## Campo `recurrence_origin_id`
 

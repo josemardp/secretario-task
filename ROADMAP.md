@@ -131,8 +131,22 @@ Entregas:
 - `BehavioralSuggestion` permanece desativado.
 - Nenhuma migration foi criada.
 
+## Sprint 10 — Fase 5B: IA narrativa cacheada e segura
+Status: concluído em 2026-06-26.
+
+Entregas:
+- Cache local em memória para briefing com IA governada.
+- `input_hash` determinístico baseado em versões, energia, janela temporal, top tasks governadas, sinais e limitações.
+- Prompt versionado por `COACH_AI_PROMPT_VERSION`.
+- Guardrails versionados por `COACH_AI_GUARDRAILS_VERSION`.
+- Cache hit evita rechamar a IA para a mesma entrada semântica.
+- Cache miss chama IA, valida a resposta e armazena apenas narrativa final segura.
+- Fallback seguro não é cacheado como resposta válida.
+- `updated_at` não influencia conclusão nem hash semântico.
+- Nenhuma migration foi criada.
+
 ## Próximo sprint
-Sprint 10 — Fase 5B: IA narrativa cacheada e segura.
+Sprint 11 — Auditoria final, hardening e documentação de fechamento.
 
 ---
 
