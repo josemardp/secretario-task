@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import type { Task, TaskInput, PendingMutation } from '../types';
+import type { Task, TaskEventType, TaskInput, PendingMutation } from '../types';
 import { computeNextRuleAndDate } from '../lib/recurrence';
 import { isOpenTask } from '../lib/taskFilters';
 
@@ -55,6 +55,7 @@ interface TaskState {
   addTask: (task: TaskInput) => void;
   updateTask: (id: string, updates: Partial<Task>) => void;
   deleteTask: (id: string) => void;
+  recordTaskEvent: (taskId: string, type: TaskEventType, payload?: Record<string, unknown>) => void;
   recordViewEvent: (taskId: string) => void;
   addMutation: (mutation: Omit<PendingMutation, 'id' | 'createdAt' | 'retryCount'>) => void;
   removeMutation: (id: string) => void;
@@ -216,6 +217,27 @@ export const useTaskStore = create<TaskState>()(
         });
       },
 
+      recordTaskEvent: (taskId, type, payload = {}) => {
+        try {
+          const eventId = crypto.randomUUID();
+
+          useTaskStore.getState().addMutation({
+            entity: 'task_event',
+            operation: 'insert',
+            entityId: eventId,
+            payload: {
+              id: eventId,
+              task_id: taskId,
+              user_id: '', // Set on sync
+              type,
+              payload,
+            },
+          });
+        } catch (err) {
+          console.warn('[task-events] falha best-effort ao enfileirar evento:', err);
+        }
+      },
+
       recordViewEvent: (taskId) => {
         const today = new Date().toISOString().split('T')[0]; // "YYYY-MM-DD"
         const { viewedRecords } = get();
@@ -233,22 +255,7 @@ export const useTaskStore = create<TaskState>()(
           }
         }));
 
-        // Register the event mutation
-        const eventId = crypto.randomUUID();
-        const now = new Date().toISOString();
-        
-        useTaskStore.getState().addMutation({
-          entity: 'task_event',
-          operation: 'insert',
-          entityId: eventId,
-          payload: {
-            id: eventId,
-            task_id: taskId,
-            user_id: '', // Set on sync
-            type: 'viewed',
-            created_at: now
-          }
-        });
+        useTaskStore.getState().recordTaskEvent(taskId, 'viewed');
       },
 
       addMutation: (mutationData) => {

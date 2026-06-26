@@ -23,7 +23,43 @@
 
 # Sprint atual
 
-Coach de Produtividade — Sprint 3 concluído
+Coach de Produtividade — Sprint 4 concluído
+
+---
+
+# Coach de Produtividade — Sprint 4 — Fase 1C: Eventos confiáveis server-stamped
+
+Data: 2026-06-26
+
+## Objetivo
+Tornar `task_events` uma trilha auditável útil, com vocabulário expandido, carimbo server-side e emissão best-effort nos fluxos existentes.
+
+## Resultado
+- Criada migration `0016_task_events_expand_stamp.sql`.
+- O CHECK de `task_events.type` passa a aceitar `created`, `updated`, `completed`, `viewed`, `started`, `reopened`, `postponed` e `resolved`.
+- A migration descobre a constraint real via `pg_constraint` antes de alterá-la e recria o CHECK como `task_events_type_check`.
+- Criada função `set_task_event_created_at()` e trigger `task_events_set_created_at` para forçar `created_at=now()` no servidor em todo INSERT.
+- O cliente deixou de enviar `created_at` para `task_events`; `sync.ts` também remove `created_at` de eventos antigos ainda pendentes.
+- `recordTaskEvent` centraliza eventos best-effort no store.
+- Fluxos existentes passaram a emitir eventos: iniciar (`started`), concluir (`completed`), reabrir via voltar de `done` (`reopened`), adiar (`postponed`) e resolver sem execução (`resolved`).
+- Eventos permanecem não-bloqueantes: falhas de enqueue/sync são registradas de forma segura e não impedem o fluxo principal.
+- `TaskStatus` não foi alterado.
+- `deleted_at` não foi usado para semântica.
+- `BehavioralSuggestion` permanece desativado.
+- Origem de `actual_minutes`/`estimated_minutes` não foi implementada.
+
+## Migration remota
+- `supabase migration list --linked`: executado antes da aplicação; remoto estava alinhado até `0015` e `0016` aparecia pendente apenas localmente.
+- `supabase db push --dry-run`: passou; listou somente `0016_task_events_expand_stamp.sql`.
+- `supabase db push --linked`: passou; `0016` aplicada no Supabase remoto.
+- `supabase migration list --linked`: confirmado após aplicação; remoto alinhado até `0016`.
+
+## Validações
+- `npm run lint`: passou.
+- `npm run build`: passou; Vite manteve aviso de chunk maior que 500 kB.
+
+## Próximo sprint recomendado
+Sprint 5 — Fase 1D: Origem dos dados e governança de campos.
 
 ---
 
@@ -53,6 +89,7 @@ Diferenciar tarefa concluída de tarefa encerrada sem execução, sem alterar `T
 - `supabase db push --dry-run`: passou; listou somente `0015_resolution_semantics.sql`.
 - `supabase db push --linked`: passou; `0015` aplicada no Supabase remoto.
 - `supabase migration list --linked`: confirmado após aplicação; remoto alinhado até `0015`.
+- Commit/push: `443daaf feat: resolution_type/resolved_at sem deleted_at — Fase 1B (Sprint 3)` enviado para `origin/main`.
 
 ## Validações
 - `npm run lint`: passou.

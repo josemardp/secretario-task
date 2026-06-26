@@ -408,7 +408,7 @@ function TaskRow({
 }
 
 export function TaskBoard({ tasks, topTasks = [] }: TaskBoardProps) {
-  const { updateTask, recordViewEvent } = useTaskStore();
+  const { updateTask, recordTaskEvent, recordViewEvent } = useTaskStore();
   const { currentEnergy, activeContext } = useContextStore();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [doneOpen, setDoneOpen] = useState(false);
@@ -419,20 +419,39 @@ export function TaskBoard({ tasks, topTasks = [] }: TaskBoardProps) {
   }, [tasks, recordViewEvent]);
 
   const completeTask = (task: Task) => {
-    updateTask(task.id, buildCompleteUpdates(task));
+    const updates = buildCompleteUpdates(task);
+    updateTask(task.id, updates);
+    recordTaskEvent(task.id, 'completed', {
+      completed_at: updates.completed_at ?? task.completed_at ?? null,
+      source: 'task_board',
+    });
   };
 
   const startTask = (task: Task) => {
     updateTask(task.id, { status: 'doing', started_at: new Date().toISOString() });
+    recordTaskEvent(task.id, 'started', { source: 'task_board' });
   };
 
   const resolveTask = (task: Task, type: Exclude<ResolutionType, 'completed'>) => {
     updateTask(task.id, buildResolutionUpdates(type));
+    recordTaskEvent(task.id, 'resolved', {
+      resolution_type: type,
+      source: 'task_board',
+    });
   };
 
   const handleStatusRevert = (task: Task) => {
     const prevStatus = task.status === 'done' ? 'doing' : task.status === 'doing' ? 'todo' : null;
-    if (prevStatus) updateTask(task.id, { status: prevStatus });
+    if (prevStatus) {
+      updateTask(task.id, { status: prevStatus });
+      if (task.status === 'done') {
+        recordTaskEvent(task.id, 'reopened', {
+          from_status: task.status,
+          to_status: prevStatus,
+          source: 'task_board',
+        });
+      }
+    }
   };
 
   const handlePostponeTomorrow = (task: Task) => {
@@ -440,12 +459,21 @@ export function TaskBoard({ tasks, topTasks = [] }: TaskBoardProps) {
       due_at: postponeToTomorrow(task.due_at ?? null),
       postponed_count: (task.postponed_count || 0) + 1,
     });
+    recordTaskEvent(task.id, 'postponed', {
+      mode: 'tomorrow',
+      source: 'task_board',
+    });
   };
 
   const handlePostponeDate = (task: Task, dateString: string) => {
     updateTask(task.id, {
       due_at: rescheduleToDate(dateString, task.due_at ?? null),
       postponed_count: (task.postponed_count || 0) + 1,
+    });
+    recordTaskEvent(task.id, 'postponed', {
+      mode: 'date',
+      date: dateString,
+      source: 'task_board',
     });
   };
 

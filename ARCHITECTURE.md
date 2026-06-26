@@ -292,7 +292,18 @@ CREATE TABLE task_events (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   task_id UUID NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-  type TEXT NOT NULL CHECK (type IN ('created','updated','completed','viewed')),
+  type TEXT NOT NULL CHECK (
+    type IN (
+      'created',
+      'updated',
+      'completed',
+      'viewed',
+      'started',
+      'reopened',
+      'postponed',
+      'resolved'
+    )
+  ),
   payload JSONB,
   created_at TIMESTAMPTZ DEFAULT now()
 );
@@ -303,6 +314,20 @@ CREATE TABLE task_events (
 - `updated` — tarefa atualizada
 - `completed` — tarefa concluída
 - `viewed` — tarefa visualizada no briefing
+- `started` — tarefa iniciada
+- `reopened` — tarefa reaberta por fluxo existente
+- `postponed` — tarefa adiada
+- `resolved` — tarefa encerrada sem execução
+
+## Carimbo server-side
+
+`task_events.created_at` é carimbado pelo servidor. A migration `0016_task_events_expand_stamp.sql` recria o CHECK de `type` como `task_events_type_check` e instala o trigger `task_events_set_created_at`, que executa `set_task_event_created_at()` em `BEFORE INSERT` para forçar `NEW.created_at = now()`.
+
+O cliente não envia `created_at` para `task_events`. A camada de sync também remove esse campo de eventos antigos que ainda estejam na fila local, e o trigger protege contra clientes legados ou bugs futuros.
+
+## Emissão best-effort
+
+Eventos são observabilidade, não caminho crítico. A emissão deve ocorrer como mutação separada e não pode impedir captura, edição, conclusão, adiamento, resolução ou sync de tarefas. Falhas de enqueue/sync são registradas de forma segura e permanecem elegíveis a retry pela fila.
 
 ## Throttling de `viewed`
 Eventos `viewed` devem ser registrados no máximo **uma vez por tarefa por dia**. Antes do insert, o cliente verifica se já existe `viewed` para essa `task_id` com `created_at >= início do dia atual`. Sem throttling, abrir o app várias vezes ao dia poluiria a tabela.
@@ -342,7 +367,7 @@ CREATE TABLE sync_log (
 ```
 
 ## Campos
-- `entity_type`: tipo da entidade sincronizada (no MVP, apenas `'task'`)
+- `entity_type`: tipo da entidade sincronizada (`'task'` ou `'task_event'` no MVP)
 - `entity_id`: id da entidade referenciada
 - `operation`: `'insert'`, `'update'`, `'delete'`
 - `status`: `'pending'`, `'synced'`, `'failed'`

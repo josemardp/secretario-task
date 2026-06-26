@@ -57,8 +57,19 @@ Entregas:
 - Ações mínimas de resolução no Kanban e na Agenda.
 - Recorrência preservada: resoluções sem execução não bloqueiam próxima ocorrência viva.
 
+## Sprint 4 — Fase 1C: Eventos confiáveis server-stamped
+Status: concluído em 2026-06-26.
+
+Entregas:
+- Migration `0016_task_events_expand_stamp.sql`.
+- CHECK de `task_events.type` ampliado para eventos operacionais.
+- Trigger server-side força `task_events.created_at=now()`.
+- Cliente não envia mais `created_at` em eventos.
+- Eventos `started`, `completed`, `reopened`, `postponed` e `resolved` emitidos como best-effort.
+- Fluxos principais permanecem não-bloqueados por falha de evento.
+
 ## Próximo sprint
-Sprint 4 — Fase 1C: eventos confiáveis server-stamped.
+Sprint 5 — Fase 1D: origem dos dados e governança de campos.
 
 ---
 
