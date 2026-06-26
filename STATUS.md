@@ -23,7 +23,41 @@
 
 # Sprint atual
 
-Coach de Produtividade — Sprint 10 concluído
+Coach de Produtividade — Sprint 11 concluído
+
+---
+
+# Coach de Produtividade — Sprint 11 — Auditoria final, hardening e documentação de fechamento
+
+Data: 2026-06-26
+
+## Objetivo
+Auditar a evolução do Coach de Produtividade dos Sprints 0 a 10, confirmar invariantes estruturais e fechar a documentação oficial.
+
+## Resultado
+- Varredura por `updated_at`: conforme. Não há uso como conclusão em métricas, motor ou briefing; aparece apenas como edição/sync, fallback legado explicitamente `legacy_approx` ou política de proibição da IA.
+- Varredura por `deleted_at`: conforme. Permanece soft delete; cancelada, delegada e obsoleta usam `resolution_type`.
+- Semântica de conclusão/resolução: conforme. `completed_at` é gravado na primeira transição para `done`, `resolution_type='completed'`; encerramentos sem execução mantêm `completed_at=NULL`.
+- Eventos: conforme. `task_events.created_at` é server-stamped; cliente/sync removem `created_at`; eventos são best-effort.
+- Tempos: conforme. `estimated_minutes_source` e `actual_minutes_source` estão tipados, sincronizados e usados como qualidade de dado; timer acima de 8h vira `unknown`.
+- Dashboard: conforme. Conclusões confirmadas, histórico aproximado, encerramentos sem execução e qualidade do dado ficam separados; não há score global.
+- Motor determinístico: conforme. `src/lib/coachSignals.ts` é puro, recebe `now`, não acessa UI, Supabase, localStorage, rede, IA ou aleatoriedade.
+- IA governada/cache: conforme. IA recebe payload governado, fallback é determinístico, termos proibidos são bloqueados, cache usa `input_hash` versionado e não armazena fallback como resposta válida.
+- Contratos de sync: conforme. Campos novos constam em `TASK_COLUMNS`; `stripReadonlyTaskFields` remove apenas `created_at`/`updated_at`.
+- Documentação: atualizada para estado final, checklist global e plano de manutenção.
+- Nenhuma migration foi criada.
+
+## Achados e ajustes
+- Ajuste documental: o schema resumido em `ARCHITECTURE.md` e `PRD.md` foi alinhado para incluir `version`.
+- Nenhuma violação de invariante exigiu sprint de correção dedicado.
+
+## Validações
+- `npm run lint`: passou.
+- `npm run build`: passou; Vite manteve aviso de chunk maior que 500 kB.
+- `npm run test`: passou; fixtures do motor e 17 fixtures de guardrails/cache passaram.
+
+## Próximo passo recomendado
+Encerrar a evolução Coach v4 como concluída. Próxima fase sugerida: manutenção leve com auditoria independente periódica antes de qualquer nova feature de diagnóstico ou IA.
 
 ---
 

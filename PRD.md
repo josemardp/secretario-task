@@ -238,7 +238,11 @@ CREATE TABLE tasks (
   actual_minutes INTEGER,
   estimated_minutes_source TEXT,
   actual_minutes_source TEXT,
-  blocker_type TEXT
+  blocker_type TEXT,
+  recurrence_rule TEXT,
+  recurrence_origin_id UUID,
+  postponed_count INTEGER DEFAULT 0,
+  version INTEGER NOT NULL DEFAULT 1
 );
 ```
 
@@ -301,6 +305,25 @@ Dados frágeis aparecem como limitação:
 - `legacy_approx` não vira conclusão confirmada;
 - `actual_minutes_source='unknown'` não vira tempo real confiável;
 - cancelada, delegada e obsoleta não contam como conclusão executada.
+
+## Coach de Produtividade — estado final da evolução v4
+
+A evolução Coach v4 está concluída quando:
+- conclusão real usa `completed_at` confirmado;
+- histórico antigo fica marcado como `legacy_approx`;
+- cancelada, delegada e obsoleta usam `resolution_type`, não `deleted_at`;
+- tempos carregam origem e confiança;
+- Dashboard evita score e separa qualidade do dado;
+- motor determinístico gera sinais operacionais, não julgamento pessoal;
+- IA narra payload governado, com fallback e cache por versão.
+
+As limitações aceitas são: conflitos LWW por registro, `completed_at` inicialmente escrito pelo cliente, cache de IA apenas por sessão e dependência da qualidade dos campos opcionais preenchidos pelo usuário.
+
+Mudanças futuras de diagnóstico, cache persistente, schema ou IA exigem novo ciclo planejado e auditoria antes de ativação.
+
+## Nota sobre escopo evoluído
+
+A lista "Fora do MVP" da baseline original permanece como histórico de planejamento. Durante uso real e sprints posteriores, alguns itens foram incorporados de forma controlada, como recorrência, busca/IA opcionais, voz, `profiles` e briefing governado. O estado vigente do produto é o descrito nas seções de Coach e em `ARCHITECTURE.md`.
 
 ---
 

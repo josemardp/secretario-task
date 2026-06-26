@@ -176,7 +176,8 @@ CREATE TABLE tasks (
   started_at TIMESTAMPTZ,
   recurrence_rule TEXT,
   recurrence_origin_id UUID REFERENCES tasks(id) ON DELETE SET NULL,
-  postponed_count INTEGER DEFAULT 0
+  postponed_count INTEGER DEFAULT 0,
+  version INTEGER NOT NULL DEFAULT 1
 );
 ```
 
@@ -412,6 +413,28 @@ Fluxo:
 - fallback: falha de API, erro de rede, JSON inválido ou linguagem proibida retorna narrativa determinística e não é armazenada como resposta válida.
 
 Alterar `COACH_AI_PROMPT_VERSION` ou `COACH_AI_GUARDRAILS_VERSION` invalida o cache anterior por mudar a chave.
+
+## Estado final do Coach de Produtividade
+
+Após o Sprint 11, o Coach de Produtividade fica fechado como uma camada honesta e auditável:
+- conclusão usa `completed_at`, nunca `updated_at`;
+- resolução sem execução usa `resolution_type`, nunca `deleted_at`;
+- eventos operacionais são server-stamped e best-effort;
+- origem de estimativa e tempo real fica marcada;
+- Dashboard separa métricas confirmadas, histórico frágil e qualidade do dado;
+- motor do Coach é determinístico, puro e testado por fixtures;
+- IA é opcional, governada, cacheada por `input_hash` versionado e sem autoridade diagnóstica;
+- `TaskStatus` permanece `todo | doing | done`;
+- sync mantém `version` como guard principal de optimistic locking.
+
+## Plano de manutenção futura
+
+Antes de qualquer novo ciclo do Coach:
+- rodar `npm run lint`, `npm run build` e `npm run test`;
+- repetir as varreduras por `updated_at`, `deleted_at`, `resolution_type`, `actual_minutes_source`, `estimated_minutes_source`, `BehavioralSuggestion` e termos diagnósticos;
+- não reativar `BehavioralSuggestion` sem gate explícito de qualidade de dado;
+- não persistir cache/diagnóstico de IA sem decisão nova de produto e privacidade;
+- abrir sprint dedicado para qualquer mudança de schema, sync, RLS ou semântica de diagnóstico.
 
 ## Campo `recurrence_origin_id`
 

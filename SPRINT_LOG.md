@@ -19,6 +19,67 @@ Este documento define:
 
 ---
 
+# Coach de Produtividade — Sprint 11 — Auditoria final, hardening e documentação de fechamento
+
+Data: 2026-06-26
+
+## Objetivo
+Confirmar que nenhuma proibição estrutural voltou, fechar a evolução Coach de Produtividade e registrar o estado final do projeto após os Sprints 0 a 10.
+
+## Varreduras executadas
+- `updated_at`: conforme. Usado como timestamp técnico de edição/sync, fallback legado `legacy_approx` em migration e texto de proibição na IA; não alimenta conclusão confirmada.
+- `deleted_at`: conforme. Usado como soft delete/tombstone; não representa cancelada, delegada ou obsoleta.
+- IA originando diagnóstico: conforme. `ai.ts` e `smartParser.ts` não escrevem `resolution_type`/`blocker_type` nem geram diagnóstico; briefing apenas narra payload governado.
+- Contratos de sync: conforme. `completed_at`, `completed_at_confidence`, `resolution_type`, `resolved_at`, `actual_minutes_source`, `estimated_minutes_source`, `blocker_type` e `version` estão em `TASK_COLUMNS`; `stripReadonlyTaskFields` remove apenas `created_at`/`updated_at`.
+- Determinismo: conforme. `coachSignals.ts` recebe `now`, não usa UI, Supabase, localStorage, rede, IA ou aleatoriedade; ranking/parser seguem determinísticos no caminho crítico.
+- Eventos: conforme. Eventos são best-effort, `created_at` não é enviado pelo cliente/sync e o servidor força carimbo.
+- Dashboard: conforme. Métricas temporais usam conclusões confirmadas; histórico aproximado, encerramentos sem execução e qualidade do dado ficam separados.
+- IA/cache: conforme. Guardrails bloqueiam termos proibidos, fallback é determinístico, `input_hash` ignora `updated_at` e versões invalidam cache.
+
+## Checklist global
+- [x] `npm run lint` e `npm run build` verdes na árvore final.
+- [x] Nenhuma métrica de conclusão/horário lê `updated_at`.
+- [x] `completed_at` gravado só na 1ª transição para `done`; edição posterior não reescreve.
+- [x] `completed_at_confidence` distingue `confirmed` de `legacy_approx`; legado fora de métrica de horário.
+- [x] `resolution_type`/`resolved_at` implementados; `completed_at` nulo para encerradas sem execução.
+- [x] Cancelada/delegada/obsoleta não usam `deleted_at` e permanecem contáveis.
+- [x] `task_events` inclui eventos operacionais, server-stamp e emissão best-effort.
+- [x] `actual_minutes_source`/`estimated_minutes_source` preenchidos nos pontos de escrita; IA marcada `ai`.
+- [x] Reabertura limpa conclusão/resolução/timer atuais, emite `reopened` e preserva histórico de eventos.
+- [x] Teto de timer acima de 8h marca `actual_minutes_source='unknown'`.
+- [x] Dashboard separa confiabilidade textual e não cria score.
+- [x] `BehavioralSuggestion` segue desativado.
+- [x] Motor determinístico puro com fixtures presentes e runner registrado.
+- [x] Recorrência preservada por instância e índice parcial de ocorrência viva documentado.
+- [x] IA opcional, não-bloqueante, com fallback e sem autoridade diagnóstica.
+- [x] Briefing cacheado por `input_hash`, prompt/guardrails versionados e fallback intacto.
+- [x] Campos novos em `TASK_COLUMNS`; nenhum campo novo indevidamente removido por `stripReadonlyTaskFields`.
+- [x] Optimistic locking por `version` intacto e conflito documentado.
+- [x] Soft delete via `deleted_at` preservado; RLS documentada.
+- [x] `TaskStatus` permanece `'todo'|'doing'|'done'`.
+- [x] Ações novas preservam captura rápida e baixo atrito; sem nova UI neste sprint.
+- [x] `STATUS/SPRINT_LOG/ROADMAP/DECISIONS/ARCHITECTURE/PRD` coerentes com o código final.
+- [x] Sem pendência nova de migration no Sprint 11.
+
+## Ajustes realizados
+- Atualizada documentação de fechamento em `STATUS.md`, `SPRINT_LOG.md`, `ROADMAP.md`, `DECISIONS.md`, `ARCHITECTURE.md` e `PRD.md`.
+- Alinhado o resumo de schema em `ARCHITECTURE.md` e `PRD.md` para incluir `version`.
+- Registrado plano de manutenção futura sem prometer feature pronta.
+
+## Validações executadas
+- `npm run lint`: passou.
+- `npm run build`: passou; Vite manteve aviso de chunk maior que 500 kB.
+- `npm run test`: passou; fixtures do motor e 17 fixtures de guardrails/cache passaram.
+
+## Pendências
+- Nenhuma violação estrutural encontrada.
+- Riscos remanescentes ficam documentados como limitações aceitas: clock do cliente em `completed_at`, LWW por registro, cache de IA apenas por sessão e dependência da qualidade dos dados preenchidos.
+
+## Resultado
+Sprint 11 fechou a evolução Coach de Produtividade com auditoria verde, documentação alinhada e sem migration.
+
+---
+
 # Coach de Produtividade — Sprint 10 — Fase 5B: IA narrativa cacheada e segura
 
 Data: 2026-06-26

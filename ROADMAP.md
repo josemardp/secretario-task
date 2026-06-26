@@ -145,8 +145,18 @@ Entregas:
 - `updated_at` não influencia conclusão nem hash semântico.
 - Nenhuma migration foi criada.
 
-## Próximo sprint
-Sprint 11 — Auditoria final, hardening e documentação de fechamento.
+## Sprint 11 — Auditoria final, hardening e documentação de fechamento
+Status: concluído em 2026-06-26.
+
+Entregas:
+- Varreduras finais por `updated_at`, `deleted_at`, IA diagnóstica, contratos de sync, eventos, tempos, Dashboard, motor determinístico e cache.
+- Checklist global de aceitação marcado em `SPRINT_LOG.md`.
+- Documentação final alinhada em `STATUS.md`, `SPRINT_LOG.md`, `ROADMAP.md`, `DECISIONS.md`, `ARCHITECTURE.md` e `PRD.md`.
+- Nenhuma violação estrutural encontrada.
+- Nenhuma migration foi criada.
+
+## Próximo passo
+Evolução Coach v4 encerrada. Próximas mudanças devem entrar como manutenção leve ou novo ciclo planejado, com auditoria independente antes de qualquer feature nova de diagnóstico ou IA.
 
 ---
 
