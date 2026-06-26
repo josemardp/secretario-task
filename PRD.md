@@ -125,6 +125,15 @@ CREATE TYPE context_type AS ENUM (
 - RLS
 - observabilidade mínima via `task_events` (com throttling de `viewed`)
 
+## Coach de Produtividade — contenção provisória
+
+Enquanto o modelo de conclusão honesta ainda não possui `completed_at`, o produto não deve apresentar `updated_at` como se fosse data de conclusão real.
+
+Comportamento atual da Fase 0:
+- Sugestões comportamentais baseadas em padrão de horário ficam desativadas.
+- Blocos do Dashboard derivados de `updated_at` aparecem como aproximação por edição.
+- Métricas independentes do horário real de conclusão continuam disponíveis.
+
 ---
 
 ## Fora do MVP (v1.1+)

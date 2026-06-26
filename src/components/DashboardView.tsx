@@ -208,14 +208,17 @@ export function DashboardView({ tasks }: DashboardViewProps) {
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
             <div className="text-[12px] font-bold uppercase tracking-[0.06em] text-ink-secondary">
-              Esta semana
+              Editadas recentemente
             </div>
             <div className="font-display text-[44px] leading-[1] tracking-[-0.04em] text-ink mt-1 tnum">
               {weekTotal}
-              <span className="text-ink-secondary text-[22px] font-sans not-italic font-normal"> concluídas</span>
+              <span className="text-ink-secondary text-[22px] font-sans not-italic font-normal"> concluídas editadas</span>
             </div>
             <div className="mt-1.5 text-[11px] text-success font-bold inline-flex items-center gap-1">
-              <ChevronUp size={11} strokeWidth={2.6} /> hoje: {todayCount}
+              <ChevronUp size={11} strokeWidth={2.6} /> editadas hoje: {todayCount}
+            </div>
+            <div className="mt-1 text-[11px] text-ink-secondary">
+              Aproximação por data de edição enquanto a conclusão real está em revisão.
             </div>
           </div>
 
@@ -237,7 +240,7 @@ export function DashboardView({ tasks }: DashboardViewProps) {
               style={{ boxShadow: `inset 0 0 0 1px ${chartTheme.border}` }}
             >
               <span className="font-display text-[20px] leading-[1] text-ink tnum">{weekTotal}</span>
-              <span className="text-[11px] text-ink-secondary font-semibold mt-0.5">conc.</span>
+              <span className="text-[11px] text-ink-secondary font-semibold mt-0.5">edit.</span>
             </div>
           </div>
         </div>
@@ -271,9 +274,9 @@ export function DashboardView({ tasks }: DashboardViewProps) {
       <div className="grid grid-cols-2 gap-3">
         <StatCard label="Total" value={doneTasks.length} sub="concluídas no histórico" />
         <StatCard
-          label="Sequência"
+          label="Edições recentes"
           value={<>{todayCount}<span className="text-ink-secondary font-normal text-[14px]"> hoje</span></>}
-          sub={`média semana ${(weekTotal / 7).toFixed(1)}/dia`}
+          sub={`aprox. semana ${(weekTotal / 7).toFixed(1)}/dia`}
         />
         <StatCard label="Prioridade média" value={avgPriority} sub="das concluídas" />
         <StatCard
@@ -352,7 +355,10 @@ export function DashboardView({ tasks }: DashboardViewProps) {
       )}
 
       {/* Peak hour */}
-      <SectionCard eyebrow="Horário de pico" title="Maior conclusão">
+      <SectionCard eyebrow="Horário de pico aproximado" title="Maior edição de concluídas">
+        <div className="text-[12px] text-ink-secondary -mt-1 mb-3">
+          Aproximação por data de edição; será revisada quando `completed_at` existir.
+        </div>
         <div className="h-48 -ml-3">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={peakHourData}>
@@ -384,7 +390,7 @@ export function DashboardView({ tasks }: DashboardViewProps) {
                 itemStyle={{ color: chartTheme.inkSecondary }}
                 labelStyle={{ color: chartTheme.inkSecondary }}
               />
-              <Bar dataKey="concluídas" name="Tarefas concluídas" fill={chartTheme.accent} radius={[6, 6, 0, 0]} />
+              <Bar dataKey="concluídas" name="Concluídas editadas" fill={chartTheme.accent} radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>

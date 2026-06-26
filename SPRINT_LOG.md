@@ -19,6 +19,53 @@ Este documento define:
 
 ---
 
+# Coach de Produtividade — Sprint 1 — Fase 0: Contenção imediata
+
+Data: 2026-06-26
+
+## Objetivo
+Parar a exibição de conclusões falsas sem alterar schema, banco, sync, offline-first ou `TaskStatus`.
+
+## Resumo do que foi feito
+- Desativada a renderização de `BehavioralSuggestion`, removendo a recomendação baseada em `updated_at`.
+- Congelado `src/lib/behaviorEngine.ts` com comentário de bloqueio até o Sprint 2, quando `completed_at` será introduzido.
+- Rotulados no Dashboard os blocos que ainda usam `updated_at`: semana/hoje agora aparecem como edições recentes e horário de pico como aproximação por edição.
+- Mantidas visíveis as métricas que não dependem de horário real de conclusão.
+- Nenhuma migration foi criada.
+- `sync.ts`, `taskStore.ts` e `TaskStatus` não foram alterados.
+
+## Arquivos alterados
+- `src/components/BehavioralSuggestion.tsx`
+- `src/components/DashboardView.tsx`
+- `src/lib/behaviorEngine.ts`
+- `STATUS.md`
+- `SPRINT_LOG.md`
+- `ROADMAP.md`
+- `DECISIONS.md`
+- `PRD.md`
+
+## Validações executadas
+- `npm run lint`: passou.
+- `npm run build`: passou; Vite manteve aviso de chunk maior que 500 kB.
+
+## Bugs ou achados
+- `updated_at` permanece no Dashboard apenas como fonte provisória rotulada; a remoção real depende do Sprint 2 com `completed_at`.
+- `BehavioralSuggestion` fica temporariamente sem renderização por segurança.
+
+## Decisões tomadas
+- `updated_at` não representa conclusão.
+- A sugestão comportamental fica desligada até existir dado de conclusão honesto.
+- Métricas derivadas de `updated_at` devem declarar aproximação por edição.
+
+## Pendências
+- Sprint 2 deve introduzir `completed_at` e `completed_at_confidence` com backfill `legacy_approx`.
+- Após Sprint 2, Dashboard e motor comportamental devem migrar para `completed_at`.
+
+## Resultado
+Sprint 1 concluído com lint/build verdes e sem migration.
+
+---
+
 # Coach de Produtividade — Sprint 0 — Preparação e congelamento de referência
 
 Data: 2026-06-26
