@@ -29,7 +29,9 @@ export class ErrorBoundary extends Component<Props, State> {
     try {
       localStorage.removeItem('secretario-task:task-store');
       localStorage.removeItem('secretario-task:context-store');
-    } catch (_) {}
+    } catch {
+      console.warn('[ErrorBoundary] Não foi possível limpar o estado local.');
+    }
     this.setState({ hasError: false, error: null });
     window.location.reload();
   };
@@ -44,7 +46,7 @@ export class ErrorBoundary extends Component<Props, State> {
             <p className="text-sm text-ink-2 mb-1">
               O app encontrou um erro inesperado.
             </p>
-            <p className="text-xs text-ink-3 font-mono bg-paper2 rounded-lg px-3 py-2 mt-3 max-w-xs break-all">
+            <p className="text-xs text-ink-2 font-mono bg-paper2 rounded-lg px-3 py-2 mt-3 max-w-xs break-all">
               {this.state.error?.message ?? 'Erro desconhecido'}
             </p>
           </div>
@@ -57,7 +59,7 @@ export class ErrorBoundary extends Component<Props, State> {
             </button>
             <a
               href="/clear-cache"
-              className="text-center text-xs text-ink-3 underline"
+              className="text-center text-xs text-ink-2 underline"
             >
               Limpar cache completo do app
             </a>

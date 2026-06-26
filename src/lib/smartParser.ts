@@ -270,17 +270,18 @@ Responda APENAS com JSON válido com array "tasks".`;
     if (!response.ok) throw new Error('API Falhou');
 
     const data = await response.json();
-    const content = JSON.parse(data.choices[0].message.content);
+    const content = JSON.parse(data.choices[0].message.content) as { tasks?: unknown[] };
 
     if (content.tasks && Array.isArray(content.tasks)) {
-      return content.tasks.map((t: any, idx: number) => {
+      return content.tasks.map((rawTask, idx: number) => {
+        const t = rawTask as Record<string, unknown>;
         // Linha original correspondente (melhor esforço: por índice)
         const originalLine = originalLines[idx] ?? rawText;
 
         // ── Pós-processamento determinístico de HORÁRIO ──────────────────
         // A AI erra sistematicamente o formato "09h05". Corrigimos no cliente.
         const timeFromText = extractBrazilianTime(originalLine) ?? extractBrazilianTime(rawText);
-        let finalDueAt: string | undefined = t.due_at ?? undefined;
+        let finalDueAt: string | undefined = typeof t.due_at === 'string' ? t.due_at : undefined;
 
         // Normaliza formato DD/MM/YYYY retornado pela AI
         if (finalDueAt?.match(/^\d{2}\/\d{2}\/\d{4}/)) {
@@ -318,7 +319,7 @@ Responda APENAS com JSON válido com array "tasks".`;
 
         return {
           title: String(t.title || rawText),
-          context: CONTEXTS.includes(t.context) ? t.context as ContextType : defaultContext,
+          context: typeof t.context === 'string' && CONTEXTS.includes(t.context) ? t.context as ContextType : defaultContext,
           priority: Number(t.priority) || 0,
           energy: Number(t.energy) || 0,
           due_at: finalDueAt,

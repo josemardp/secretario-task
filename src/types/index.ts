@@ -60,7 +60,7 @@ export type PendingMutation = {
   entity: 'task' | 'task_event';
   operation: 'insert' | 'update' | 'delete';
   entityId: string;
-  payload: any;
+  payload: Partial<Task> | Record<string, unknown>;
   baseUpdatedAt?: string | null;
   baseVersion?: number;
   createdAt: string;

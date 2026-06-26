@@ -40,6 +40,7 @@ function toLocalDatetimeInput(iso: string | null | undefined): string {
 
 interface TimelineTaskCardProps {
   block: TimelineBlock;
+  now: Date;
   updateTask: (id: string, updates: Partial<Task>) => void;
   deleteTask: (id: string) => void;
   openEdit: (task: Task) => void;
@@ -50,15 +51,15 @@ interface TimelineTaskCardProps {
 }
 
 function TimelineTaskCard({
-  block, updateTask, deleteTask, openEdit,
+  block, now, updateTask, deleteTask, openEdit,
   handleComplete, handlePostponeTomorrow, handlePostponeDate, formatTime,
 }: TimelineTaskCardProps) {
   const t = block.task!;
   const isLate =
-    (t.due_at && new Date(t.due_at) < new Date()) ||
+    (t.due_at && new Date(t.due_at) < now) ||
     (!t.due_at &&
-      new Date(t.created_at).getTime() < Date.now() - 3 * 60 * 60 * 1000 &&
-      new Date(t.created_at).getDate() === new Date().getDate());
+      new Date(t.created_at).getTime() < now.getTime() - 3 * 60 * 60 * 1000 &&
+      new Date(t.created_at).getDate() === now.getDate());
 
   const style: React.CSSProperties = {
     touchAction: 'pan-y',
@@ -78,12 +79,12 @@ function TimelineTaskCard({
       <div className="px-3 pt-2.5 pb-2.5">
         {/* time + duration controls */}
         <div className="flex items-center justify-between gap-2 mb-1.5">
-          <span className="text-[10px] font-extrabold tnum text-ink-3 tracking-wide">
+          <span className="text-[12px] font-bold tnum text-ink-2 tracking-wide">
             {formatTime(block.startTime)} – {formatTime(block.endTime)}
           </span>
           <div className="flex items-center gap-1.5">
             {isLate && (
-              <span className="text-[9px] font-extrabold px-1.5 py-0.5 rounded bg-danger-light text-danger tracking-[0.05em]">
+              <span className="text-[11px] font-bold px-1.5 py-0.5 rounded bg-danger-light text-danger tracking-[0.05em]">
                 ATRASADA
               </span>
             )}
@@ -93,9 +94,9 @@ function TimelineTaskCard({
                   e.stopPropagation();
                   updateTask(t.id, { estimated_minutes: Math.max(5, (t.estimated_minutes || 30) - 15) });
                 }}
-                className="px-2 text-ink-3 hover:text-ink text-[11px] font-extrabold"
+                className="px-2 text-ink-2 hover:text-ink text-[12px] font-bold"
               >−</button>
-              <span className="text-[10px] font-bold text-ink-2 px-2 min-w-[44px] text-center tnum select-none">
+              <span className="text-[12px] font-semibold text-ink-2 px-2 min-w-[54px] text-center tnum select-none">
                 {durText}
               </span>
               <button
@@ -103,7 +104,7 @@ function TimelineTaskCard({
                   e.stopPropagation();
                   updateTask(t.id, { estimated_minutes: (t.estimated_minutes || 30) + 15 });
                 }}
-                className="px-2 text-ink-3 hover:text-ink text-[11px] font-extrabold"
+                className="px-2 text-ink-2 hover:text-ink text-[12px] font-bold"
               >+</button>
             </div>
           </div>
@@ -111,10 +112,10 @@ function TimelineTaskCard({
 
         {/* title row */}
         <h3 className="text-[14px] font-bold text-ink leading-snug tracking-tight break-words flex items-center gap-1.5">
-          {t.recurrence_rule && <Repeat size={11} className="shrink-0 text-ink-3" />}
+          {t.recurrence_rule && <Repeat size={12} className="shrink-0 text-ink-2" />}
           {(t.postponed_count ?? 0) > 0 && (
-            <span title={`${t.postponed_count}× adiada`} className="shrink-0 text-[9px] font-extrabold bg-warning-light text-warning px-1 rounded">
-              🐌 {t.postponed_count}×
+            <span title={`${t.postponed_count}× adiada`} className="shrink-0 text-[11px] font-bold bg-warning-light text-warning px-1.5 py-0.5 rounded">
+              Adiada {t.postponed_count}×
             </span>
           )}
           <span className="min-w-0">{block.title}</span>
@@ -125,8 +126,8 @@ function TimelineTaskCard({
           <div className="mt-1.5">
             <span
               className={
-                'inline-flex items-center gap-1 text-[10px] font-extrabold tnum ' +
-                (t.priority >= 8 ? 'text-danger' : t.priority >= 5 ? 'text-warning' : 'text-ink-3')
+                'inline-flex items-center gap-1 text-[12px] font-bold tnum ' +
+                (t.priority >= 8 ? 'text-danger' : t.priority >= 5 ? 'text-warning' : 'text-ink-2')
               }
             >
               <Flag size={10} strokeWidth={2.4} /> P{t.priority}
@@ -148,14 +149,14 @@ function TimelineTaskCard({
           <div className="flex items-center gap-1 shrink-0">
             <button
               onClick={(e) => { e.stopPropagation(); openEdit(t); }}
-              className="text-ink-2 p-1.5 rounded-lg hover:bg-paper2"
+              className="text-ink-2 w-11 h-11 inline-flex items-center justify-center rounded-lg hover:bg-paper2"
               title="Editar"
             >
               <Edit3 size={13} />
             </button>
             <button
               onClick={(e) => { e.stopPropagation(); deleteTask(t.id); }}
-              className="text-danger p-1.5 rounded-lg hover:bg-danger-light"
+              className="text-danger w-11 h-11 inline-flex items-center justify-center rounded-lg hover:bg-danger-light"
               title="Excluir"
             >
               <Trash2 size={13} />
@@ -204,7 +205,7 @@ function TimelineSlot({
           className="absolute left-0 right-0 z-10 flex items-center pointer-events-none w-full"
           style={{ top: `${topPercent}%`, transform: 'translateY(-50%)' }}
         >
-          <span className="w-12 pr-1.5 text-right text-[10px] font-extrabold text-danger bg-paper z-20 tnum select-none">
+          <span className="w-12 pr-1.5 text-right text-[12px] font-bold text-danger bg-paper z-20 tnum select-none">
             {now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </span>
           <div className="flex-1 h-[1.5px] bg-danger" />
@@ -215,7 +216,7 @@ function TimelineSlot({
       <div className={`w-12 flex-shrink-0 text-right pr-2 flex items-start justify-end ${slotBlocksCount === 0 ? 'py-1' : 'pt-2'}`}>
         <span className={[
           'leading-none tnum select-none',
-          onHourBoundary ? 'text-[11px] font-extrabold text-ink-2' : 'text-[10px] text-ink-3',
+          onHourBoundary ? 'text-[12px] font-bold text-ink-2' : 'text-[12px] text-ink-2',
         ].join(' ')}>
           {slot.timeString}
         </span>
@@ -254,12 +255,22 @@ export function TimelineView({ tasks }: TimelineViewProps) {
   });
 
   const anchorRef = useRef<HTMLDivElement>(null);
+  const timelineScrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    let raf1: number, raf2: number;
-    raf1 = requestAnimationFrame(() => {
+    let raf2 = 0;
+    const raf1 = requestAnimationFrame(() => {
       raf2 = requestAnimationFrame(() => {
-        anchorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        const container = timelineScrollRef.current;
+        const anchor = anchorRef.current;
+        if (!container || !anchor) return;
+
+        const containerTop = container.getBoundingClientRect().top;
+        const anchorTop = anchor.getBoundingClientRect().top;
+        container.scrollTo({
+          top: container.scrollTop + anchorTop - containerTop,
+          behavior: 'smooth',
+        });
       });
     });
     return () => {
@@ -393,7 +404,7 @@ export function TimelineView({ tasks }: TimelineViewProps) {
         </div>
         <button
           onClick={() => setIsCalendarOpen(true)}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-paper2 text-ink text-[11px] font-extrabold shrink-0"
+          className="inline-flex items-center gap-1.5 min-h-11 px-3 rounded-xl bg-paper2 text-ink text-[12px] font-bold shrink-0"
         >
           <CalIcon size={12} strokeWidth={2.2} /> Mês
         </button>
@@ -409,7 +420,10 @@ export function TimelineView({ tasks }: TimelineViewProps) {
       )}
 
       {/* Timeline grid */}
-      <div className="bg-paper rounded-2xl border border-line overflow-hidden flex flex-col">
+      <div
+        ref={timelineScrollRef}
+        className="bg-paper rounded-2xl border border-line overflow-y-auto overflow-x-hidden flex flex-col max-h-[calc(100dvh-220px)]"
+      >
         {timeGrid.map((slot, idx) => {
           const slotBlocks = blocks.filter(b => {
             const start = b.startTime.getTime();
@@ -445,7 +459,7 @@ export function TimelineView({ tasks }: TimelineViewProps) {
                       className="px-3 py-2.5 rounded-xl border border-warning-light bg-warning-light/50 w-full min-w-0 overflow-hidden"
                     >
                       <div className="flex items-center justify-between gap-2 mb-1">
-                        <span className="text-[10px] font-extrabold tnum text-warning tracking-wide">
+                        <span className="text-[12px] font-bold tnum text-warning tracking-wide">
                           {formatTime(block.startTime)} – {formatTime(block.endTime)}
                         </span>
                         <button
@@ -467,6 +481,7 @@ export function TimelineView({ tasks }: TimelineViewProps) {
                   <TimelineTaskCard
                     key={`${block.id}-${slot.timeString}`}
                     block={block}
+                    now={now}
                     updateTask={updateTask}
                     deleteTask={deleteTask}
                     openEdit={openEdit}
@@ -501,7 +516,7 @@ export function TimelineView({ tasks }: TimelineViewProps) {
 
             <div className="flex items-start justify-between px-5">
               <div>
-                <div className="text-[10px] font-extrabold uppercase tracking-[0.06em] text-ink-3">
+                <div className="text-[12px] font-bold uppercase tracking-[0.06em] text-ink-2">
                   Editar tarefa
                 </div>
                 <div className="font-display text-[22px] tracking-[-0.02em] text-ink mt-0.5">
@@ -510,7 +525,7 @@ export function TimelineView({ tasks }: TimelineViewProps) {
               </div>
               <button
                 onClick={() => setEditingTask(null)}
-                className="w-8 h-8 rounded-xl bg-paper2 flex items-center justify-center text-ink-2"
+                className="w-11 h-11 rounded-xl bg-paper2 flex items-center justify-center text-ink-2"
                 aria-label="Fechar"
               >
                 <X size={16} />
@@ -520,7 +535,7 @@ export function TimelineView({ tasks }: TimelineViewProps) {
             <div className="flex-1 overflow-y-auto px-5 flex flex-col gap-3 pb-3">
 
             <label className="flex flex-col gap-1">
-              <span className="text-[10px] font-bold uppercase tracking-wide text-ink-3">Título</span>
+              <span className="text-[12px] font-semibold uppercase tracking-wide text-ink-2">Título</span>
               <input
                 type="text"
                 value={editForm.title}
@@ -532,7 +547,7 @@ export function TimelineView({ tasks }: TimelineViewProps) {
 
             <div className="grid grid-cols-2 gap-2">
               <label className="flex flex-col gap-1">
-                <span className="text-[10px] font-bold uppercase tracking-wide text-ink-3">Data e hora</span>
+                <span className="text-[12px] font-semibold uppercase tracking-wide text-ink-2">Data e hora</span>
                 <input
                   type="datetime-local"
                   value={editForm.due_at}
@@ -541,7 +556,7 @@ export function TimelineView({ tasks }: TimelineViewProps) {
                 />
               </label>
               <label className="flex flex-col gap-1">
-                <span className="text-[10px] font-bold uppercase tracking-wide text-ink-3">Duração (min)</span>
+                <span className="text-[12px] font-semibold uppercase tracking-wide text-ink-2">Duração (min)</span>
                 <input
                   type="number"
                   value={editForm.estimated_minutes}
@@ -554,7 +569,7 @@ export function TimelineView({ tasks }: TimelineViewProps) {
             </div>
 
             <label className="flex flex-col gap-1">
-              <span className="text-[10px] font-bold uppercase tracking-wide text-ink-3">Contexto</span>
+              <span className="text-[12px] font-semibold uppercase tracking-wide text-ink-2">Contexto</span>
               <select
                 value={editForm.context}
                 onChange={(e) => setEditForm((f) => ({ ...f, context: e.target.value as ContextType }))}
@@ -565,12 +580,12 @@ export function TimelineView({ tasks }: TimelineViewProps) {
             </label>
 
             <div className="flex flex-col gap-1.5">
-              <span className="text-[10px] font-bold uppercase tracking-wide text-ink-3">Recorrência</span>
+              <span className="text-[12px] font-semibold uppercase tracking-wide text-ink-2">Recorrência</span>
               <div className="flex items-center gap-2">
                 <button
                   type="button"
                   onClick={() => setShowRecurrenceModal(true)}
-                  className="flex-1 h-9 bg-paper2 rounded-xl px-3 text-left text-[12px] font-semibold text-ink truncate"
+                  className="flex-1 h-11 bg-paper2 rounded-xl px-3 text-left text-[12px] font-semibold text-ink truncate"
                 >
                   {describeRecurrenceRule(editForm.recurrence_rule)}
                 </button>
@@ -578,7 +593,7 @@ export function TimelineView({ tasks }: TimelineViewProps) {
                   <button
                     type="button"
                     onClick={() => setEditForm((f) => ({ ...f, recurrence_rule: null }))}
-                    className="w-9 h-9 shrink-0 flex items-center justify-center bg-paper2 rounded-xl text-ink-3 text-[14px] font-bold hover:text-danger"
+                    className="w-11 h-11 shrink-0 flex items-center justify-center bg-paper2 rounded-xl text-ink-2 text-[14px] font-bold hover:text-danger"
                     aria-label="Remover recorrência"
                   >
                     ×
@@ -604,7 +619,7 @@ export function TimelineView({ tasks }: TimelineViewProps) {
 
             <div className="grid grid-cols-2 gap-2">
               <label className="flex flex-col gap-1">
-                <span className="text-[10px] font-bold uppercase tracking-wide text-ink-3">Prioridade · 0-10</span>
+                <span className="text-[12px] font-semibold uppercase tracking-wide text-ink-2">Prioridade · 0-10</span>
                 <input
                   type="number"
                   value={editForm.priority}
@@ -614,7 +629,7 @@ export function TimelineView({ tasks }: TimelineViewProps) {
                 />
               </label>
               <label className="flex flex-col gap-1">
-                <span className="text-[10px] font-bold uppercase tracking-wide text-ink-3">Energia · 0-10</span>
+                <span className="text-[12px] font-semibold uppercase tracking-wide text-ink-2">Energia · 0-10</span>
                 <input
                   type="number"
                   value={editForm.energy}
@@ -642,13 +657,13 @@ export function TimelineView({ tasks }: TimelineViewProps) {
             >
               <button
                 onClick={() => setEditingTask(null)}
-                className="flex-1 py-2.5 rounded-xl bg-paper2 text-[13px] font-extrabold text-ink-2"
+                className="flex-1 py-2.5 rounded-xl bg-paper2 text-[13px] font-bold text-ink-2"
               >
                 Cancelar
               </button>
               <button
                 onClick={saveEdit}
-                className="flex-1 py-2.5 rounded-xl bg-ink text-[13px] font-extrabold text-white"
+                className="flex-1 py-2.5 rounded-xl bg-ink text-[13px] font-bold text-white"
               >
                 Salvar
               </button>

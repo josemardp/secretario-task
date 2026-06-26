@@ -78,12 +78,12 @@ export function MultiTaskConfirmModal({
         {/* header */}
         <div className="px-5 pt-2 pb-3 flex items-start justify-between">
           <div className="flex items-start gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-ink text-white flex items-center justify-center shrink-0">
+            <div className="w-11 h-11 rounded-xl bg-ink text-white flex items-center justify-center shrink-0">
               <Sparkles size={16} strokeWidth={2.2} />
             </div>
             <div>
-              <div className="text-[10px] font-extrabold uppercase tracking-[0.06em] text-ink-3">
-                IA destrinchou
+              <div className="text-[12px] font-bold uppercase tracking-[0.06em] text-ink-2">
+                Tarefas detectadas
               </div>
               <div className="font-display text-[22px] tracking-[-0.02em] text-ink leading-tight mt-0.5">
                 {tasks.length} {tasks.length === 1 ? 'tarefa encontrada' : 'tarefas encontradas'}.
@@ -95,7 +95,7 @@ export function MultiTaskConfirmModal({
           </div>
           <button
             onClick={onCancel}
-            className="w-9 h-9 rounded-xl bg-paper2 flex items-center justify-center text-ink-2"
+            className="w-11 h-11 rounded-xl bg-paper2 flex items-center justify-center text-ink-2"
             aria-label="Fechar"
           >
             <X size={16} />
@@ -121,12 +121,12 @@ export function MultiTaskConfirmModal({
                     type="text"
                     value={task.title || ''}
                     onChange={(e) => updateTask(idx, { title: e.target.value })}
-                    className="flex-1 min-w-0 bg-transparent text-[15px] font-bold text-ink outline-none border-0 placeholder:text-ink-3"
+                    className="flex-1 min-w-0 bg-transparent text-[15px] font-semibold text-ink outline-none border-0 placeholder:text-ink-2"
                     placeholder="Título da tarefa"
                   />
                   <button
                     onClick={() => removeTask(idx)}
-                    className="w-8 h-8 rounded-xl bg-paper flex items-center justify-center text-danger hover:bg-danger-light shrink-0"
+                    className="w-11 h-11 rounded-xl bg-paper flex items-center justify-center text-danger hover:bg-danger-light shrink-0"
                     title="Remover"
                   >
                     <Trash2 size={14} />
@@ -135,23 +135,23 @@ export function MultiTaskConfirmModal({
 
                 {/* recurrence row */}
                 <div className="mt-2">
-                  <span className="text-[10px] font-bold uppercase tracking-wide text-ink-3 block mb-1">
+                  <span className="text-[12px] font-semibold uppercase tracking-wide text-ink-2 block mb-1">
                     Recorrência
                   </span>
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
                       onClick={() => setRecurrenceModalIdx(idx)}
-                      className="flex-1 h-11 bg-paper rounded-xl px-3 text-left text-[11px] font-semibold text-ink truncate inline-flex items-center gap-1.5"
+                      className="flex-1 h-11 bg-paper rounded-xl px-3 text-left text-[12px] font-semibold text-ink truncate inline-flex items-center gap-1.5"
                     >
-                      <Repeat size={10} strokeWidth={2.4} className="shrink-0 text-ink-3" />
+                      <Repeat size={12} strokeWidth={2.4} className="shrink-0 text-ink-2" />
                       {describeRecurrenceRule(typeof task.recurrence_rule === 'string' ? task.recurrence_rule : null)}
                     </button>
                     {task.recurrence_rule && (
                       <button
                         type="button"
                         onClick={() => updateTask(idx, { recurrence_rule: null })}
-                        className="w-11 h-11 shrink-0 flex items-center justify-center bg-paper rounded-xl text-ink-3 text-[14px] font-bold hover:text-danger"
+                        className="w-11 h-11 shrink-0 flex items-center justify-center bg-paper rounded-xl text-ink-2 text-[14px] font-bold hover:text-danger"
                         aria-label="Remover recorrência"
                       >
                         ×
@@ -177,7 +177,7 @@ export function MultiTaskConfirmModal({
                 {/* row 2: date + context */}
                 <div className="grid grid-cols-2 gap-2 mt-2.5">
                   <label className="flex flex-col gap-1">
-                    <span className="text-[10px] font-bold uppercase tracking-wide text-ink-3">Data e hora</span>
+                    <span className="text-[12px] font-semibold uppercase tracking-wide text-ink-2">Data e hora</span>
                     <input
                       type="datetime-local"
                       value={formatForInput(task.due_at)}
@@ -186,7 +186,7 @@ export function MultiTaskConfirmModal({
                     />
                   </label>
                   <label className="flex flex-col gap-1">
-                    <span className="text-[10px] font-bold uppercase tracking-wide text-ink-3">Contexto</span>
+                    <span className="text-[12px] font-semibold uppercase tracking-wide text-ink-2">Contexto</span>
                     <select
                       value={task.context}
                       onChange={(e) => updateTask(idx, { context: e.target.value as ContextType })}
@@ -199,7 +199,7 @@ export function MultiTaskConfirmModal({
 
                 {/* row 3: priority segmented */}
                 <div className="mt-2.5">
-                  <span className="text-[10px] font-bold uppercase tracking-wide text-ink-3 block mb-1">
+                  <span className="text-[12px] font-semibold uppercase tracking-wide text-ink-2 block mb-1">
                     Prioridade
                   </span>
                   <div className="flex bg-paper rounded-xl p-1 gap-1">
@@ -210,7 +210,7 @@ export function MultiTaskConfirmModal({
                           key={p.value}
                           onClick={() => updateTask(idx, { priority: p.value })}
                           className={[
-                            'flex-1 inline-flex items-center justify-center gap-1 py-1.5 rounded-lg text-[11px] font-extrabold transition-colors',
+                            'flex-1 inline-flex items-center justify-center gap-1 py-2 rounded-lg text-[12px] font-bold transition-colors',
                             on ? 'bg-ink text-white' : 'text-ink-2',
                           ].join(' ')}
                         >
@@ -236,14 +236,14 @@ export function MultiTaskConfirmModal({
         <div className="px-5 pt-3 flex items-center gap-2 border-t border-line">
           <button
             onClick={onCancel}
-            className="flex-1 h-11 rounded-xl bg-paper2 text-[13px] font-extrabold text-ink-2"
+            className="flex-1 h-11 rounded-xl bg-paper2 text-[13px] font-bold text-ink-2"
           >
             Cancelar
           </button>
           <button
             onClick={() => onConfirm(tasks)}
             disabled={tasks.length === 0}
-            className="flex-[1.4] h-11 rounded-xl bg-ink text-[13px] font-extrabold text-white disabled:opacity-40"
+            className="flex-[1.4] h-11 rounded-xl bg-ink text-[13px] font-bold text-white disabled:opacity-40"
           >
             Salvar {tasks.length > 0 ? tasks.length : ''} {tasks.length === 1 ? 'tarefa' : 'tarefas'}
           </button>

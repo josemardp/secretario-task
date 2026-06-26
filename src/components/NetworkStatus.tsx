@@ -7,7 +7,7 @@ export function NetworkStatus() {
 
   return (
     <div
-      className="fixed right-3 z-50 inline-flex items-center gap-1.5 bg-warning text-white px-3 rounded-xl shadow-soft text-[11px] font-extrabold"
+      className="fixed right-3 z-50 inline-flex items-center gap-1.5 bg-warning text-white px-3 rounded-xl shadow-soft text-[12px] font-bold"
       style={{
         bottom: 'calc(16px + env(safe-area-inset-bottom))',
         paddingTop: 8,

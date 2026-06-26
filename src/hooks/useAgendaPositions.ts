@@ -22,7 +22,7 @@ export function calculateAgendaBlocks(
   const startOfDay = new Date(selectedDate.getTime());
   startOfDay.setHours(8, 30, 0, 0);
 
-  let currentTime = new Date(isToday ? Math.max(now.getTime(), startOfDay.getTime()) : startOfDay.getTime());
+  const currentTime = new Date(isToday ? Math.max(now.getTime(), startOfDay.getTime()) : startOfDay.getTime());
   const m = currentTime.getMinutes();
   if (m > 0 && m <= 30) currentTime.setMinutes(30, 0, 0);
   else if (m > 30) currentTime.setHours(currentTime.getHours() + 1, 0, 0, 0);
@@ -165,14 +165,17 @@ export function useAgendaPositions(
   useEffect(() => {
     if (!isToday) return;
 
-    // Reset now to current date when changing to today
-    setNow(new Date());
+    // Reset now to current date when changing to today.
+    const frame = requestAnimationFrame(() => setNow(new Date()));
 
     const interval = setInterval(() => {
       setNow(new Date());
     }, 30000); // 30 seconds
 
-    return () => clearInterval(interval);
+    return () => {
+      cancelAnimationFrame(frame);
+      clearInterval(interval);
+    };
   }, [isToday]);
 
   const blocks = useMemo(() => {

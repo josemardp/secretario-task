@@ -75,9 +75,9 @@ export function CalendarWidget({ selectedDate, onSelectDate, onClose, tasks }: C
           className={[
             'h-10 w-10 rounded-xl flex items-center justify-center relative transition-colors tnum',
             isSelected
-              ? 'bg-ink text-white font-extrabold'
+              ? 'bg-ink text-white font-bold'
               : isToday
-                ? 'bg-paper2 text-ink font-extrabold ring-1 ring-line'
+                ? 'bg-paper2 text-ink font-bold ring-1 ring-line'
                 : 'text-ink hover:bg-paper2',
           ].join(' ')}
         >
@@ -116,12 +116,12 @@ export function CalendarWidget({ selectedDate, onSelectDate, onClose, tasks }: C
         <div className="flex items-center justify-between px-3 py-2.5">
           <button
             onClick={prevMonth}
-            className="w-9 h-9 rounded-xl bg-paper2 flex items-center justify-center text-ink-2"
+            className="w-11 h-11 rounded-xl bg-paper2 flex items-center justify-center text-ink-2"
           >
             <ChevronLeft size={16} />
           </button>
           <div className="text-center">
-            <div className="text-[10px] font-extrabold uppercase tracking-[0.06em] text-ink-3">
+            <div className="text-[12px] font-bold uppercase tracking-[0.06em] text-ink-2">
               Calendário
             </div>
             <div className="font-display text-[18px] text-ink leading-tight tracking-[-0.02em]">
@@ -130,14 +130,14 @@ export function CalendarWidget({ selectedDate, onSelectDate, onClose, tasks }: C
           </div>
           <button
             onClick={nextMonth}
-            className="w-9 h-9 rounded-xl bg-paper2 flex items-center justify-center text-ink-2"
+            className="w-11 h-11 rounded-xl bg-paper2 flex items-center justify-center text-ink-2"
           >
             <ChevronRight size={16} />
           </button>
         </div>
 
         {/* week labels */}
-        <div className="grid grid-cols-7 gap-1 px-4 text-center text-[10px] font-extrabold text-ink-3 tracking-[0.06em]">
+        <div className="grid grid-cols-7 gap-1 px-4 text-center text-[12px] font-bold text-ink-2 tracking-[0.06em]">
           {WEEK.map((d, i) => <div key={i}>{d}</div>)}
         </div>
 
@@ -153,7 +153,7 @@ export function CalendarWidget({ selectedDate, onSelectDate, onClose, tasks }: C
               onSelectDate(new Date());
               onClose();
             }}
-            className="flex-1 h-10 rounded-xl bg-paper2 text-[12px] font-extrabold text-ink"
+            className="flex-1 h-11 rounded-xl bg-paper2 text-[12px] font-bold text-ink"
           >
             Hoje
           </button>

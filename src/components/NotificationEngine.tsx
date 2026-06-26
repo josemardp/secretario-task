@@ -11,13 +11,13 @@ export function NotificationEngine() {
     // Only run if notifications are granted
     if (permission !== 'granted') return;
 
-    // 1. Daily Briefing Check (First open of the day)
+    // 1. Briefing do dia (primeira abertura do dia)
     const todayStr = new Date().toISOString().split('T')[0];
     const lastBriefingDate = localStorage.getItem('secretario-task:last-briefing-date');
     
     if (lastBriefingDate !== todayStr) {
-      sendNotification('Bom dia! ☀️', {
-        body: 'Abra o SecretárioTask para ver o seu Briefing Inteligente e começar o dia com energia!',
+      sendNotification('Briefing do dia', {
+        body: 'Abra o SecretárioTask para ver suas prioridades de hoje.',
         tag: 'daily-briefing' // Tag prevents duplicate popups
       });
       localStorage.setItem('secretario-task:last-briefing-date', todayStr);
@@ -37,7 +37,7 @@ export function NotificationEngine() {
         
         // Notify if task is due in 15 minutes or less, OR if it's already delayed by up to 60 mins
         if (timeDiffMinutes <= 15 && timeDiffMinutes >= -60) {
-          sendNotification(timeDiffMinutes < 0 ? '⚠️ Tarefa Atrasada!' : '⏰ Tarefa se aproximando', {
+          sendNotification(timeDiffMinutes < 0 ? 'Tarefa atrasada' : 'Tarefa se aproximando', {
             body: `A tarefa "${task.title}" está marcada para ${dueTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}.`,
             tag: `task-${task.id}`,
             requireInteraction: true // Keep it on screen until user clicks

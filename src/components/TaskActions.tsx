@@ -21,7 +21,7 @@ export function TaskActions({
       {showComplete && (
         <button
           onClick={onComplete}
-          className="inline-flex items-center gap-1 text-[11px] font-extrabold px-2.5 py-1.5 rounded-lg bg-success text-white hover:opacity-90 transition-colors"
+          className="min-h-11 inline-flex items-center gap-1 text-[12px] font-bold px-3 py-2 rounded-lg bg-success text-white hover:opacity-90 transition-colors"
           title="Marcar como concluído"
         >
           <Check size={12} strokeWidth={2.6} /> Concluir
@@ -30,7 +30,7 @@ export function TaskActions({
 
       <button
         onClick={onPostponeTomorrow}
-        className="inline-flex items-center gap-1 text-[11px] font-extrabold px-2.5 py-1.5 rounded-lg bg-paper2 text-ink hover:bg-paper3 transition-colors"
+        className="min-h-11 inline-flex items-center gap-1 text-[12px] font-bold px-3 py-2 rounded-lg bg-paper2 text-ink hover:bg-paper3 transition-colors"
         title="Adiar para amanhã"
       >
         <Sun size={12} strokeWidth={2.2} /> Amanhã
@@ -39,7 +39,7 @@ export function TaskActions({
       <div className="relative">
         <button
           onClick={() => dateInputRef.current?.showPicker?.()}
-          className="inline-flex items-center gap-1 text-[11px] font-extrabold px-2.5 py-1.5 rounded-lg bg-paper2 text-ink hover:bg-paper3 transition-colors"
+          className="min-h-11 inline-flex items-center gap-1 text-[12px] font-bold px-3 py-2 rounded-lg bg-paper2 text-ink hover:bg-paper3 transition-colors"
           title="Escolher outra data"
         >
           <Calendar size={12} strokeWidth={2.2} /> Adiar

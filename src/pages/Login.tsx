@@ -6,112 +6,109 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState('');
+  const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
   const navigate = useNavigate();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setMessage('');
+    setError('');
+    setNotice('');
 
     const { error } = await supabase.auth.signInWithPassword({ email, password });
 
-    if (error) {
-      setMessage(`Erro: ${error.message}`);
-    } else {
-      navigate('/');
-    }
+    if (error) setError(error.message);
+    else navigate('/');
+
     setLoading(false);
   };
 
   const handleSignUp = async () => {
     if (!email || !password) {
-      setMessage('Preencha e-mail e senha para criar a conta.');
+      setError('Preencha e-mail e senha para criar a conta.');
       return;
     }
+
     setLoading(true);
-    setMessage('');
+    setError('');
+    setNotice('');
 
     const { error } = await supabase.auth.signUp({ email, password });
 
-    if (error) {
-      setMessage(`Erro: ${error.message}`);
-    } else {
-      setMessage('Conta criada com sucesso! Você pode fazer login agora.');
-    }
+    if (error) setError(error.message);
+    else setNotice('Conta criada. Você já pode entrar.');
+
     setLoading(false);
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4 py-12 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
+    <div
+      className="min-h-screen bg-canvas flex flex-col justify-center px-5 safe-top safe-bottom font-sans text-ink"
+      style={{ width: '100%', maxWidth: '100vw' }}
+    >
+      <div className="w-full max-w-sm mx-auto">
+        <div className="mb-8">
+          <div className="text-[12px] font-bold uppercase tracking-[0.08em] text-ink-2">
             SecretárioTask
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Chefe de Gabinete Digital
+          </div>
+          <h1 className="font-display text-[34px] leading-[1.05] text-ink mt-1">
+            Seu chefe de gabinete.
+          </h1>
+          <p className="text-[13px] text-ink-2 mt-2 leading-snug">
+            Entre para ver o que importa hoje, em que ordem.
           </p>
         </div>
-        <form className="mt-8 space-y-4" onSubmit={handleLogin}>
-          <div className="-space-y-px rounded-md shadow-sm">
-            <div>
-              <label htmlFor="email-address" className="sr-only">
-                Endereço de e-mail
-              </label>
-              <input
-                id="email-address"
-                name="email"
-                type="email"
-                autoComplete="email"
-                required
-                className="relative block w-full rounded-t-md border-0 py-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-3"
-                placeholder="Seu e-mail"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-            <div>
-              <label htmlFor="password" className="sr-only">
-                Senha
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                className="relative block w-full rounded-b-md border-0 py-1.5 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:z-10 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6 px-3"
-                placeholder="Sua senha"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-          </div>
 
-          <div className="flex flex-col gap-2">
-            <button
-              type="submit"
-              disabled={loading}
-              className="group relative flex w-full justify-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-70"
-            >
-              {loading ? 'Aguarde...' : 'Entrar'}
-            </button>
-            <button
-              type="button"
-              onClick={handleSignUp}
-              disabled={loading}
-              className="group relative flex w-full justify-center rounded-md bg-white px-3 py-2 text-sm font-semibold text-indigo-600 ring-1 ring-inset ring-indigo-600 hover:bg-indigo-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-70"
-            >
-              Criar nova conta
-            </button>
-          </div>
-          
-          {message && (
-            <p className="mt-2 text-center text-sm font-medium text-red-600 bg-red-50 p-2 rounded">
-              {message}
-            </p>
+        <form onSubmit={handleLogin} className="flex flex-col gap-3">
+          <label className="flex flex-col gap-1.5">
+            <span className="text-[12px] font-semibold uppercase tracking-wide text-ink-2">E-mail</span>
+            <input
+              type="email"
+              autoComplete="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="voce@email.com"
+              className="h-12 bg-paper border border-line rounded-xl px-3.5 text-[16px] text-ink outline-none placeholder:text-ink-2 focus:border-ink"
+            />
+          </label>
+
+          <label className="flex flex-col gap-1.5">
+            <span className="text-[12px] font-semibold uppercase tracking-wide text-ink-2">Senha</span>
+            <input
+              type="password"
+              autoComplete="current-password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              className="h-12 bg-paper border border-line rounded-xl px-3.5 text-[16px] text-ink outline-none placeholder:text-ink-2 focus:border-ink"
+            />
+          </label>
+
+          {error && (
+            <p className="text-[12px] font-semibold text-danger leading-snug">{error}</p>
           )}
+          {notice && (
+            <p className="text-[12px] font-semibold text-success leading-snug">{notice}</p>
+          )}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="h-12 mt-1 rounded-xl bg-ink text-white text-[14px] font-bold disabled:opacity-50"
+          >
+            {loading ? 'Entrando...' : 'Entrar'}
+          </button>
+          <button
+            type="button"
+            onClick={handleSignUp}
+            disabled={loading}
+            className="h-12 rounded-xl bg-paper2 text-ink text-[14px] font-bold disabled:opacity-50"
+          >
+            Criar conta
+          </button>
         </form>
       </div>
     </div>

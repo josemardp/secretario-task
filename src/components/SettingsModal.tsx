@@ -31,7 +31,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
       onClose();
     } catch (err) {
       console.error('Erro ao salvar chave:', err);
-      setSaveError('Nao foi possivel salvar a chave agora. Tente novamente.');
+      setSaveError('Não foi possível salvar a chave agora. Tente novamente.');
     } finally {
       setIsSaving(false);
     }
@@ -57,16 +57,16 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         {/* header */}
         <div className="px-5 pt-2 pb-3 flex items-start justify-between">
           <div>
-            <div className="text-[10px] font-extrabold uppercase tracking-[0.06em] text-ink-3">
+            <div className="text-[12px] font-bold uppercase tracking-[0.06em] text-ink-2">
               Configurações
             </div>
             <div className="font-display text-[24px] tracking-[-0.02em] text-ink mt-0.5 leading-tight">
-              Sua conta &amp; ajustes.
+              Conta e ajustes.
             </div>
           </div>
           <button
             onClick={onClose}
-            className="w-9 h-9 rounded-xl bg-paper2 flex items-center justify-center text-ink-2"
+            className="w-11 h-11 rounded-xl bg-paper2 flex items-center justify-center text-ink-2"
             aria-label="Fechar"
           >
             <X size={16} />
@@ -82,12 +82,12 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 <Sparkles size={15} strokeWidth={2} />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-[13px] font-extrabold text-ink leading-tight">
-                  Chave da OpenAI
+                <div className="text-[13px] font-bold text-ink leading-tight">
+                  Recursos avançados
                 </div>
                 <p className="text-[11px] text-ink-2 mt-1 leading-snug">
-                  Salva na nuvem, vinculada à sua conta. Usada para parser inteligente,
-                  briefings e busca semântica.
+                  A chave fica vinculada à sua conta e ativa recursos opcionais como
+                  captura por voz, briefing e busca avançada.
                 </p>
               </div>
             </div>
@@ -96,7 +96,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               value={apiKeyInput}
               onChange={(e) => setApiKeyInput(e.target.value)}
               placeholder="sk-proj-…"
-              className="w-full bg-paper2 rounded-xl px-3 py-2.5 text-[13px] text-ink outline-none border-0 placeholder:text-ink-3 tnum"
+              className="w-full bg-paper2 rounded-xl px-3 py-2.5 text-[13px] text-ink outline-none border-0 placeholder:text-ink-2 tnum"
             />
             {saveError && (
               <p className="mt-2 text-[11px] font-semibold text-danger">
@@ -112,11 +112,11 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 <Bell size={15} strokeWidth={2} />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-[13px] font-extrabold text-ink leading-tight">
+                <div className="text-[13px] font-bold text-ink leading-tight">
                   Notificações
                 </div>
                 <p className="text-[11px] text-ink-2 mt-1 leading-snug">
-                  Receba lembretes nativos sobre tarefas vencendo e do Daily Briefing,
+                  Receba lembretes nativos sobre tarefas vencendo e o Briefing do dia,
                   mesmo com o app minimizado.
                 </p>
               </div>
@@ -135,7 +135,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               <button
                 type="button"
                 onClick={() => requestPermission()}
-                className="inline-flex items-center gap-1.5 bg-ink text-white px-3 py-2 rounded-xl text-[12px] font-extrabold"
+                className="inline-flex items-center gap-1.5 min-h-11 bg-ink text-white px-3 py-2 rounded-xl text-[12px] font-bold"
               >
                 Ativar notificações
               </button>
@@ -145,7 +145,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           {/* Sign out */}
           <section className="bg-paper border border-line rounded-2xl px-4 py-3 flex items-center justify-between">
             <div>
-              <div className="text-[13px] font-extrabold text-ink">Sair da conta</div>
+              <div className="text-[13px] font-bold text-ink">Sair da conta</div>
               <div className="text-[11px] text-ink-2">Seus dados sincronizados ficam salvos.</div>
             </div>
             <button
@@ -153,7 +153,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                 await supabase.auth.signOut();
                 onClose();
               }}
-              className="inline-flex items-center gap-1.5 text-danger text-[12px] font-extrabold px-3 py-2 rounded-xl bg-danger-light"
+              className="inline-flex items-center gap-1.5 min-h-11 text-danger text-[12px] font-bold px-3 py-2 rounded-xl bg-danger-light"
             >
               <LogOut size={14} /> Sair
             </button>
@@ -164,14 +164,14 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         <div className="px-5 pt-2 flex items-center gap-2 border-t border-line">
           <button
             onClick={onClose}
-            className="flex-1 h-11 rounded-xl bg-paper2 text-[13px] font-extrabold text-ink-2"
+            className="flex-1 h-11 rounded-xl bg-paper2 text-[13px] font-bold text-ink-2"
           >
             Cancelar
           </button>
           <button
             onClick={handleSave}
             disabled={isSaving}
-            className="flex-1 h-11 rounded-xl bg-ink text-[13px] font-extrabold text-white"
+            className="flex-1 h-11 rounded-xl bg-ink text-[13px] font-bold text-white"
           >
             {isSaving ? 'Salvando...' : 'Salvar'}
           </button>

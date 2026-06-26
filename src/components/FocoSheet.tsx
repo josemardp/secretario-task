@@ -67,7 +67,7 @@ export function FocoSheet({
         {/* header — fora do scroll */}
         <div className="px-5 flex items-start justify-between flex-shrink-0">
           <div>
-            <div className="text-[10px] font-extrabold tracking-[0.06em] uppercase text-ink-3">
+            <div className="text-[12px] font-bold tracking-[0.06em] uppercase text-ink-2">
               Foco · Top 3
             </div>
             <div className="font-display text-[26px] leading-[1.1] text-ink mt-1">
@@ -78,14 +78,14 @@ export function FocoSheet({
             <button
               onClick={onGenerateBriefing}
               disabled={isGeneratingBriefing}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-ink text-white text-[11px] font-extrabold disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 min-h-11 px-3 rounded-xl bg-ink text-white text-[12px] font-bold disabled:opacity-50"
             >
               <Sparkles size={12} strokeWidth={2.2} />
-              {isGeneratingBriefing ? 'Pensando…' : 'Briefing'}
+              {isGeneratingBriefing ? 'Gerando...' : 'Briefing'}
             </button>
             <button
               onClick={onClose}
-              className="w-8 h-8 rounded-xl bg-paper2 flex items-center justify-center text-ink-2"
+              className="w-11 h-11 rounded-xl bg-paper2 flex items-center justify-center text-ink-2"
               aria-label="Fechar"
             >
               <X size={16} />
@@ -110,14 +110,10 @@ export function FocoSheet({
         {top1 ? (
           <div className="px-5 mt-3">
             <div className="bg-ink text-white rounded-2xl px-3.5 pt-3.5 pb-3 relative overflow-hidden">
-              <div
-                className="absolute -top-10 -right-10 w-40 h-40 rounded-full"
-                style={{ background: 'radial-gradient(circle, rgba(200,142,42,.35), transparent 70%)' }}
-              />
               <div className="relative flex items-center justify-between mb-1.5">
-                <span className="text-[10px] font-extrabold tracking-[0.06em] text-amber-soft">TOP 1</span>
+                <span className="text-[12px] font-bold tracking-[0.06em] text-amber-soft">TOP 1</span>
                 {top1.priority > 0 && (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/10 text-amber-soft text-[10px] font-extrabold">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/10 text-amber-soft text-[12px] font-bold">
                     <Flag size={10} strokeWidth={2.4} /> P{top1.priority}
                   </span>
                 )}
@@ -132,7 +128,7 @@ export function FocoSheet({
               </div>
               <button
                 onClick={() => onStartTop1?.(top1)}
-                className="relative mt-2.5 w-full h-9 rounded-xl bg-white text-ink text-[12px] font-extrabold inline-flex items-center justify-center gap-1.5"
+                className="relative mt-2.5 w-full h-11 rounded-xl bg-white text-ink text-[13px] font-bold inline-flex items-center justify-center gap-1.5"
               >
                 <ArrowRight size={14} strokeWidth={2.4} /> Iniciar agora
               </button>
@@ -154,12 +150,12 @@ export function FocoSheet({
                 key={t.id}
                 className={`px-3 py-2.5 bg-paper border border-line rounded-xl border-l-4 ${CTX_BAR[t.context]} flex items-center gap-2.5`}
               >
-                <span className="text-[10px] font-extrabold tracking-[0.05em] text-ink-3 w-7">
+                <span className="text-[12px] font-bold tracking-[0.05em] text-ink-2 w-10">
                   TOP {i + 2}
                 </span>
                 <div className="flex-1 min-w-0">
-                  <div className="text-[13px] font-bold text-ink truncate">{t.title}</div>
-                  <div className="text-[10px] text-ink-3 mt-0.5 tnum">
+                  <div className="text-[13px] font-semibold text-ink truncate">{t.title}</div>
+                  <div className="text-[12px] text-ink-2 mt-0.5 tnum">
                     {t.due_at
                       ? new Date(t.due_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
                       : 'sem horário'}{' '}
