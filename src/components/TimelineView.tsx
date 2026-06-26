@@ -51,70 +51,74 @@ function AgendaQuickActions({
   const dateInputRef = useRef<HTMLInputElement>(null);
 
   return (
-    <div className="flex items-center gap-1.5 flex-wrap">
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          onComplete();
-        }}
-        className="h-8 px-2.5 rounded-lg bg-success text-white text-[12px] font-bold"
-      >
-        Concluir
-      </button>
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          onPostponeTomorrow();
-        }}
-        className="h-8 px-2.5 rounded-lg bg-paper2 text-ink text-[12px] font-bold"
-      >
-        Amanhã
-      </button>
-      <div className="relative">
+    <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center gap-1.5 flex-wrap min-w-0">
         <button
           type="button"
           onClick={(e) => {
             e.stopPropagation();
-            dateInputRef.current?.showPicker?.();
+            onComplete();
+          }}
+          className="h-8 px-2.5 rounded-lg bg-success text-white text-[12px] font-bold"
+        >
+          Concluir
+        </button>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onPostponeTomorrow();
           }}
           className="h-8 px-2.5 rounded-lg bg-paper2 text-ink text-[12px] font-bold"
         >
-          Adiar
+          Amanhã
         </button>
-        <input
-          ref={dateInputRef}
-          type="date"
-          className="absolute opacity-0 w-0 h-0 p-0 m-0 border-0"
-          onClick={(e) => e.stopPropagation()}
-          onChange={(e) => {
-            if (e.target.value) onPostponeDate(e.target.value);
-          }}
-        />
+        <div className="relative">
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              dateInputRef.current?.showPicker?.();
+            }}
+            className="h-8 px-2.5 rounded-lg bg-paper2 text-ink text-[12px] font-bold"
+          >
+            Adiar
+          </button>
+          <input
+            ref={dateInputRef}
+            type="date"
+            className="absolute opacity-0 w-0 h-0 p-0 m-0 border-0"
+            onClick={(e) => e.stopPropagation()}
+            onChange={(e) => {
+              if (e.target.value) onPostponeDate(e.target.value);
+            }}
+          />
+        </div>
       </div>
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          onEdit();
-        }}
-        className="h-8 px-2.5 rounded-lg bg-paper2 text-ink text-[12px] font-bold inline-flex items-center gap-1"
-        title="Editar"
-      >
-        <Edit3 size={12} /> Editar
-      </button>
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          onDelete();
-        }}
-        className="h-8 px-2.5 rounded-lg bg-danger-light text-danger text-[12px] font-bold inline-flex items-center gap-1"
-        title="Excluir"
-      >
-        <Trash2 size={12} /> Excluir
-      </button>
+      <div className="flex items-center gap-1.5 shrink-0">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onEdit();
+          }}
+          className="h-8 px-2.5 rounded-lg bg-paper2 text-ink text-[12px] font-bold inline-flex items-center gap-1"
+          title="Editar"
+        >
+          <Edit3 size={12} /> Editar
+        </button>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+          }}
+          className="h-8 px-2.5 rounded-lg bg-danger-light text-danger text-[12px] font-bold inline-flex items-center gap-1"
+          title="Excluir"
+        >
+          <Trash2 size={12} /> Excluir
+        </button>
+      </div>
     </div>
   );
 }
