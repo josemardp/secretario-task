@@ -23,7 +23,36 @@
 
 # Sprint atual
 
-Coach de Produtividade — Sprint 6 concluído
+Coach de Produtividade — Sprint 7 concluído
+
+---
+
+# Coach de Produtividade — Sprint 7 — Fase 3A: Dashboard confiável mínimo
+
+Data: 2026-06-26
+
+## Objetivo
+Refatorar o Dashboard para consumir os dados honestos dos Sprints 2 a 6, separando conclusões reais, histórico aproximado, encerramentos sem execução, fila aberta, bloqueios/adiamentos e qualidade do dado.
+
+## Resultado
+- `DashboardView` passou a separar conclusões confirmadas, histórico aproximado e conclusões com dado incompleto.
+- Métricas de horário e semana usam somente `completed_at` com `completed_at_confidence='confirmed'`.
+- Histórico `legacy_approx` aparece apenas em contagem agregada rotulada como "Histórico aproximado".
+- Encerradas sem execução aparecem separadas por `cancelled`, `delegated` e `obsolete`, sem contar como conclusão.
+- A fila ativa separa abertas executáveis de aguardando/bloqueadas/adiadas.
+- Adiamentos com e sem motivo são exibidos separadamente; ausência de motivo é apresentada como dívida de dado.
+- Estimado vs. real usa somente tempo real com origem conhecida; tempos `unknown` ou sem origem aparecem em qualidade do dado.
+- Qualidade do dado é textual e segmentada, sem score único.
+- `updated_at` não é usado como conclusão no Dashboard.
+- `BehavioralSuggestion` permanece desativado.
+- Nenhuma migration foi criada.
+
+## Validações
+- `npm run lint`: passou.
+- `npm run build`: passou; Vite manteve aviso de chunk maior que 500 kB.
+
+## Próximo sprint recomendado
+Sprint 8 — Fase 4: Motor determinístico testável.
 
 ---
 
@@ -54,6 +83,7 @@ Corrigir reabertura, impedir que timers antigos inflem tempo real confiável e p
 - `supabase db push --dry-run`: passou; listou somente `0018_postpone_blocker_type.sql`.
 - `supabase db push --linked`: passou; `0018` aplicada no Supabase remoto.
 - `supabase migration list --linked`: confirmado após aplicação; remoto alinhado até `0018`.
+- Commit/push: `090f1ef fix: ajustar fluxos de reabertura e adiamento (Sprint 6)` enviado para `origin/main`.
 
 ## Validações
 - `npm run lint`: passou.

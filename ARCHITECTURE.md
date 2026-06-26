@@ -281,6 +281,18 @@ Reabrir tarefa concluída ou encerrada sem execução limpa a resolução corren
 
 Eventos antigos em `task_events` permanecem preservados; a reabertura adiciona um novo evento `reopened` best-effort.
 
+## Regimes de dado no Dashboard
+
+O Dashboard separa leitura operacional de qualidade do dado:
+- Conclusões confirmadas: `resolution_type='completed'`, `completed_at` preenchido e `completed_at_confidence='confirmed'`. Alimentam semana, hoje e horário de pico.
+- Histórico aproximado: `completed_at_confidence='legacy_approx'`. Pode aparecer em contagem agregada rotulada, mas não alimenta métricas de horário.
+- Encerradas sem execução: `resolution_type IN ('cancelled','delegated','obsolete')`. São vazão de encerramento, não conclusão.
+- Fila ativa executável: tarefas abertas por `isOpenTask` sem bloqueio ou adiamento informado.
+- Aguardando/bloqueadas/adiadas: tarefas abertas com `blocker_type` ou `postponed_count > 0`.
+- Qualidade do dado: contagens textuais de fontes de estimativa e tempo real, incluindo tempo real `unknown` como baixa confiança.
+
+Esses blocos não formam score de produtividade. Eles apenas declaram a confiabilidade e a composição dos dados exibidos.
+
 ## Campo `recurrence_origin_id`
 
 - UUID nullable referenciando `tasks(id)` com `ON DELETE SET NULL`

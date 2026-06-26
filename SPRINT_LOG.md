@@ -19,6 +19,59 @@ Este documento define:
 
 ---
 
+# Coach de Produtividade — Sprint 7 — Fase 3A: Dashboard confiável mínimo
+
+Data: 2026-06-26
+
+## Objetivo
+Refatorar o Dashboard para exibir métricas confiáveis, separando execução real, encerramento sem execução, fila ativa, bloqueios/adiamentos e qualidade do dado, sem criar diagnóstico comportamental novo.
+
+## Resumo do que foi feito
+- `DashboardView` foi reorganizado para usar `resolution_type`, `completed_at`, `completed_at_confidence`, `actual_minutes_source`, `estimated_minutes_source`, `blocker_type` e `postponed_count`.
+- Conclusões confirmadas aparecem como bloco próprio e alimentam semana, hoje e horário de pico.
+- Histórico `legacy_approx` aparece como "Histórico aproximado" e não alimenta métricas de horário.
+- Encerradas sem execução aparecem separadas em canceladas, delegadas e obsoletas.
+- Abertas executáveis foram separadas de aguardando/bloqueadas/adiadas.
+- Adiadas com motivo e sem motivo informado aparecem separadamente.
+- Estimado vs. real considera apenas tempo real com origem conhecida.
+- Tempo real `unknown` ou sem origem aparece em "Tempo real com baixa confiança".
+- Estimativas por IA/default/parser/manual aparecem como qualidade do dado, sem precisão forte.
+- `updated_at` não é usado como conclusão no Dashboard.
+- `BehavioralSuggestion` permanece desativado.
+- Nenhum score de produtividade foi criado.
+- Nenhuma migration foi criada.
+
+## Arquivos alterados
+- `src/components/DashboardView.tsx`
+- `STATUS.md`
+- `SPRINT_LOG.md`
+- `ROADMAP.md`
+- `DECISIONS.md`
+- `ARCHITECTURE.md`
+- `PRD.md`
+
+## Validações executadas
+- `npm run lint`: passou.
+- `npm run build`: passou; Vite manteve aviso de chunk maior que 500 kB.
+
+## Bugs ou achados
+- O Sprint 6 estava enviado em `090f1ef`, mas o `SPRINT_LOG.md` ainda dizia que commit/push seriam registrados no relatório final.
+- Não foi encontrado uso de `updated_at` como conclusão no Dashboard ou no `behaviorEngine`; os usos restantes em `src` são técnicos de edição/sync.
+
+## Decisões tomadas
+- Manter `BehavioralSuggestion` desativado no Sprint 7; a reativação fica para depois de um gate explícito de massa de dados confirmados e sem diagnóstico novo.
+- Exibir qualidade de dado como contagens e texto, sem score único.
+- Tratar adiamento sem motivo como dívida de dado, não como diagnóstico comportamental.
+
+## Pendências
+- Sprint 8 deve criar o motor determinístico testável (`diagnostics.ts`) e decidir o mecanismo de fixtures/teste.
+- Reativação de sugestão comportamental permanece pendente de gate futuro e massa suficiente de dados confirmados.
+
+## Resultado
+Sprint 7 implementado com lint/build verdes e sem migration.
+
+---
+
 # Coach de Produtividade — Sprint 6 — Fase 2: Ajustes nos fluxos existentes
 
 Data: 2026-06-26
@@ -78,7 +131,7 @@ Fechar lacunas dos fluxos existentes: reabertura limpa, teto plausível de timer
 - Sprint 7 deve consolidar o Dashboard confiável mínimo consumindo as fontes e confidências já registradas.
 
 ## Resultado
-Sprint 6 implementado e migration `0018` aplicada remotamente. Commit/push serão registrados no relatório final.
+Sprint 6 implementado, migration `0018` aplicada remotamente e enviado para `origin/main` no commit `090f1ef fix: ajustar fluxos de reabertura e adiamento (Sprint 6)`.
 
 ---
 

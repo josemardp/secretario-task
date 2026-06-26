@@ -123,56 +123,132 @@ function SectionCard({ title, eyebrow, children }: { title?: string; eyebrow?: s
   );
 }
 
+function DataLine({ label, value, detail }: { label: string; value: React.ReactNode; detail?: string }) {
+  return (
+    <div className="flex items-start justify-between gap-3 py-2 border-b border-border last:border-b-0">
+      <div className="min-w-0">
+        <div className="text-[13px] font-bold text-ink">{label}</div>
+        {detail && <div className="mt-0.5 text-[11px] text-ink-secondary">{detail}</div>}
+      </div>
+      <div className="text-[13px] font-bold text-ink tnum shrink-0">{value}</div>
+    </div>
+  );
+}
+
+function isConfirmedCompletion(task: Task): boolean {
+  return task.resolution_type === 'completed' &&
+    !!task.completed_at &&
+    task.completed_at_confidence === 'confirmed';
+}
+
+function isLegacyCompletion(task: Task): boolean {
+  return task.resolution_type === 'completed' &&
+    !!task.completed_at &&
+    task.completed_at_confidence === 'legacy_approx';
+}
+
+function isTrustedActualMinutes(task: Task): boolean {
+  return task.actual_minutes != null &&
+    task.actual_minutes_source !== 'unknown' &&
+    !!task.actual_minutes_source;
+}
+
+function blockerLabel(type: Task['blocker_type']): string {
+  if (type === 'waiting_third_party') return 'Aguardando terceiro';
+  if (type === 'no_time') return 'Sem tempo';
+  if (type === 'priority_changed') return 'Prioridade mudou';
+  if (type === 'needs_split') return 'Precisa dividir';
+  if (type === 'dependency') return 'Dependência';
+  return 'Sem motivo informado';
+}
+
 export function DashboardView({ tasks }: DashboardViewProps) {
   const chartTheme = useChartTheme();
 
-  const doneTasks = useMemo(
-    () => tasks.filter(t => t.status === 'done' && !t.deleted_at && !isClosedWithoutExecution(t)),
+  const liveTasks = useMemo(
+    () => tasks.filter(t => !t.deleted_at),
     [tasks]
   );
 
-  const confirmedDoneTasks = useMemo(
-    () => doneTasks.filter(t => t.completed_at && t.completed_at_confidence === 'confirmed'),
-    [doneTasks]
+  const completedTasks = useMemo(
+    () => liveTasks.filter(t => t.resolution_type === 'completed' && !!t.completed_at),
+    [liveTasks]
+  );
+
+  const confirmedCompletedTasks = useMemo(
+    () => completedTasks.filter(isConfirmedCompletion),
+    [completedTasks]
+  );
+
+  const legacyCompletedTasks = useMemo(
+    () => completedTasks.filter(isLegacyCompletion),
+    [completedTasks]
+  );
+
+  const completedWithWeakTimestamp = useMemo(
+    () => completedTasks.filter(t => !isConfirmedCompletion(t) && !isLegacyCompletion(t)),
+    [completedTasks]
+  );
+
+  const closedWithoutExecutionTasks = useMemo(
+    () => liveTasks.filter(isClosedWithoutExecution),
+    [liveTasks]
+  );
+
+  const openTasks = useMemo(
+    () => liveTasks.filter(isOpenTask),
+    [liveTasks]
+  );
+
+  const waitingTasks = useMemo(
+    () => openTasks.filter(t => !!t.blocker_type || (t.postponed_count ?? 0) > 0),
+    [openTasks]
+  );
+
+  const executableOpenTasks = useMemo(
+    () => openTasks.filter(t => !waitingTasks.includes(t)),
+    [openTasks, waitingTasks]
   );
 
   // contexts pie
   const contextData = useMemo(() => {
     const counts: Record<string, number> = {};
-    doneTasks.forEach(t => { counts[t.context] = (counts[t.context] || 0) + 1; });
+    completedTasks.forEach(t => { counts[t.context] = (counts[t.context] || 0) + 1; });
     return Object.entries(counts).map(([name, value]) => ({ name, value }));
-  }, [doneTasks]);
+  }, [completedTasks]);
 
   // estimated vs real
-  const timeData = useMemo(() => doneTasks
-    .filter(t => t.estimated_minutes && t.actual_minutes)
+  const timeData = useMemo(() => completedTasks
+    .filter(t => t.estimated_minutes && isTrustedActualMinutes(t))
     .slice(-15)
     .map(t => ({
       name: t.title.length > 14 ? t.title.slice(0, 14) + '…' : t.title,
       estimado: t.estimated_minutes,
       real: Math.round(t.actual_minutes || 0),
+      estimativa: t.estimated_minutes_source ?? 'sem origem',
+      origemReal: t.actual_minutes_source ?? 'sem origem',
     })),
-  [doneTasks]);
+  [completedTasks]);
 
   // peak hour
   const peakHourData = useMemo(() => {
     const hourCounts: Record<string, number> = {};
     for (let i = 6; i <= 23; i++) hourCounts[`${i}h`] = 0;
-    confirmedDoneTasks.forEach(t => {
+    confirmedCompletedTasks.forEach(t => {
       if (!t.completed_at) return;
       const hour = new Date(t.completed_at).getHours();
       const key = `${hour}h`;
       if (hourCounts[key] !== undefined) hourCounts[key]++;
     });
     return Object.entries(hourCounts).map(([hora, concluídas]) => ({ hora, concluídas }));
-  }, [confirmedDoneTasks]);
+  }, [confirmedCompletedTasks]);
 
   // avg priority
   const avgPriority = useMemo(() => {
-    if (doneTasks.length === 0) return '0';
-    const sum = doneTasks.reduce((acc, t) => acc + t.priority, 0);
-    return (sum / doneTasks.length).toFixed(1);
-  }, [doneTasks]);
+    if (completedTasks.length === 0) return '0';
+    const sum = completedTasks.reduce((acc, t) => acc + t.priority, 0);
+    return (sum / completedTasks.length).toFixed(1);
+  }, [completedTasks]);
 
   // last 7 days
   const dailyData = useMemo(() => {
@@ -184,18 +260,18 @@ export function DashboardView({ tasks }: DashboardViewProps) {
       const key = d.toLocaleDateString('pt-BR', { weekday: 'short' });
       data.push({ dia: key.slice(0, 1).toUpperCase(), tarefas: 0, key });
     }
-    confirmedDoneTasks.forEach(t => {
+    confirmedCompletedTasks.forEach(t => {
       if (!t.completed_at) return;
       const d = new Date(t.completed_at);
-      const diffDays = Math.ceil(Math.abs(today.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
-      if (diffDays <= 7) {
+      const diffDays = Math.floor((today.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
+      if (diffDays >= 0 && diffDays <= 6) {
         const k = d.toLocaleDateString('pt-BR', { weekday: 'short' });
         const row = data.find(r => r.key === k);
         if (row) row.tarefas++;
       }
     });
     return data;
-  }, [confirmedDoneTasks]);
+  }, [confirmedCompletedTasks]);
 
   const weekTotal = dailyData.reduce((a, r) => a + r.tarefas, 0);
   const todayCount = dailyData[dailyData.length - 1]?.tarefas ?? 0;
@@ -203,18 +279,57 @@ export function DashboardView({ tasks }: DashboardViewProps) {
   const recentConfirmedContextData = useMemo(() => {
     const counts: Record<string, number> = {};
     const today = new Date();
-    confirmedDoneTasks.forEach(t => {
+    confirmedCompletedTasks.forEach(t => {
       if (!t.completed_at) return;
       const completedAt = new Date(t.completed_at);
-      const diffDays = Math.ceil(Math.abs(today.getTime() - completedAt.getTime()) / (1000 * 60 * 60 * 24));
-      if (diffDays <= 7) counts[t.context] = (counts[t.context] || 0) + 1;
+      const diffDays = Math.floor((today.getTime() - completedAt.getTime()) / (1000 * 60 * 60 * 24));
+      if (diffDays >= 0 && diffDays <= 6) counts[t.context] = (counts[t.context] || 0) + 1;
     });
     return Object.entries(counts).map(([name, value]) => ({ name, value }));
-  }, [confirmedDoneTasks]);
+  }, [confirmedCompletedTasks]);
 
-  if (doneTasks.length === 0) {
+  const closedCounts = useMemo(() => ({
+    cancelled: closedWithoutExecutionTasks.filter(t => t.resolution_type === 'cancelled').length,
+    delegated: closedWithoutExecutionTasks.filter(t => t.resolution_type === 'delegated').length,
+    obsolete: closedWithoutExecutionTasks.filter(t => t.resolution_type === 'obsolete').length,
+  }), [closedWithoutExecutionTasks]);
+
+  const postponedOpenTasks = useMemo(
+    () => openTasks.filter(t => (t.postponed_count ?? 0) > 0),
+    [openTasks]
+  );
+
+  const postponedWithReason = postponedOpenTasks.filter(t => !!t.blocker_type).length;
+  const postponedWithoutReason = postponedOpenTasks.length - postponedWithReason;
+
+  const blockerCounts = useMemo(() => {
+    const counts: Partial<Record<NonNullable<Task['blocker_type']>, number>> = {};
+    waitingTasks.forEach((task) => {
+      if (!task.blocker_type) return;
+      counts[task.blocker_type] = (counts[task.blocker_type] ?? 0) + 1;
+    });
+    return Object.entries(counts).map(([type, value]) => ({ type: type as Task['blocker_type'], value }));
+  }, [waitingTasks]);
+
+  const trustedActualCount = completedTasks.filter(isTrustedActualMinutes).length;
+  const lowConfidenceActualCount = completedTasks.filter(t => t.actual_minutes != null && t.actual_minutes_source === 'unknown').length;
+  const actualWithoutSourceCount = completedTasks.filter(t => t.actual_minutes != null && !t.actual_minutes_source).length;
+
+  const estimateSourceCounts = {
+    manual: completedTasks.filter(t => t.estimated_minutes_source === 'manual').length,
+    parser: completedTasks.filter(t => t.estimated_minutes_source === 'parser').length,
+    ai: completedTasks.filter(t => t.estimated_minutes_source === 'ai').length,
+    default_30: completedTasks.filter(t => t.estimated_minutes_source === 'default_30').length,
+    unknown: completedTasks.filter(t => t.estimated_minutes != null && !t.estimated_minutes_source).length,
+  };
+
+  const confirmedShareText = completedTasks.length > 0
+    ? `${confirmedCompletedTasks.length}/${completedTasks.length} conclusões com timestamp confirmado`
+    : 'Nenhuma conclusão com timestamp próprio ainda';
+
+  if (liveTasks.length === 0) {
     return (
-      <EmptyState title="Sem dados ainda" hint="Conclua tarefas para ver suas estatísticas." />
+      <EmptyState title="Sem dados ainda" hint="Capture ou conclua tarefas para ver a higiene da fila." />
     );
   }
 
@@ -235,7 +350,7 @@ export function DashboardView({ tasks }: DashboardViewProps) {
               <ChevronUp size={11} strokeWidth={2.6} /> hoje: {todayCount}
             </div>
             <div className="mt-1 text-[11px] text-ink-secondary">
-              Usa conclusões confirmadas; histórico anterior fica fora das métricas de horário.
+              Usa apenas conclusões confirmadas. Histórico aproximado fica separado.
             </div>
           </div>
 
@@ -289,29 +404,69 @@ export function DashboardView({ tasks }: DashboardViewProps) {
 
       {/* Mini cards */}
       <div className="grid grid-cols-2 gap-3">
-        <StatCard label="Total" value={doneTasks.length} sub="concluídas no histórico" />
+        <StatCard label="Concluídas confirmadas" value={confirmedCompletedTasks.length} sub="pós-saneamento" />
+        <StatCard label="Histórico aproximado" value={legacyCompletedTasks.length} sub="legado, horário frágil" />
         <StatCard
-          label="Confirmadas"
-          value={<>{todayCount}<span className="text-ink-secondary font-normal text-[14px]"> hoje</span></>}
-          sub={`média semana ${(weekTotal / 7).toFixed(1)}/dia`}
+          label="Abertas executáveis"
+          value={executableOpenTasks.length}
+          sub="sem resolução terminal nem bloqueio informado"
         />
-        <StatCard label="Prioridade média" value={avgPriority} sub="das concluídas" />
         <StatCard
-          label="Adiadas"
-          value={tasks.filter(t => (t.postponed_count ?? 0) > 0 && isOpenTask(t)).length}
-          sub="tarefas abertas com adiamento"
+          label="Aguardando/bloqueadas"
+          value={waitingTasks.length}
+          sub={`${postponedWithoutReason} adiadas sem motivo informado`}
         />
+        <StatCard label="Prioridade média" value={avgPriority} sub="das conclusões registradas" />
       </div>
+
+      <SectionCard eyebrow="Fluxo" title="Concluídas e encerradas sem execução">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="rounded-xl bg-surface-sunken px-3 py-2.5">
+            <DataLine label="Concluídas confirmadas" value={confirmedCompletedTasks.length} detail="Contam como execução feita." />
+            <DataLine label="Histórico aproximado" value={legacyCompletedTasks.length} detail="Conta agregada; horário não alimenta padrões." />
+            <DataLine label="Conclusões com dado incompleto" value={completedWithWeakTimestamp.length} detail="Exigem cuidado até saneamento futuro." />
+          </div>
+          <div className="rounded-xl bg-surface-sunken px-3 py-2.5">
+            <DataLine label="Canceladas" value={closedCounts.cancelled} detail="Encerradas sem execução." />
+            <DataLine label="Delegadas" value={closedCounts.delegated} detail="Não contam como conclusão." />
+            <DataLine label="Obsoletas" value={closedCounts.obsolete} detail="Preservadas para histórico." />
+          </div>
+        </div>
+      </SectionCard>
+
+      <SectionCard eyebrow="Fila ativa" title="Abertas, bloqueadas e adiadas">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="rounded-xl bg-surface-sunken px-3 py-2.5">
+            <DataLine label="Abertas executáveis" value={executableOpenTasks.length} detail="Tarefas abertas sem motivo de bloqueio informado." />
+            <DataLine label="Aguardando/bloqueadas" value={waitingTasks.length} detail="Inclui tarefas adiadas ou com motivo de bloqueio." />
+            <DataLine label="Adiadas sem motivo informado" value={postponedWithoutReason} detail="Dívida de dado, não diagnóstico comportamental." />
+            <DataLine label="Adiadas com motivo" value={postponedWithReason} detail="Motivo de bloqueio preenchido." />
+          </div>
+          <div className="rounded-xl bg-surface-sunken px-3 py-2.5">
+            {blockerCounts.length === 0 ? (
+              <div className="text-[12px] text-ink-secondary">Nenhum motivo de bloqueio informado em tarefas abertas.</div>
+            ) : (
+              blockerCounts.map((item) => (
+                <DataLine
+                  key={item.type ?? 'unknown'}
+                  label={blockerLabel(item.type)}
+                  value={item.value}
+                />
+              ))
+            )}
+          </div>
+        </div>
+      </SectionCard>
 
       {/* Contexts */}
       {contextData.length > 0 && (
-        <SectionCard eyebrow="Por contexto">
+        <SectionCard eyebrow="Por contexto" title="Conclusões por área">
           <div className="flex flex-wrap gap-2">
             {contextData
               .slice()
               .sort((a, b) => b.value - a.value)
               .map((c) => {
-                const pct = ((c.value / doneTasks.length) * 100).toFixed(0);
+                const pct = ((c.value / completedTasks.length) * 100).toFixed(0);
                 return (
                   <div
                     key={c.name}
@@ -331,6 +486,9 @@ export function DashboardView({ tasks }: DashboardViewProps) {
       {/* Time est vs real */}
       {timeData.length > 0 && (
         <SectionCard eyebrow="Estimativa" title="Estimado vs. real">
+          <div className="text-[12px] text-ink-secondary -mt-1 mb-3">
+            O gráfico usa tempo real com origem conhecida. Itens `unknown` ficam fora e aparecem em qualidade do dado.
+          </div>
           <div className="h-56 -ml-3">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={timeData}>
@@ -410,6 +568,27 @@ export function DashboardView({ tasks }: DashboardViewProps) {
               <Bar dataKey="concluídas" name="Concluídas confirmadas" fill={chartTheme.accent} radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
+        </div>
+      </SectionCard>
+
+      <SectionCard eyebrow="Qualidade do dado" title="Leitura confiável, sem score">
+        <div className="text-[12px] text-ink-secondary -mt-1 mb-3">
+          {confirmedShareText}. Estes sinais orientam a confiança das métricas, sem virar nota de produtividade.
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="rounded-xl bg-surface-sunken px-3 py-2.5">
+            <DataLine label="Conclusões confirmadas" value={confirmedCompletedTasks.length} detail="Podem alimentar métricas de horário." />
+            <DataLine label="Conclusões legadas aproximadas" value={legacyCompletedTasks.length} detail="Apenas contagem agregada rotulada." />
+            <DataLine label="Tempo real com origem conhecida" value={trustedActualCount} detail="Timer, manual ou retroativo com origem marcada." />
+            <DataLine label="Tempo real com baixa confiança" value={lowConfidenceActualCount + actualWithoutSourceCount} detail="Origem desconhecida ou ausente." />
+          </div>
+          <div className="rounded-xl bg-surface-sunken px-3 py-2.5">
+            <DataLine label="Estimativas manuais" value={estimateSourceCounts.manual} />
+            <DataLine label="Estimativas do parser" value={estimateSourceCounts.parser} />
+            <DataLine label="Estimativas por IA" value={estimateSourceCounts.ai} detail="Marcadas como IA, sem precisão forte." />
+            <DataLine label="Estimativas default" value={estimateSourceCounts.default_30} detail="Fallback operacional de 30 minutos." />
+            <DataLine label="Estimativas sem origem" value={estimateSourceCounts.unknown} detail="Legado ou dado incompleto." />
+          </div>
         </div>
       </SectionCard>
 
