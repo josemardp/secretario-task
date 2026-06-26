@@ -7,7 +7,6 @@ import type { Task, ContextType } from '../types';
 import { CONTEXTS_LIST } from '../types';
 import { useContextStore } from '../stores/contextStore';
 import { useTaskStore } from '../stores/taskStore';
-import { TaskActions } from './TaskActions';
 import { CalendarWidget } from './CalendarWidget';
 import { RecurrenceModal } from './RecurrenceModal';
 import { useAgendaPositions, type TimelineBlock } from '../hooks/useAgendaPositions';
@@ -36,12 +35,82 @@ function toLocalDatetimeInput(iso: string | null | undefined): string {
 
 // ─── Recurrence helpers (importados de src/lib/recurrence.ts) ───
 
+function AgendaQuickActions({
+  onComplete,
+  onPostponeTomorrow,
+  onPostponeDate,
+  onEdit,
+}: {
+  onComplete: () => void;
+  onPostponeTomorrow: () => void;
+  onPostponeDate: (dateString: string) => void;
+  onEdit: () => void;
+}) {
+  const dateInputRef = useRef<HTMLInputElement>(null);
+
+  return (
+    <div className="flex items-center gap-1.5 flex-wrap">
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onComplete();
+        }}
+        className="h-8 px-2.5 rounded-lg bg-success text-white text-[12px] font-bold"
+      >
+        Concluir
+      </button>
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onPostponeTomorrow();
+        }}
+        className="h-8 px-2.5 rounded-lg bg-paper2 text-ink text-[12px] font-bold"
+      >
+        Amanhã
+      </button>
+      <div className="relative">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            dateInputRef.current?.showPicker?.();
+          }}
+          className="h-8 px-2.5 rounded-lg bg-paper2 text-ink text-[12px] font-bold"
+        >
+          Adiar
+        </button>
+        <input
+          ref={dateInputRef}
+          type="date"
+          className="absolute opacity-0 w-0 h-0 p-0 m-0 border-0"
+          onClick={(e) => e.stopPropagation()}
+          onChange={(e) => {
+            if (e.target.value) onPostponeDate(e.target.value);
+          }}
+        />
+      </div>
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onEdit();
+        }}
+        className="h-8 px-2.5 rounded-lg bg-paper2 text-ink text-[12px] font-bold inline-flex items-center gap-1"
+        title="Editar"
+      >
+        <Edit3 size={12} /> Editar
+      </button>
+    </div>
+  );
+}
+
 // ─── Task card ──────────────────────────────────────────────────
 
 interface TimelineTaskCardProps {
   block: TimelineBlock;
   now: Date;
-  updateTask: (id: string, updates: Partial<Task>) => void;
   deleteTask: (id: string) => void;
   openEdit: (task: Task) => void;
   handleComplete: (id: string) => void;
@@ -51,7 +120,7 @@ interface TimelineTaskCardProps {
 }
 
 function TimelineTaskCard({
-  block, now, updateTask, deleteTask, openEdit,
+  block, now, deleteTask, openEdit,
   handleComplete, handlePostponeTomorrow, handlePostponeDate, formatTime,
 }: TimelineTaskCardProps) {
   const t = block.task!;
@@ -64,8 +133,6 @@ function TimelineTaskCard({
   const style: React.CSSProperties = {
     touchAction: 'pan-y',
   };
-
-  const durText = t.actual_minutes != null ? `${t.actual_minutes}m real` : `${t.estimated_minutes || 30}m`;
 
   return (
     <div
@@ -88,25 +155,6 @@ function TimelineTaskCard({
                 ATRASADA
               </span>
             )}
-            <div className="flex items-center bg-paper2 rounded-md h-[22px] overflow-hidden" onMouseDown={(e) => e.stopPropagation()}>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  updateTask(t.id, { estimated_minutes: Math.max(5, (t.estimated_minutes || 30) - 15) });
-                }}
-                className="px-2 text-ink-2 hover:text-ink text-[12px] font-bold"
-              >−</button>
-              <span className="text-[12px] font-semibold text-ink-2 px-2 min-w-[54px] text-center tnum select-none">
-                {durText}
-              </span>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  updateTask(t.id, { estimated_minutes: (t.estimated_minutes || 30) + 15 });
-                }}
-                className="px-2 text-ink-2 hover:text-ink text-[12px] font-bold"
-              >+</button>
-            </div>
           </div>
         </div>
 
@@ -120,6 +168,15 @@ function TimelineTaskCard({
           )}
           <span className="min-w-0">{block.title}</span>
         </h3>
+
+        <div className="mt-2" onMouseDown={(e) => e.stopPropagation()}>
+          <AgendaQuickActions
+            onComplete={() => handleComplete(t.id)}
+            onPostponeTomorrow={() => handlePostponeTomorrow(t.id)}
+            onPostponeDate={(d) => handlePostponeDate(t.id, d)}
+            onEdit={() => openEdit(t)}
+          />
+        </div>
 
         {/* priority chip */}
         {t.priority > 0 && (
@@ -135,25 +192,12 @@ function TimelineTaskCard({
           </div>
         )}
 
-        {/* actions */}
+        {/* secondary actions */}
         <div
-          className="mt-2.5 pt-2 border-t border-line2 flex items-center justify-between gap-2"
+          className="mt-2 pt-2 border-t border-line2 flex items-center justify-end gap-2"
           onMouseDown={(e) => e.stopPropagation()}
         >
-          <TaskActions
-            showComplete={true}
-            onComplete={() => handleComplete(t.id)}
-            onPostponeTomorrow={() => handlePostponeTomorrow(t.id)}
-            onPostponeDate={(d) => handlePostponeDate(t.id, d)}
-          />
           <div className="flex items-center gap-1 shrink-0">
-            <button
-              onClick={(e) => { e.stopPropagation(); openEdit(t); }}
-              className="text-ink-2 w-11 h-11 inline-flex items-center justify-center rounded-lg hover:bg-paper2"
-              title="Editar"
-            >
-              <Edit3 size={13} />
-            </button>
             <button
               onClick={(e) => { e.stopPropagation(); deleteTask(t.id); }}
               className="text-danger w-11 h-11 inline-flex items-center justify-center rounded-lg hover:bg-danger-light"
@@ -482,7 +526,6 @@ export function TimelineView({ tasks }: TimelineViewProps) {
                     key={`${block.id}-${slot.timeString}`}
                     block={block}
                     now={now}
-                    updateTask={updateTask}
                     deleteTask={deleteTask}
                     openEdit={openEdit}
                     handleComplete={handleComplete}
