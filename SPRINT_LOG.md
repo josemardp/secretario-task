@@ -19,6 +19,68 @@ Este documento define:
 
 ---
 
+# Coach de Produtividade — Sprint 10 — Fase 5B: IA narrativa cacheada e segura
+
+Data: 2026-06-26
+
+## Objetivo
+Cachear a narrativa governada da IA por `input_hash`, versionar prompt/guardrails e evitar chamadas repetidas quando a entrada semântica do briefing não mudou.
+
+## Resumo do que foi feito
+- Criado `src/lib/stableHash.ts`.
+- Criado `src/lib/coachAICache.ts`.
+- Adicionadas as constantes `COACH_AI_PROMPT_VERSION` e `COACH_AI_GUARDRAILS_VERSION`.
+- `buildGovernedCoachPrompt` passou a declarar versões e que a IA narra o ranking determinístico.
+- `generateSmartBriefing` passou a usar `resolveCachedCoachNarrative` antes de chamar a API.
+- Cache armazena somente a narrativa final segura/sanitizada de origem `ai`.
+- Fallback por falha de API, erro de rede, JSON inválido ou linguagem proibida permanece determinístico e não é cacheado como resposta válida.
+- Fixtures de guardrails/cache foram ampliadas de 8 para 17 cenários.
+- Nenhuma migration foi criada.
+
+## Composição do input_hash
+- `prompt_version`.
+- `guardrails_version`.
+- `current_energy`.
+- Janela temporal horária derivada de `generated_at`.
+- Top tasks governadas em ordem de ranking.
+- Sinais determinísticos normalizados e ordenados por `signal_id`.
+- Limitações normalizadas e ordenadas.
+
+O hash não inclui `updated_at`, payload bruto completo, chave de API, resposta da IA ou campos fora do payload governado.
+
+## Arquivos alterados
+- `src/lib/stableHash.ts`
+- `src/lib/coachAICache.ts`
+- `src/lib/coachAIGuardrails.ts`
+- `src/lib/ai.ts`
+- `scripts/coachAIGuardrails.fixtures.ts`
+- `tsconfig.coach-tests.json`
+- `STATUS.md`
+- `SPRINT_LOG.md`
+- `ROADMAP.md`
+- `DECISIONS.md`
+- `ARCHITECTURE.md`
+- `PRD.md`
+
+## Validações executadas
+- `npm run test`: passou; fixtures do motor e 17 fixtures de guardrails/cache passaram.
+- `npm run lint`: passou.
+- `npm run build`: passou; Vite manteve aviso de chunk maior que 500 kB.
+
+## Decisões tomadas
+- Cache local em memória, sem migration e sem persistência em `localStorage`.
+- Cache key inclui versões de prompt e guardrails.
+- Fallback não é cacheado para permitir nova tentativa de IA quando a falha for transitória.
+
+## Pendências
+- Sprint 11 deve executar auditoria final e hardening documental.
+- O cache é por sessão do browser; ao recarregar a página, a IA pode ser chamada novamente.
+
+## Resultado
+Sprint 10 implementado com lint/build/test verdes e sem migration.
+
+---
+
 # Coach de Produtividade — Sprint 9 — Fase 5A: Governança da IA existente
 
 Data: 2026-06-26

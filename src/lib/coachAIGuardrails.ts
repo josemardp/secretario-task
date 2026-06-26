@@ -1,4 +1,5 @@
 import type { Task } from '../types';
+import { COACH_AI_GUARDRAILS_VERSION, COACH_AI_PROMPT_VERSION } from './coachAICache.js';
 import { analyzeCoachSignals, type CoachSignal, type CoachSignalReport } from './coachSignals.js';
 import { isActionableBriefingTask } from './taskFilters.js';
 
@@ -48,6 +49,12 @@ export interface GovernedCoachAIResponse {
   limitations: string[];
   recommendation: string;
   confidence: GovernedCoachConfidence;
+}
+
+export interface GovernedCoachAIParseResult {
+  response: GovernedCoachAIResponse;
+  source: 'ai' | 'fallback';
+  fallback_reason?: string;
 }
 
 export interface BuildGovernedCoachAIPayloadInput {
@@ -100,8 +107,11 @@ export function buildGovernedCoachAIPayload({
 
 export function buildGovernedCoachPrompt(payload: GovernedCoachAIPayload): string {
   return `Voce e a narrativa segura do Coach de Produtividade do SecretarioTask.
+Versao do prompt: ${COACH_AI_PROMPT_VERSION}.
+Versao dos guardrails: ${COACH_AI_GUARDRAILS_VERSION}.
 Use somente o payload governado abaixo. Nao use conhecimento externo nem inferencias psicologicas.
-O payload ja contem sinais deterministicas do motor local; a IA apenas verbaliza esses sinais com cautela operacional.
+O payload ja contem sinais deterministicos do motor local; a IA apenas verbaliza esses sinais com cautela operacional.
+Comece deixando claro que a narrativa segue o ranking deterministico, por exemplo: "Pelo ranking deterministico, ...".
 
 Regras obrigatorias:
 - Nao use updated_at como conclusao; esse campo nem deve aparecer no payload.
@@ -127,8 +137,19 @@ ${JSON.stringify(payload, null, 2)}`;
 }
 
 export function parseGovernedCoachAIResponse(rawText: string, payload: GovernedCoachAIPayload): GovernedCoachAIResponse {
+  return parseGovernedCoachAIResponseResult(rawText, payload).response;
+}
+
+export function parseGovernedCoachAIResponseResult(
+  rawText: string,
+  payload: GovernedCoachAIPayload,
+): GovernedCoachAIParseResult {
   if (hasProhibitedLanguage(rawText)) {
-    return buildDeterministicCoachResponse(payload, BLOCKED_AI_TEXT);
+    return {
+      response: buildDeterministicCoachResponse(payload, BLOCKED_AI_TEXT),
+      source: 'fallback',
+      fallback_reason: 'prohibited_language',
+    };
   }
 
   try {
@@ -142,18 +163,27 @@ export function parseGovernedCoachAIResponse(rawText: string, payload: GovernedC
     };
 
     if (!response.summary || !response.recommendation) {
-      return buildDeterministicCoachResponse(payload);
+      return {
+        response: buildDeterministicCoachResponse(payload),
+        source: 'fallback',
+        fallback_reason: 'invalid_contract',
+      };
     }
 
     return {
-      ...response,
-      evidence: response.evidence.length > 0 ? response.evidence.slice(0, 3) : fallbackEvidence(payload),
-      limitations: response.limitations.length > 0 ? response.limitations.slice(0, 3) : payload.limitations.slice(0, 3),
+      response: {
+        ...response,
+        evidence: response.evidence.length > 0 ? response.evidence.slice(0, 3) : fallbackEvidence(payload),
+        limitations: response.limitations.length > 0 ? response.limitations.slice(0, 3) : payload.limitations.slice(0, 3),
+      },
+      source: 'ai',
     };
   } catch {
-    const sanitized = sanitizeCoachNarrative(rawText);
-    if (!sanitized) return buildDeterministicCoachResponse(payload);
-    return buildDeterministicCoachResponse(payload, sanitized);
+    return {
+      response: buildDeterministicCoachResponse(payload),
+      source: 'fallback',
+      fallback_reason: 'invalid_json',
+    };
   }
 }
 

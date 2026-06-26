@@ -369,6 +369,20 @@ Motivo: sanitizar palavra por palavra poderia preservar a estrutura de uma afirm
 Alternativas descartadas: apenas instruir o prompt — descartada porque prompt não é garantia; remover só palavras proibidas — descartada porque a frase restante ainda poderia carregar julgamento; falhar com erro na UI — descartada porque IA deve ser opcional e não-bloqueante.
 Contexto: Coach de Produtividade, Sprint 9 — Fase 5A: Governança da IA existente.
 
+## 2026-06-26 — Sprint 10 Coach: cache local em memória para narrativa IA
+
+Decisão: cachear a narrativa governada do briefing em memória no cliente, usando `input_hash` + versões de prompt e guardrails como chave.
+Motivo: o plano oficial não prevê migration no Sprint 10. Cache em memória evita rechamadas repetidas na mesma sessão sem persistir payloads, respostas ou metadados sensíveis em banco ou `localStorage`.
+Alternativas descartadas: cache remoto — descartado por exigir migration fora do plano; cache em `localStorage` — descartado por persistir narrativa e metadados além do necessário; não cachear fallback — adotado para não transformar falhas transitórias ou respostas bloqueadas em resposta válida.
+Contexto: Coach de Produtividade, Sprint 10 — Fase 5B: IA narrativa cacheada e segura.
+
+## 2026-06-26 — Sprint 10 Coach: input_hash versionado e sem updated_at
+
+Decisão: o `input_hash` é derivado de versões, energia, janela temporal horária, top tasks governadas, sinais determinísticos e limitações, sem incluir `updated_at`.
+Motivo: a entrada semântica do briefing deve mudar quando muda o conteúdo relevante ou o contrato de interpretação, mas não quando muda um campo técnico de edição que não é conclusão.
+Alternativas descartadas: hash do payload JSON bruto — descartado porque incluiria `generated_at` minuto/segundo e poderia variar por ordem acidental; hash só das tasks — descartado porque ignoraria limitações, sinais e versões; hash da resposta da IA — descartado porque o cache deve evitar a chamada, não depender dela.
+Contexto: Coach de Produtividade, Sprint 10 — Fase 5B: IA narrativa cacheada e segura.
+
 ## 2026-05-24 — Extração de "energia" no Parser
 Decisão: O parser agora extrai o campo `energia` através de palavras-chave (`energia alta|media|baixa`) ou prefixos explícitos (`e8`, `e2`), assim como faz com prioridade.
 Motivo: Durante testes de validação, constatamos que sem a definição da energia individual da tarefa, o algoritmo do Ranking Engine aplicava penalidades idênticas a todas as tarefas simultaneamente ao mudar a Energia Atual (já que todas as tarefas nasciam com energy=0). Isso alterava a nota, mas não reordenava as tarefas. Extrair a energia via texto resolve o problema matematicamente.

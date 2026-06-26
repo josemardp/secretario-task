@@ -17,8 +17,10 @@
   "include": [
     "scripts/coachSignals.fixtures.ts",
     "scripts/coachAIGuardrails.fixtures.ts",
+    "src/lib/coachAICache.ts",
     "src/lib/coachAIGuardrails.ts",
     "src/lib/coachSignals.ts",
+    "src/lib/stableHash.ts",
     "src/lib/taskFilters.ts",
     "src/types/index.ts"
   ]
