@@ -250,6 +250,20 @@ Motivo: métricas de horário precisam de um campo semanticamente estável. O le
 Alternativas descartadas: marcar backfill como `confirmed` — descartada por transformar aproximação em verdade; criar evento retroativo `completed` — descartada por fabricar histórico auditável falso; implementar `resolution_type` junto — descartada porque pertence ao Sprint 3.
 Contexto: Coach de Produtividade, Sprint 2 — Fase 1A: Timestamp honesto mínimo.
 
+## 2026-06-26 — Sprint 3 Coach: resolução sem deleted_at
+
+Decisão: modelar encerramentos sem execução com `resolution_type IN ('cancelled','delegated','obsolete')` e `resolved_at`, mantendo `completed_at` nulo e preservando `deleted_at` exclusivamente para exclusão/remoção.
+Motivo: cancelada, delegada e obsoleta precisam sair das listas operacionais sem desaparecer da análise. `deleted_at` remove a tarefa do store e do histórico local, portanto não serve para semântica de resolução.
+Alternativas descartadas: ampliar `TaskStatus` — descartada por tocar Kanban, ranking, recorrência, sync e constraints; usar `deleted_at` para cancelamento — descartada por apagar o dado analítico; tratar cancelada como `done` — descartada por contaminar métricas de produtividade.
+Contexto: Coach de Produtividade, Sprint 3 — Fase 1B: Semântica de resolução.
+
+## 2026-06-26 — Sprint 3 Coach: recorrência viva exclui resoluções sem execução
+
+Decisão: recriar o índice parcial `idx_unique_live_recurrence` para excluir tarefas com `resolution_type IN ('cancelled','delegated','obsolete')` da definição de ocorrência viva, e alinhar o helper local `isOpenTask` à mesma regra.
+Motivo: como `TaskStatus` permanece `todo/doing` em resoluções sem execução, o índice antigo (`status <> 'done'`) bloquearia a próxima ocorrência recorrente após cancelar/delegar/obsoletar uma instância.
+Alternativas descartadas: deixar a série bloqueada até ação manual — descartada por quebrar recorrência; marcar a instância resolvida como `done` — descartada por contaminar conclusão; usar `deleted_at` — descartada pela decisão acima.
+Contexto: Coach de Produtividade, Sprint 3 — Fase 1B: Semântica de resolução.
+
 ## 2026-05-24 — Extração de "energia" no Parser
 Decisão: O parser agora extrai o campo `energia` através de palavras-chave (`energia alta|media|baixa`) ou prefixos explícitos (`e8`, `e2`), assim como faz com prioridade.
 Motivo: Durante testes de validação, constatamos que sem a definição da energia individual da tarefa, o algoritmo do Ranking Engine aplicava penalidades idênticas a todas as tarefas simultaneamente ao mudar a Energia Atual (já que todas as tarefas nasciam com energy=0). Isso alterava a nota, mas não reordenava as tarefas. Extrair a energia via texto resolve o problema matematicamente.

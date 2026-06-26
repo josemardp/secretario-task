@@ -19,6 +19,73 @@ Este documento define:
 
 ---
 
+# Coach de Produtividade — Sprint 3 — Fase 1B: Semântica de resolução
+
+Data: 2026-06-26
+
+## Objetivo
+Introduzir `resolution_type` e `resolved_at` para separar conclusão real de encerramentos sem execução, preservando `TaskStatus` e `deleted_at` exclusivamente para exclusão.
+
+## Resumo do que foi feito
+- Criada a migration `0015_resolution_semantics.sql` com colunas, CHECK e backfill de tarefas concluídas.
+- Atualizados `Task`, `TaskInput` e `TASK_COLUMNS`.
+- Conclusões no Kanban e na Agenda passam a gravar `resolution_type='completed'` e `resolved_at` no mesmo instante de `completed_at`.
+- Ações mínimas Cancelar, Delegar e Obsoleta foram adicionadas fora da captura rápida.
+- Cancelar, Delegar e Obsoleta mantêm `status` original, gravam `resolved_at`, deixam `completed_at` nulo e não usam `deleted_at`.
+- Criado helper compartilhado para tarefa ativa/aberta em `taskFilters.ts`.
+- Kanban, Agenda, briefing/ranking, calendário, notificações e Dashboard passaram a excluir encerradas sem execução das listas operacionais.
+- O índice parcial de recorrência foi ajustado para que resoluções sem execução não bloqueiem a próxima ocorrência viva.
+- `BehavioralSuggestion` segue desativado.
+- Eventos novos e origem de dados não foram implementados neste sprint.
+
+## Arquivos alterados
+- `supabase/migrations/0015_resolution_semantics.sql`
+- `src/types/index.ts`
+- `src/lib/sync.ts`
+- `src/lib/taskFilters.ts`
+- `src/lib/ranking.ts`
+- `src/lib/behaviorEngine.ts`
+- `src/stores/taskStore.ts`
+- `src/components/TaskActions.tsx`
+- `src/components/TaskBoard.tsx`
+- `src/components/TimelineView.tsx`
+- `src/components/DashboardView.tsx`
+- `src/components/CalendarWidget.tsx`
+- `src/components/NotificationEngine.tsx`
+- `src/hooks/useAgendaPositions.ts`
+- `src/pages/Home.tsx`
+- `STATUS.md`
+- `SPRINT_LOG.md`
+- `ROADMAP.md`
+- `DECISIONS.md`
+- `ARCHITECTURE.md`
+- `PRD.md`
+
+## Validações executadas
+- `npm run lint`: passou.
+- `npm run build`: passou; Vite manteve aviso de chunk maior que 500 kB.
+- `supabase migration list --linked`: remoto alinhado até `0014` antes da aplicação do Sprint 3.
+- `supabase db push --dry-run`: passou; listou somente `0015_resolution_semantics.sql`.
+- `supabase db push --linked`: passou; `0015` aplicada no Supabase remoto.
+- `supabase migration list --linked`: remoto alinhado até `0015` após aplicação.
+
+## Bugs ou achados
+- O índice único parcial de recorrência considerava qualquer tarefa `status <> 'done'` como ocorrência viva. Como resoluções sem execução preservam `status='todo'/'doing'`, o índice foi recriado para excluir `resolution_type IN ('cancelled','delegated','obsolete')`.
+
+## Decisões tomadas
+- Cancelada, delegada e obsoleta são resoluções sem execução: não usam `deleted_at` e não recebem `completed_at`.
+- `completed_at` passa a ser subconjunto de `resolved_at`.
+- Encerrar uma instância recorrente sem execução também prepara a próxima ocorrência quando houver regra de recorrência.
+
+## Pendências
+- Sprint 4 deve introduzir eventos confiáveis com carimbo server-side.
+- Sprint 5 deve introduzir origem de `estimated_minutes` e `actual_minutes`.
+
+## Resultado
+Sprint 3 concluído, com migration aplicada remotamente. Commit/push serão registrados no fechamento.
+
+---
+
 # Coach de Produtividade — Sprint 2 — Fase 1A: Timestamp honesto mínimo
 
 Data: 2026-06-26
@@ -51,11 +118,11 @@ Criar a base mínima de conclusão honesta com `completed_at`, `completed_at_con
 - `PRD.md`
 
 ## Validações executadas
-- `npm run lint`: pendente de execução no fechamento do sprint.
-- `npm run build`: pendente de execução no fechamento do sprint.
-- `supabase migration list --linked`: pendente de execução no fechamento do sprint.
-- `supabase db push --dry-run`: pendente de execução no fechamento do sprint.
-- `supabase db push --linked`: pendente de execução no fechamento do sprint.
+- `npm run lint`: executado no fechamento versionado do Sprint 2.
+- `npm run build`: executado no fechamento versionado do Sprint 2.
+- `supabase migration list --linked`: confirmado na revisão do Sprint 3; remoto alinhado até `0014`.
+- `supabase db push --dry-run`: executado no fechamento versionado do Sprint 2.
+- `supabase db push --linked`: aplicado no fechamento versionado do Sprint 2.
 
 ## Bugs ou achados
 - A Agenda (`TimelineView`) também tinha caminho próprio de conclusão; foi atualizada junto do Kanban para não deixar gravação sem `completed_at`.
@@ -70,7 +137,7 @@ Criar a base mínima de conclusão honesta com `completed_at`, `completed_at_con
 - Sprint 4 deve introduzir eventos confiáveis/server-stamped.
 
 ## Resultado
-Sprint 2 implementado; validações e aplicação remota pendentes nesta seção até o fechamento.
+Sprint 2 concluído, aplicado remotamente e enviado para `origin/main` no commit `3ec8800 feat: adicionar timestamp honesto de conclusão (Sprint 2)`.
 
 ---
 

@@ -46,8 +46,19 @@ Entregas:
 - Dashboard temporal usa `completed_at` confirmado, não `updated_at`.
 - `TASK_COLUMNS` e tipos TypeScript atualizados.
 
+## Sprint 3 — Fase 1B: Semântica de resolução
+Status: concluído em 2026-06-26.
+
+Entregas:
+- Migration `0015_resolution_semantics.sql` com `resolution_type` e `resolved_at`.
+- Backfill de tarefas `done` como `resolution_type='completed'`.
+- Cancelada, delegada e obsoleta modeladas sem `deleted_at` e sem `completed_at`.
+- Helper compartilhado para tarefa ativa/aberta aplicado em listas operacionais.
+- Ações mínimas de resolução no Kanban e na Agenda.
+- Recorrência preservada: resoluções sem execução não bloqueiam próxima ocorrência viva.
+
 ## Próximo sprint
-Sprint 3 — Fase 1B: `resolution_type` + `resolved_at`.
+Sprint 4 — Fase 1C: eventos confiáveis server-stamped.
 
 ---
 

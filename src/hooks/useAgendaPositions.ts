@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import type { Task, ContextType } from '../types';
 import { calculateTaskScore } from '../lib/ranking';
+import { isOpenTask } from '../lib/taskFilters';
 
 export interface TimelineBlock {
   id: string;
@@ -27,7 +28,7 @@ export function calculateAgendaBlocks(
   if (m > 0 && m <= 30) currentTime.setMinutes(30, 0, 0);
   else if (m > 30) currentTime.setHours(currentTime.getHours() + 1, 0, 0, 0);
 
-  let todoTasks = tasks.filter(t => t.status !== 'done' && !t.deleted_at);
+  let todoTasks = tasks.filter(isOpenTask);
 
   if (isToday) {
     todoTasks = todoTasks.filter(t => {

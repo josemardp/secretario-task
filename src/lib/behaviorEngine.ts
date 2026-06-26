@@ -1,4 +1,5 @@
 import type { Task } from '../types';
+import { isOpenTask } from './taskFilters';
 
 // BehavioralSuggestion segue desativado ate haver massa suficiente de dados
 // confirmados. Este modulo nao usa updated_at como conclusao.
@@ -64,7 +65,7 @@ export function getSuggestion(tasks: Task[], currentHour: number = new Date().ge
   today.setHours(0, 0, 0, 0);
   
   const pendingTasks = tasks.filter(t => {
-    if (t.status !== 'todo') return false;
+    if (!isOpenTask(t) || t.status !== 'todo') return false;
     if (t.due_at) {
       const due = new Date(t.due_at);
       due.setHours(0, 0, 0, 0);
