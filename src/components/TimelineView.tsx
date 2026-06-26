@@ -230,6 +230,9 @@ function TimelineSlot({
 }: TimelineSlotProps) {
   // half-hour vs hour boundary
   const onHourBoundary = slot.dateObj.getMinutes() === 0;
+  const slotMinHeight = slotBlocksCount === 0
+    ? 28
+    : Math.max(112, slotBlocksCount * 156 + Math.max(0, slotBlocksCount - 1) * 8 + 16);
 
   return (
     <div
@@ -237,10 +240,10 @@ function TimelineSlot({
       className={[
         'flex relative border-b',
         onHourBoundary ? 'border-line' : 'border-line2',
-        slotBlocksCount === 0 ? 'min-h-[28px]' : 'min-h-[76px]',
       ].join(' ')}
       style={{
         touchAction: 'pan-y',
+        minHeight: slotMinHeight,
       }}
     >
       {/* Now line */}
