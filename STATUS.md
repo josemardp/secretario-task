@@ -58,7 +58,12 @@ Data: 2026-06-26
 ## Estado Git antes das alterações deste sprint
 - Branch: `main...origin/main`
 - Árvore já não estava limpa antes do Sprint 0: `AGENTS.md` modificado e `docs/` não rastreado.
+- Pendência resolvida após o Sprint 0 pelo commit `cca1f1e chore: organiza plano executor do coach`, enviado para `origin/main`.
 - Nenhuma alteração funcional foi feita no Sprint 0.
+
+## Fechamento versionado
+- Sprint 0 commitado e enviado para `origin/main` em `cca1f1e chore: organiza plano executor do coach`.
+- A pendência "árvore suja com `AGENTS.md` e `docs/`" foi resolvida por esse commit.
 
 ## Arquivos críticos confirmados
 - `src/lib/sync.ts`: presente; contém `TASK_COLUMNS`, `stripReadonlyTaskFields`, `fetchRemoteTasks` e `processSyncQueue`. SHA256 `CB1007345181A3CA449D3763FFAB8015488D7A3FFFA8EFF3D345EEFE7DA2FC9F`.
