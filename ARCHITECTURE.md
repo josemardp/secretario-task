@@ -340,6 +340,43 @@ Sinais atuais:
 
 Fixtures ficam em `scripts/coachSignals.fixtures.ts` e são executadas por `npm run test`, usando apenas `tsc` e `node`, sem runner externo.
 
+## Governança da IA existente
+
+A IA do Coach é opcional, não-bloqueante e não possui autoridade para originar diagnóstico, score, `resolution_type` ou `blocker_type`.
+
+Camada principal:
+
+```ts
+buildGovernedCoachAIPayload({ topTasks, allTasks, energy, now })
+buildGovernedCoachPrompt(payload)
+parseGovernedCoachAIResponse(rawText, payload)
+buildDeterministicCoachNarrative(payload)
+```
+
+O payload governado contém:
+- tarefas acionáveis mínimas do ranking, sem histórico bruto completo;
+- sinais determinísticos produzidos por `analyzeCoachSignals`;
+- limitações explícitas de confiabilidade;
+- política de dado que proíbe `updated_at` como conclusão.
+
+O payload não envia `updated_at` como evidência. O termo pode aparecer apenas na política de proibição enviada ao modelo.
+
+Inventário de rotas de IA:
+- `estimateTaskTime`: pode influenciar `estimated_minutes`; retorna origem `ai` quando a API responde de forma válida, ou `default_30` em fallback.
+- `parseMultipleTasks`: pode inferir campos de captura como título, contexto, prioridade, energia, data e recorrência; em falha ou ausência de chave cai no parser determinístico.
+- `generateEmbedding`: gera vetor para busca/sync semântico; no sync fica dentro de `try/catch` e não bloqueia a mutation principal.
+- `generateSmartBriefing`: não escreve dados; narra payload governado e cai em narrativa determinística quando a API falha ou retorna linguagem proibida.
+- `transcribeAudio`: transforma áudio em texto de captura; falha retorna `null` e não cria tarefa automaticamente.
+
+Guardrails:
+- `legacy_approx` é apresentado como limitação, não conclusão confirmada.
+- `actual_minutes_source='unknown'` reduz confiança e não é tratado como tempo real confiável.
+- `resolution_type IN ('cancelled','delegated','obsolete')` é encerramento sem execução, não produtividade.
+- linguagem como "procrastinador", "desorganizado", "improdutivo", "perfil psicológico", "tendência comportamental" ou "diagnóstico" bloqueia a resposta da IA.
+- `BehavioralSuggestion` permanece desativado.
+
+Este sprint não implementa cache, `input_hash` nem versionamento de prompt; esses itens pertencem ao Sprint 10.
+
 ## Campo `recurrence_origin_id`
 
 - UUID nullable referenciando `tasks(id)` com `ON DELETE SET NULL`

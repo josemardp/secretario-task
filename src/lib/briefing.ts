@@ -1,6 +1,7 @@
 import type { Task, ContextType } from '../types';
 import { calculateTaskScore } from './ranking';
 import { generateSmartBriefing } from './ai';
+import { buildGovernedCoachAIPayload } from './coachAIGuardrails';
 import { isActionableBriefingTask } from './taskFilters';
 
 export function getDailyBriefing(tasks: Task[], currentEnergy: number, activeContext: ContextType, limit: number = 3): Task[] {
@@ -46,11 +47,18 @@ export function getDailyBriefing(tasks: Task[], currentEnergy: number, activeCon
 
 export async function generateBriefingFromTopTasks(
   topTasks: Task[],
+  allTasks: Task[],
   currentEnergy: number,
   aiApiKey: string
 ): Promise<string> {
   const now = new Date();
   const actionableTasks = topTasks.filter((task) => isActionableBriefingTask(task, now));
+  const governedPayload = buildGovernedCoachAIPayload({
+    topTasks: actionableTasks,
+    allTasks,
+    energy: currentEnergy,
+    now,
+  });
 
-  return generateSmartBriefing(actionableTasks, currentEnergy, aiApiKey);
+  return generateSmartBriefing(actionableTasks, currentEnergy, aiApiKey, governedPayload);
 }

@@ -355,6 +355,20 @@ Motivo: o objetivo é transformar dados honestos em sinais objetivos. Afirmaçõ
 Alternativas descartadas: criar score de produtividade — descartada por falsa precisão e gamificação; emitir frases motivacionais — descartada por antecipar IA narrativa; classificar adiamento como procrastinação — descartada por confundir dívida de dado com comportamento.
 Contexto: Coach de Produtividade, Sprint 8 — Fase 4: Motor determinístico testável.
 
+## 2026-06-26 — Sprint 9 Coach: IA consome payload governado
+
+Decisão: o briefing com IA passa a receber um payload governado com tarefas acionáveis mínimas, sinais determinísticos do motor local, limitações e política de dados, em vez de histórico bruto completo.
+Motivo: a IA existente deve narrar sinais operacionais já calculados, sem ganhar autoridade para diagnosticar, usar `updated_at` como conclusão ou misturar dados frágeis como se fossem confiáveis.
+Alternativas descartadas: enviar todas as tarefas brutas para o prompt — descartada por exposição desnecessária e risco de inferência indevida; deixar o prompt antigo apenas com top tasks — descartada por não carregar limitações de `legacy_approx`, `unknown` e encerramentos sem execução; implementar cache/input_hash agora — descartada por pertencer ao Sprint 10.
+Contexto: Coach de Produtividade, Sprint 9 — Fase 5A: Governança da IA existente.
+
+## 2026-06-26 — Sprint 9 Coach: linguagem proibida bloqueia resposta da IA
+
+Decisão: respostas de IA com termos diagnósticos ou julgamentos pessoais são substituídas por fallback determinístico cauteloso.
+Motivo: sanitizar palavra por palavra poderia preservar a estrutura de uma afirmação forte indevida. Substituir a resposta inteira reduz o risco de julgamento psicológico, score implícito ou conclusão forte sem evidência.
+Alternativas descartadas: apenas instruir o prompt — descartada porque prompt não é garantia; remover só palavras proibidas — descartada porque a frase restante ainda poderia carregar julgamento; falhar com erro na UI — descartada porque IA deve ser opcional e não-bloqueante.
+Contexto: Coach de Produtividade, Sprint 9 — Fase 5A: Governança da IA existente.
+
 ## 2026-05-24 — Extração de "energia" no Parser
 Decisão: O parser agora extrai o campo `energia` através de palavras-chave (`energia alta|media|baixa`) ou prefixos explícitos (`e8`, `e2`), assim como faz com prioridade.
 Motivo: Durante testes de validação, constatamos que sem a definição da energia individual da tarefa, o algoritmo do Ranking Engine aplicava penalidades idênticas a todas as tarefas simultaneamente ao mudar a Energia Atual (já que todas as tarefas nasciam com energy=0). Isso alterava a nota, mas não reordenava as tarefas. Extrair a energia via texto resolve o problema matematicamente.

@@ -119,9 +119,11 @@ export default function Home() {
         setIsTranscribing(true);
         try {
           const text = await transcribeAudio(audioBlob, aiApiKey);
-          setTaskText((prev) => (prev ? `${prev} ${text}` : text));
-        } catch {
-          toast('Erro ao transcrever áudio. Tente novamente.', 'error');
+          if (text) {
+            setTaskText((prev) => (prev ? `${prev} ${text}` : text));
+          } else {
+            toast('Não foi possível transcrever o áudio agora.', 'error');
+          }
         } finally {
           setIsTranscribing(false);
           clearAudio();
@@ -150,7 +152,7 @@ export default function Home() {
 
     setIsGeneratingBriefing(true);
     try {
-      const text = await generateBriefingFromTopTasks(briefingTasks, currentEnergy, aiApiKey);
+      const text = await generateBriefingFromTopTasks(briefingTasks, tasks, currentEnergy, aiApiKey);
       setBriefingText(text);
     } catch (err) {
       console.error(err);
