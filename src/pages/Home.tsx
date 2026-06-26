@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo, useRef, type CSSProperties } from 'react';
 import { useTaskStore } from '../stores/taskStore';
 import { useContextStore } from '../stores/contextStore';
 
@@ -259,6 +259,9 @@ export default function Home() {
     () => baseVisibleTasks.filter((t) => isTaskForToday(t.due_at)),
     [baseVisibleTasks]
   );
+  const energySliderStyle: CSSProperties & { '--energy-percent': string } = {
+    '--energy-percent': `${currentEnergy * 10}%`,
+  };
 
   return (
     <div
@@ -313,7 +316,7 @@ export default function Home() {
             >
               <Target size={16} strokeWidth={2.2} />
               {briefingTasks.length > 0 && (
-                <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-warning border border-paper2" />
+                <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-accent border border-paper2" />
               )}
             </button>
             <button
@@ -356,7 +359,7 @@ export default function Home() {
                 onClick={handleSemanticSearch}
                 disabled={isSearching || !searchText.trim() || !aiApiKey}
                 title={!aiApiKey ? 'Configure sua API Key primeiro' : 'Busca avançada'}
-                className="ml-1 px-3 py-1 rounded-lg bg-ink text-white text-[12px] font-bold disabled:opacity-50"
+                className="ml-1 px-3 py-1 rounded-lg bg-accent text-white text-[12px] font-bold disabled:opacity-50"
               >
                 {isSearching ? '...' : 'Buscar'}
               </button>
@@ -367,7 +370,7 @@ export default function Home() {
         {/* energy strip */}
         <div className="px-4 pb-3">
           <label className="flex items-center gap-3 bg-paper border border-line rounded-xl px-3 py-2">
-            <Zap size={14} className="text-warning shrink-0" strokeWidth={2.2} />
+            <Zap size={14} className="text-ink-secondary shrink-0" strokeWidth={2.2} />
             <span className="text-[12px] font-semibold text-ink shrink-0">Energia</span>
             <input
               type="range"
@@ -375,7 +378,8 @@ export default function Home() {
               max="10"
               value={currentEnergy}
               onChange={(e) => setCurrentEnergy(parseInt(e.target.value, 10))}
-              className="flex-1 h-1.5 bg-paper2 rounded-full appearance-none accent-ink"
+              className="energy-slider flex-1 h-1.5 rounded-full appearance-none"
+              style={energySliderStyle}
             />
             <span className="text-[13px] font-bold tnum text-ink shrink-0">
               {currentEnergy}
@@ -455,7 +459,7 @@ export default function Home() {
           <button
             type="submit"
             disabled={isAddingTask || !taskText.trim() || isTranscribing}
-            className="w-11 h-11 rounded-xl bg-ink text-white text-[12px] font-bold disabled:opacity-40 inline-flex items-center justify-center gap-1.5 shrink-0"
+            className="w-11 h-11 rounded-xl bg-accent text-white text-[12px] font-bold disabled:opacity-40 inline-flex items-center justify-center gap-1.5 shrink-0"
             aria-label="Adicionar tarefa"
           >
             {isAddingTask ? '...' : (<ArrowRight size={14} strokeWidth={2.4} />)}
@@ -480,11 +484,10 @@ export default function Home() {
               onClick={() => setViewMode(it.id)}
               className="flex-1 flex flex-col items-center justify-center gap-1 relative focus:outline-none"
             >
-              <it.icon size={20} strokeWidth={on ? 2.2 : 1.7} className={on ? 'text-ink' : 'text-ink-2'} />
-              <span className={(on ? 'text-ink font-bold' : 'text-ink-2 font-semibold') + ' text-[12px] tracking-wide'}>
+              <it.icon size={20} strokeWidth={on ? 2.2 : 1.7} className={on ? 'text-accent' : 'text-ink-tertiary'} />
+              <span className={(on ? 'text-accent font-bold' : 'text-ink-tertiary font-semibold') + ' text-[12px] tracking-wide'}>
                 {it.label}
               </span>
-              {on && <span className="absolute top-0 left-1/2 -translate-x-1/2 w-6 h-[3px] bg-ink rounded-full" />}
             </button>
           );
         })}

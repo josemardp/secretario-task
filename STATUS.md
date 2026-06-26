@@ -46,6 +46,7 @@ Foi implementado o refinamento mobile hard-level solicitado a partir da auditori
 Foram aplicados ajustes de paleta semântica, contraste, alvos de toque, tipografia, Painel sem duplicação de gráfico de distribuição, Agenda com scroll calculado no contêiner e limpeza de lint em código-fonte.
 Foi refinada a Agenda mobile para abandonar a parede de botões: bolinha de conclusão no card, lápis discreto para edição/ações completas, swipe para a direita adiando para amanhã e swipe para a esquerda abrindo confirmação de exclusão.
 Foi corrigida a regressão visual no desktop da Agenda: o card desktop não herda mais a bolinha/layer de gesto do mobile e mantém os botões em fluxo estável, sem corte.
+Foi aplicada a primeira etapa do design system premium de cores: tokens CSS globais claro/escuro, Tailwind referenciando variáveis, Agenda sem faixas laterais coloridas, tab bar em acento e slider de energia tokenizado.
 
 ## Checklist
 - [x] Pré-requisitos críticos (Viewport fit cover & PWA event listener cleanup).
@@ -96,6 +97,7 @@ Foi corrigida a regressão visual no desktop da Agenda: o card desktop não herd
 - [x] Ajustes P1/P2 aplicados: captura direta para tarefa única, estimativas em paralelo, Painel em PT-BR, cores semânticas quentes, Saúde afastado de CCB, Dashboard sem gráfico duplicado, Agenda com scroll em contêiner, lint limpo.
 - [x] Agenda mobile refinada com card compacto, conclusão por bolinha, edição por lápis e gestos laterais para adiar/excluir com confirmação.
 - [x] Desktop da Agenda ajustado para separar o layout operacional dos cards do padrão mobile por gestos.
+- [x] Design system de cores premium aplicado no escopo da rodada: tokens globais, Agenda, tab bar e slider de energia.
 
 ---
 

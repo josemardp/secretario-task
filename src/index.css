@@ -2,17 +2,72 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Native-PWA tweaks */
-body {
-  background: #F7F6F2;
-  font-family: "Inter Tight", Inter, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
-  color: #1A1814;
-  overscroll-behavior-y: none;
-  -webkit-tap-highlight-color: transparent;
-  user-select: none;
-  -webkit-user-select: none;
-  -webkit-font-smoothing: antialiased;
-  text-rendering: geometricPrecision;
+@layer base {
+  :root {
+    --bg: #FAFAFA;
+    --surface: #FFFFFF;
+    --surface-sunken: #F4F4F5;
+    --border: #E4E4E7;
+    --border-strong: #D4D4D8;
+    --ink: #18181B;
+    --ink-secondary: #52525B;
+    --ink-tertiary: #71717A;
+    --accent: #4F46E5;
+    --accent-hover: #4338CA;
+    --accent-subtle: #EEF2FF;
+    --success: #16A34A;
+    --warning: #D97706;
+    --danger: #DC2626;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0A0A0B;
+      --surface: #18181B;
+      --surface-sunken: #111113;
+      --border: #27272A;
+      --border-strong: #3F3F46;
+      --ink: #FAFAFA;
+      --ink-secondary: #A1A1AA;
+      --ink-tertiary: #71717A;
+      --accent: #6366F1;
+      --accent-hover: #818CF8;
+      --accent-subtle: #1E1B4B;
+      --success: #22C55E;
+      --warning: #F59E0B;
+      --danger: #EF4444;
+    }
+  }
+
+  .dark {
+    --bg: #0A0A0B;
+    --surface: #18181B;
+    --surface-sunken: #111113;
+    --border: #27272A;
+    --border-strong: #3F3F46;
+    --ink: #FAFAFA;
+    --ink-secondary: #A1A1AA;
+    --ink-tertiary: #71717A;
+    --accent: #6366F1;
+    --accent-hover: #818CF8;
+    --accent-subtle: #1E1B4B;
+    --success: #22C55E;
+    --warning: #F59E0B;
+    --danger: #EF4444;
+  }
+
+  /* Native-PWA tweaks */
+  body {
+    background: var(--bg);
+    font-family: "Inter Tight", Inter, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    color: var(--ink);
+    overscroll-behavior-y: none;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: geometricPrecision;
+  }
 }
 
 input, textarea, [contenteditable] {
@@ -54,6 +109,31 @@ input, textarea, [contenteditable] {
 /* Hide scrollbars on horizontal strips */
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { scrollbar-width: none; }
+
+.energy-slider {
+  background: linear-gradient(
+    to right,
+    var(--accent) 0 var(--energy-percent, 50%),
+    var(--surface-sunken) var(--energy-percent, 50%) 100%
+  );
+}
+
+.energy-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--ink);
+  border: 2px solid var(--surface);
+}
+
+.energy-slider::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: var(--ink);
+  border: 2px solid var(--surface);
+}
 
 /* Subtle pulse used by the Foco button badge */
 @keyframes ping-soft {
