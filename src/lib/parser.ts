@@ -157,7 +157,7 @@ export function parseTaskInput(rawText: string, defaultContext: ContextType): Pa
       const h = parseInt(recTimeMatch[1], 10);
       const m = recTimeMatch[2] ? parseInt(recTimeMatch[2], 10) : 0;
       baseDate.setHours(h, m, 0, 0);
-      dateFound = true;
+      due_at = baseDate.toISOString();
     }
     
     title = title.replace(explicitRecurrenceMatch[0], '');

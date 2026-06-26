@@ -1,6 +1,6 @@
 # STATUS.md — SecretárioTask
 
-Última atualização: 2026-06-07
+Última atualização: 2026-06-26
 
 ---
 
@@ -42,6 +42,8 @@ Foi ajustada a barra de captura para expandir automaticamente com textos longos 
 Foi removido o drag-and-drop por toque dos cards da Agenda para priorizar a rolagem vertical natural em mobile.
 Foi corrigida a hierarquia visual mobile para impedir que cards da Agenda cubram a barra de captura expandida.
 Foi corrigida uma regressão de sync pós-auditoria: falha ao buscar `profiles` não bloqueia mais o ciclo de tarefas, e conflitos `23505` de recorrência removem a ocorrência local rejeitada pelo banco antes do novo pull remoto.
+Foi implementado o refinamento mobile hard-level solicitado a partir da auditoria de design: login em Direction B, linguagem operacional sem emojis, toasts no lugar de alerts, EmptyState padronizado, aba Hoje com bloco Agora/Top 1, concluídas colapsadas, checkbox concluindo diretamente, swipe concluir/adiar, captura restrita ao Hoje e ancorada ao teclado virtual.
+Foram aplicados ajustes de paleta semântica, contraste, alvos de toque, tipografia, Painel sem duplicação de gráfico de distribuição, Agenda com scroll calculado no contêiner e limpeza de lint em código-fonte.
 
 ## Checklist
 - [x] Pré-requisitos críticos (Viewport fit cover & PWA event listener cleanup).
@@ -88,17 +90,21 @@ Foi corrigida uma regressão de sync pós-auditoria: falha ao buscar `profiles` 
 - [x] Diagnóstico e correção de regressão de sync: `profiles` isolado do ciclo de tasks; conflito `23505` de recorrência limpa a cópia local rejeitada e refaz pull remoto.
 - [x] Bug tarefa-zumbi corrigido: `fetchRemoteTasks` agora usa `pendingTaskIds` para decidir merge — tasks com mutation pendente mantêm a versão local (evita ressurreição por clock skew); tasks sem mutation pendente aceitam sempre o servidor; tasks locais ausentes no remoto sem mutation são descartadas (deletadas em outro device).
 - [x] Optimistic locking por `version` no push: coluna `version integer NOT NULL DEFAULT 1` adicionada a `tasks`; `set_updated_at()` estendida com `NEW.version = OLD.version + 1`; `set_timestamps_on_insert()` fixa `version = 1`; guard `.eq('version', baseVersion)` substitui `.lte('updated_at')` em `processSyncQueue`; fallback para mutations órfãs sem `baseVersion`. Migration `0013` pronta para aplicar.
+- [x] Auditoria de design hard-level implementada: login Direction B, linguagem operacional, remoção de emojis, toasts, EmptyState, aba Hoje orientada por Agora/Top 1, concluídas colapsadas, checkbox concluir, swipe concluir/adiar, capture bar no Hoje com `visualViewport`.
+- [x] Ajustes P1/P2 aplicados: captura direta para tarefa única, estimativas em paralelo, Painel em PT-BR, cores semânticas quentes, Saúde afastado de CCB, Dashboard sem gráfico duplicado, Agenda com scroll em contêiner, lint limpo.
 
 ---
 
 # Próximo passo concreto
 
-Aplicar `0013` no SQL Editor → publicar (`vercel --prod`) → validar:
+Aplicar `0013` no SQL Editor, se ainda não foi aplicada → publicar (`vercel --prod`) → validar em celular real:
 1. Concluir uma tarefa no celular → no PC ela deve sumir (não ressuscitar) dentro de 30s.
 2. Editar a mesma tarefa nos dois devices quase ao mesmo tempo → segundo push descartado silenciosamente (log: "LWW conflict … version/updated_at divergente"), sem híbrido nem loop de retry.
 3. Concluir tarefa recorrente em dois devices → sobra uma próxima ocorrência (não duas).
 4. Mudar energia num device → o outro reflete em até 30s.
 5. Criar tarefa offline → aparece no outro device após reconectar, sem duplicata.
+6. Abrir Hoje em viewport pequena → ver bloco Agora, captura acima do teclado, checkbox concluindo e swipe funcionando.
+7. Abrir Agenda/Painel → confirmar ausência da capture bar fixa e navegação inferior sem sobreposição.
 
 ---
 

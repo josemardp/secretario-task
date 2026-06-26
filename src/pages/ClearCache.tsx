@@ -56,7 +56,7 @@ export default function ClearCache() {
         <p className="text-sm text-ink-2">Pronto! Redirecionando...</p>
       )}
 
-      <a href="/" className="text-xs text-ink-3 underline">
+      <a href="/" className="text-xs text-ink-2 underline">
         Voltar sem limpar
       </a>
     </div>

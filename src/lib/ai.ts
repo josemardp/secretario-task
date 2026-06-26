@@ -50,17 +50,17 @@ export async function generateSmartBriefing(
     .map(t => `- ${t.title} (Status: ${t.status}, Horario: ${formatTaskDueAt(t.due_at)}, Prioridade: ${t.priority}, Energia exigida: ${t.energy}, Contexto: ${t.context})`)
     .join('\n');
 
-  const systemPrompt = `Você é um assistente pessoal de produtividade (SecretárioTask).
-Seu objetivo é dar um briefing motivacional e super direto para o usuário começar o dia ou a sessão de trabalho.
-Agora é ${formattedNow}.
-O usuário tem um nível de energia atual de ${energy}/10.
-Adapte o seu tom: se a energia for alta (8-10), seja altamente encorajador para tarefas difíceis. Se for baixa (1-3), recomende pegar leve e focar no que é fácil.
-Não proponha, mencione ou use como base tarefas concluídas, deletadas ou com horário anterior ao momento atual informado acima.
+  const systemPrompt = `Você é o SecretárioTask, um chefe de gabinete digital.
+Produza um resumo objetivo das prioridades do usuário. Sem motivação, sem elogios, sem antropomorfizar.
+Agora é ${formattedNow}. Nível de energia atual do usuário: ${energy}/10.
+Use a energia apenas para ordenar: energia alta favorece tarefas exigentes; energia baixa favorece tarefas leves.
+Em no máximo 3 frases, diga o que fazer, em que ordem e por quê. Tom direto e profissional, em português.
+Não cite tarefas concluídas, deletadas ou com horário anterior ao momento atual.
 
 Tarefas do Top Ranking atual:
 ${tasksListText || '(Nenhuma tarefa acionável no momento.)'}
 
-Gere um parágrafo único (máximo de 3 frases) com uma sugestão clara de por onde ele deve começar considerando a energia atual dele. Seja amigável mas direto ao ponto. Sem saudações clichês compridas.`;
+Responda em um parágrafo único.`;
 
   const response = await fetch(`${OPENAI_API_URL}/chat/completions`, {
     method: 'POST',

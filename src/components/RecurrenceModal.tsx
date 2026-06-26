@@ -148,9 +148,9 @@ export function RecurrenceModal({ dueAt, currentRule, onSave, onClose }: Recurre
 
         {/* Cabeçalho */}
         <div className="px-4 pt-5 pb-3 border-b border-line shrink-0">
-          <h2 className="text-[15px] font-extrabold text-ink tracking-tight">Recorrência</h2>
+          <h2 className="text-[15px] font-bold text-ink tracking-tight">Recorrência</h2>
           {firstDate && (
-            <p className="text-[12px] text-ink-2 mt-0.5">A primeira tarefa sera em {firstDate}</p>
+            <p className="text-[12px] text-ink-2 mt-0.5">A primeira tarefa será em {firstDate}</p>
           )}
         </div>
 
@@ -159,7 +159,7 @@ export function RecurrenceModal({ dueAt, currentRule, onSave, onClose }: Recurre
 
           {/* Repetição a cada */}
           <div>
-            <span className="text-[10px] font-bold uppercase tracking-wide text-ink-3 block mb-2">
+            <span className="text-[12px] font-semibold uppercase tracking-wide text-ink-2 block mb-2">
               Repetição a cada
             </span>
             <div className="flex gap-2">
@@ -189,7 +189,7 @@ export function RecurrenceModal({ dueAt, currentRule, onSave, onClose }: Recurre
           {/* Opções mensais */}
           {form.freq === 'monthly' && (
             <div>
-              <span className="text-[10px] font-bold uppercase tracking-wide text-ink-3 block mb-2">
+              <span className="text-[12px] font-semibold uppercase tracking-wide text-ink-2 block mb-2">
                 Dia do mês
               </span>
               <div className="space-y-1">
@@ -200,7 +200,7 @@ export function RecurrenceModal({ dueAt, currentRule, onSave, onClose }: Recurre
                     onChange={() => set('monthType', 'day')}
                     className="w-5 h-5 accent-ink shrink-0"
                   />
-                  <span className="text-[13px] text-ink">Dia especifico</span>
+                  <span className="text-[13px] text-ink">Dia específico</span>
                   {form.monthType === 'day' && (
                     <select
                       value={form.byMonthDay}
@@ -208,7 +208,7 @@ export function RecurrenceModal({ dueAt, currentRule, onSave, onClose }: Recurre
                         const v = e.target.value === 'last' ? 'last' : parseInt(e.target.value);
                         set('byMonthDay', v as number | 'last');
                       }}
-                      className="ml-auto bg-paper2 rounded-lg px-2 h-9 text-[13px] font-semibold text-ink border-0 outline-none"
+                      className="ml-auto bg-paper2 rounded-lg px-2 h-11 text-[13px] font-semibold text-ink border-0 outline-none"
                       style={{ fontSize: '16px' }}
                     >
                       {MONTH_DAY_OPTIONS.map(opt => (
@@ -258,7 +258,7 @@ export function RecurrenceModal({ dueAt, currentRule, onSave, onClose }: Recurre
 
           {/* Horário */}
           <div>
-            <span className="text-[10px] font-bold uppercase tracking-wide text-ink-3 block mb-2">
+            <span className="text-[12px] font-semibold uppercase tracking-wide text-ink-2 block mb-2">
               Horário
             </span>
             <input
@@ -272,7 +272,7 @@ export function RecurrenceModal({ dueAt, currentRule, onSave, onClose }: Recurre
 
           {/* Término */}
           <div>
-            <span className="text-[10px] font-bold uppercase tracking-wide text-ink-3 block mb-2">
+            <span className="text-[12px] font-semibold uppercase tracking-wide text-ink-2 block mb-2">
               Término
             </span>
             <div className="space-y-1">
@@ -299,7 +299,7 @@ export function RecurrenceModal({ dueAt, currentRule, onSave, onClose }: Recurre
                     type="date"
                     value={form.endDate}
                     onChange={(e) => set('endDate', e.target.value)}
-                    className="ml-auto bg-paper2 rounded-lg px-2 h-9 text-[13px] text-ink border-0 outline-none"
+                    className="ml-auto bg-paper2 rounded-lg px-2 h-11 text-[13px] text-ink border-0 outline-none"
                     style={{ fontSize: '16px' }}
                   />
                 )}
@@ -320,10 +320,10 @@ export function RecurrenceModal({ dueAt, currentRule, onSave, onClose }: Recurre
                       min={1}
                       value={form.endCount}
                       onChange={(e) => set('endCount', Math.max(1, parseInt(e.target.value) || 1))}
-                      className="w-16 bg-paper2 rounded-lg px-2 h-9 text-[13px] font-bold text-ink border-0 outline-none text-center"
+                      className="w-16 bg-paper2 rounded-lg px-2 h-11 text-[13px] font-bold text-ink border-0 outline-none text-center"
                       style={{ fontSize: '16px' }}
                     />
-                    <span className="text-[13px] text-ink">ocorrencias</span>
+                    <span className="text-[13px] text-ink">ocorrências</span>
                   </>
                 )}
               </label>

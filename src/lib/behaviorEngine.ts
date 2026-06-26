@@ -72,7 +72,7 @@ export function getSuggestion(tasks: Task[], currentHour: number = new Date().ge
     const heavyTask = pendingTasks.filter(t => t.energy >= 7).sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())[0];
     if (heavyTask) {
       return {
-        message: `Seu cérebro costuma voar nas tarefas complexas às ${currentHour}h. Que tal atacar: "${heavyTask.title}"?`,
+        message: `Você costuma concluir tarefas exigentes por volta das ${currentHour}h. Sugestão: "${heavyTask.title}".`,
         suggestedTaskId: heavyTask.id,
         type: 'high'
       };
@@ -85,7 +85,7 @@ export function getSuggestion(tasks: Task[], currentHour: number = new Date().ge
     const lightTask = pendingTasks.filter(t => t.energy <= 3).sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())[0];
     if (lightTask) {
       return {
-        message: `Sua energia costuma cair às ${currentHour}h. Que tal adiantar algo leve como: "${lightTask.title}"?`,
+        message: `Tarefas leves rendem melhor às ${currentHour}h, pelo seu histórico. Sugestão: "${lightTask.title}".`,
         suggestedTaskId: lightTask.id,
         type: 'low'
       };

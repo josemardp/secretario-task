@@ -361,3 +361,11 @@ Decisão: cinco bugs de sincronização foram corrigidos em `sync.ts` e `App.tsx
 Motivo: esses bugs causavam perda de dados silenciosa, mutations zumbi na fila e falha de sincronização crônica entre PC e mobile.
 Alternativas descartadas: force-merge no cliente quando servidor mais novo — descartada por sobrescrever dados mais recentes com dados obsoletos; throw no bloco delete — descartada por incrementar `retryCount` desnecessariamente e poluir o `sync_log`.
 Contexto: diagnóstico profundo da camada de sync solicitado pelo usuário em 06/06/2026. Migration `0009` aplicada via SQL Editor do Supabase Dashboard em 06/06/2026.
+
+## 2026-06-26 — Refinamento mobile hard-level orientado por auditoria de design
+
+Decisão: aplicar a auditoria de design como refinamento operacional do app, preservando regras de dados/sync. A aba Hoje passa a priorizar execução com um bloco "Agora" baseado no Top 1 do ranking, concluídas ficam colapsadas por padrão, checkbox conclui diretamente, swipe à direita conclui e swipe à esquerda adia para amanhã. A barra de captura fica fixa apenas na aba Hoje e usa `visualViewport` para se manter acima do teclado virtual.
+Motivo: reduzir competição visual no mobile, encurtar o fluxo da ação mais frequente (concluir/capturar) e evitar duas barras fixas empilhadas em Agenda/Painel. Isso mantém a captura rápida onde ela é central sem roubar altura de telas que são primariamente de consulta.
+Padrões adotados: `ToastProvider` substitui `alert()` para feedback discreto; `EmptyState` padroniza vazios; linguagem de UI fica direta/profissional, sem emojis por padrão e com IA tratada como recurso avançado opcional; tokens Direction B continuam como base visual.
+Alternativas descartadas: manter capture bar em todas as abas — descartada por ocupar espaço permanente em telas de consulta; transformar captura em FAB expansível nesta rodada — descartada por exigir mais estados/interações e aumentar risco de regressão; manter score/UUID na UI — descartada por expor telemetria interna ao usuário final.
+Contexto: implementação do relatório de design mobile funcional solicitado em 26/06/2026.

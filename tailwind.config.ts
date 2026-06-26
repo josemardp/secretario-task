@@ -20,9 +20,9 @@ export default {
           light:   '#6366f1',
           subtle:  '#eef2ff',
         },
-        danger:  { DEFAULT: '#dc2626', light: '#fef2f2' },
-        warning: { DEFAULT: '#f59e0b', light: '#fffbeb' },
-        success: { DEFAULT: '#16a34a', light: '#f0fdf4' },
+        danger:  { DEFAULT: '#B4322B', light: '#F6E4E0' },
+        warning: { DEFAULT: '#B07A1E', light: '#F7ECD6' },
+        success: { DEFAULT: '#3F6420', light: '#E6F0D8' },
         surface: {
           DEFAULT: '#ffffff',
           muted:   '#f9fafb',
@@ -60,7 +60,7 @@ export default {
         ctxFamilia: { DEFAULT: '#1E8590', soft: '#D6F0F2', ink: '#125F66' },
         ctxCCB:     { DEFAULT: '#5C8A2C', soft: '#E6F0D8', ink: '#3F6420' },
         ctxEstudo:  { DEFAULT: '#C53580', soft: '#FFE0EC', ink: '#9D2960' },
-        ctxSaude:   { DEFAULT: '#2E8B4F', soft: '#DCEFE1', ink: '#1F5F36' },
+        ctxSaude:   { DEFAULT: '#1F7A57', soft: '#D6F0E4', ink: '#155F43' },
       },
       borderRadius: {
         xl:    '14px',

@@ -1,10 +1,11 @@
 import { useMemo } from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell, LineChart, Line, Legend,
+  LineChart, Line, Legend,
 } from 'recharts';
 import { ChevronUp } from 'lucide-react';
 import type { Task, ContextType } from '../types';
+import { EmptyState } from './EmptyState';
 
 interface DashboardViewProps {
   tasks: Task[];
@@ -17,7 +18,7 @@ const CTX_COLORS: Record<ContextType, string> = {
   Familia: '#1E8590',
   CCB:     '#5C8A2C',
   Estudo:  '#C53580',
-  Saude:   '#2E8B4F',
+  Saude:   '#1F7A57',
 };
 
 const INK         = '#1A1814';
@@ -39,7 +40,7 @@ function StatCard({ label, value, sub, dark = false, big = false }: {
           : 'bg-paper border-line')
       }
     >
-      <div className={'text-[10px] font-extrabold uppercase tracking-[0.06em] ' + (dark ? 'text-amber-soft' : 'text-ink-3')}>
+      <div className={'text-[12px] font-bold uppercase tracking-[0.06em] ' + (dark ? 'text-amber-soft' : 'text-ink-2')}>
         {label}
       </div>
       <div
@@ -47,13 +48,13 @@ function StatCard({ label, value, sub, dark = false, big = false }: {
           'mt-0.5 tnum ' +
           (big
             ? 'font-display text-[40px] leading-[1] tracking-[-0.04em] ' + (dark ? 'text-white' : 'text-ink')
-            : 'font-extrabold text-[24px] leading-[1.05] tracking-[-0.02em] ' + (dark ? 'text-white' : 'text-ink'))
+            : 'font-bold text-[24px] leading-[1.05] tracking-[-0.02em] ' + (dark ? 'text-white' : 'text-ink'))
         }
       >
         {value}
       </div>
       {sub && (
-        <div className={'text-[11px] mt-1 ' + (dark ? 'text-white/60' : 'text-ink-2')}>
+        <div className={'text-[12px] mt-1 ' + (dark ? 'text-white/60' : 'text-ink-2')}>
           {sub}
         </div>
       )}
@@ -65,7 +66,7 @@ function SectionCard({ title, eyebrow, children }: { title?: string; eyebrow?: s
   return (
     <div className="bg-paper border border-line rounded-2xl p-4">
       {eyebrow && (
-        <div className="text-[10px] font-extrabold uppercase tracking-[0.06em] text-ink-3 mb-1">
+        <div className="text-[12px] font-bold uppercase tracking-[0.06em] text-ink-2 mb-1">
           {eyebrow}
         </div>
       )}
@@ -152,15 +153,7 @@ export function DashboardView({ tasks }: DashboardViewProps) {
 
   if (doneTasks.length === 0) {
     return (
-      <div className="bg-paper border border-line rounded-2xl px-6 py-12 text-center">
-        <div className="font-display text-[28px] tracking-[-0.02em] text-ink">
-          Sem dados ainda.
-        </div>
-        <p className="text-[13px] text-ink-2 mt-2 leading-snug max-w-xs mx-auto">
-          Conclua algumas tarefas no quadro para a inteligência gerar suas
-          estatísticas.
-        </p>
-      </div>
+      <EmptyState title="Sem dados ainda" hint="Conclua tarefas para ver suas estatísticas." />
     );
   }
 
@@ -170,12 +163,12 @@ export function DashboardView({ tasks }: DashboardViewProps) {
       <div className="bg-paper border border-line rounded-2xl p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
-            <div className="text-[10px] font-extrabold uppercase tracking-[0.06em] text-ink-3">
+            <div className="text-[12px] font-bold uppercase tracking-[0.06em] text-ink-2">
               Esta semana
             </div>
             <div className="font-display text-[44px] leading-[1] tracking-[-0.04em] text-ink mt-1 tnum">
               {weekTotal}
-              <span className="text-ink-3 text-[22px] font-sans not-italic font-normal"> concluídas</span>
+              <span className="text-ink-2 text-[22px] font-sans not-italic font-normal"> concluídas</span>
             </div>
             <div className="mt-1.5 text-[11px] text-success font-bold inline-flex items-center gap-1">
               <ChevronUp size={11} strokeWidth={2.6} /> hoje: {todayCount}
@@ -197,7 +190,7 @@ export function DashboardView({ tasks }: DashboardViewProps) {
           >
             <div className="w-[60px] h-[60px] rounded-full bg-paper flex flex-col items-center justify-center" style={{ boxShadow: 'inset 0 0 0 1px ' + LINE }}>
               <span className="font-display text-[20px] leading-[1] text-ink tnum">{weekTotal}</span>
-              <span className="text-[9px] text-ink-3 font-semibold mt-0.5">conc.</span>
+              <span className="text-[11px] text-ink-2 font-semibold mt-0.5">conc.</span>
             </div>
           </div>
         </div>
@@ -218,7 +211,7 @@ export function DashboardView({ tasks }: DashboardViewProps) {
                     minHeight: 4,
                   }}
                 />
-                <span className={(isToday ? 'text-ink font-extrabold' : 'text-ink-3 font-semibold') + ' text-[9px]'}>
+                <span className={(isToday ? 'text-ink font-bold' : 'text-ink-2 font-semibold') + ' text-[11px]'}>
                   {d.dia}
                 </span>
               </div>
@@ -232,7 +225,7 @@ export function DashboardView({ tasks }: DashboardViewProps) {
         <StatCard label="Total" value={doneTasks.length} sub="concluídas no histórico" />
         <StatCard
           dark
-          label="Streak"
+          label="Sequência"
           value={<>{todayCount}<span className="text-white/60 font-normal text-[14px]"> hoje</span></>}
           sub={`média semana ${(weekTotal / 7).toFixed(1)}/dia`}
         />
@@ -261,7 +254,7 @@ export function DashboardView({ tasks }: DashboardViewProps) {
                   >
                     <span className="w-2 h-2 rounded-full" style={{ background: CTX_COLORS[c.name as ContextType] || INK_3 }} />
                     <span className="text-[11px] font-bold text-ink">{c.name}</span>
-                    <span className="text-[11px] font-extrabold text-ink-2 tnum">{pct}%</span>
+                    <span className="text-[12px] font-bold text-ink-2 tnum">{pct}%</span>
                   </div>
                 );
               })}
@@ -271,7 +264,7 @@ export function DashboardView({ tasks }: DashboardViewProps) {
 
       {/* Time est vs real */}
       {timeData.length > 0 && (
-        <SectionCard eyebrow="Estimativa da IA vs tempo real" title="Você acerta bem?">
+        <SectionCard eyebrow="Estimativa" title="Estimado vs. real">
           <div className="h-56 -ml-3">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={timeData}>
@@ -280,7 +273,7 @@ export function DashboardView({ tasks }: DashboardViewProps) {
                 <YAxis tick={{ fontSize: 10, fill: INK_3 }} axisLine={false} tickLine={false} width={28} />
                 <Tooltip contentStyle={{ background: 'white', border: `1px solid ${LINE}`, borderRadius: 12, fontSize: 12 }} />
                 <Legend wrapperStyle={{ fontSize: 11 }} iconType="circle" />
-                <Line type="monotone" dataKey="estimado" name="Estimado (IA)" stroke={INK_3} strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="estimado" name="Estimado" stroke={INK_3} strokeWidth={2} dot={false} />
                 <Line type="monotone" dataKey="real"     name="Real"          stroke={INK}    strokeWidth={3} activeDot={{ r: 5 }} dot={false} />
               </LineChart>
             </ResponsiveContainer>
@@ -289,7 +282,7 @@ export function DashboardView({ tasks }: DashboardViewProps) {
       )}
 
       {/* Peak hour */}
-      <SectionCard eyebrow="Horário de pico" title="Quando você flui?">
+      <SectionCard eyebrow="Horário de pico" title="Maior conclusão">
         <div className="h-48 -ml-3">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={peakHourData}>
@@ -309,36 +302,6 @@ export function DashboardView({ tasks }: DashboardViewProps) {
         </div>
       </SectionCard>
 
-      {/* Pie (compact) */}
-      {contextData.length > 0 && (
-        <SectionCard eyebrow="Distribuição" title="Onde gastei energia">
-          <div className="h-56">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={contextData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={48}
-                  outerRadius={80}
-                  paddingAngle={3}
-                  dataKey="value"
-                  stroke="white"
-                  strokeWidth={2}
-                  label={({ name, percent }) => `${name} ${((percent || 0) * 100).toFixed(0)}%`}
-                  labelLine={{ stroke: INK_3 }}
-                  style={{ fontSize: 11, fontWeight: 700 }}
-                >
-                  {contextData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={CTX_COLORS[entry.name as ContextType] || INK_3} />
-                  ))}
-                </Pie>
-                <Tooltip contentStyle={{ background: 'white', border: `1px solid ${LINE}`, borderRadius: 12, fontSize: 12 }} />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        </SectionCard>
-      )}
     </div>
   );
 }

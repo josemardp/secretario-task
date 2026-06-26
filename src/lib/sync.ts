@@ -25,8 +25,10 @@ function toTimestampOrZero(iso: string | null | undefined): number {
 }
 
 function stripReadonlyTaskFields<T extends Record<string, unknown>>(payload: T): Omit<T, 'created_at' | 'updated_at'> {
-  const { created_at: _createdAt, updated_at: _updatedAt, ...rest } = payload;
-  return rest;
+  const rest = { ...payload };
+  delete rest.created_at;
+  delete rest.updated_at;
+  return rest as Omit<T, 'created_at' | 'updated_at'>;
 }
 
 export async function fetchRemoteTasks() {

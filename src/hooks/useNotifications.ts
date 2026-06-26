@@ -1,23 +1,21 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
+import { useToast } from '../components/toastContext';
 
 export function useNotifications() {
-  const [permission, setPermission] = useState<NotificationPermission>('default');
-
-  useEffect(() => {
-    if ('Notification' in window) {
-      setPermission(Notification.permission);
-    }
-  }, []);
+  const [permission, setPermission] = useState<NotificationPermission>(() =>
+    'Notification' in window ? Notification.permission : 'default'
+  );
+  const toast = useToast();
 
   const requestPermission = useCallback(async () => {
     if (!('Notification' in window)) {
-      alert('Seu navegador não suporta notificações.');
+      toast('Seu navegador não suporta notificações.', 'error');
       return false;
     }
     const result = await Notification.requestPermission();
     setPermission(result);
     return result === 'granted';
-  }, []);
+  }, [toast]);
 
   const sendNotification = useCallback((title: string, options?: NotificationOptions) => {
     if (permission === 'granted') {
