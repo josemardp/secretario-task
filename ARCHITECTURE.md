@@ -154,6 +154,10 @@ CREATE TABLE tasks (
   deleted_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  completed_at TIMESTAMPTZ,
+  completed_at_confidence TEXT CHECK (
+    completed_at_confidence IN ('confirmed', 'legacy_approx')
+  ),
   estimated_minutes INTEGER,
   actual_minutes INTEGER,
   started_at TIMESTAMPTZ,
@@ -191,6 +195,18 @@ CREATE TABLE tasks (
 ## Campos `created_at` e `updated_at`
 
 `created_at` registra a criação original da tarefa e é imutável. `updated_at` é atualizado automaticamente pelo banco a cada `UPDATE`. O cliente pode preencher ambos ao criar tarefa localmente para suportar offline imediato, mas nunca envia `created_at` nem `updated_at` em payloads de `UPDATE`.
+
+## Campos `completed_at` e `completed_at_confidence`
+
+`completed_at` registra a conclusão da tarefa e é preenchido somente na primeira transição real para `status='done'`. Edições posteriores não alteram esse campo.
+
+`completed_at_confidence` indica a qualidade do timestamp:
+- `confirmed`: conclusão nova gravada no momento da transição para `done`.
+- `legacy_approx`: dado legado criado por backfill usando `updated_at` como aproximação explícita.
+
+O backfill da migration `0014_completed_at.sql` marca tarefas antigas `status='done'` como `legacy_approx`. Esse dado pode apoiar contagens históricas, mas não deve alimentar métricas finas de horário ou padrão comportamental.
+
+`updated_at` permanece apenas como timestamp técnico de edição/sync, nunca como conclusão.
 
 ## Campo `recurrence_origin_id`
 

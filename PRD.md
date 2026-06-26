@@ -127,11 +127,13 @@ CREATE TYPE context_type AS ENUM (
 
 ## Coach de Produtividade — contenção provisória
 
-Enquanto o modelo de conclusão honesta ainda não possui `completed_at`, o produto não deve apresentar `updated_at` como se fosse data de conclusão real.
+O produto não deve apresentar `updated_at` como se fosse data de conclusão real.
 
-Comportamento atual da Fase 0:
+Comportamento atual após a Fase 1A:
 - Sugestões comportamentais baseadas em padrão de horário ficam desativadas.
-- Blocos do Dashboard derivados de `updated_at` aparecem como aproximação por edição.
+- Novas conclusões passam a registrar um timestamp próprio de conclusão.
+- Histórico antigo concluído é marcado como aproximação legada.
+- Blocos temporais do Dashboard usam somente conclusões confirmadas.
 - Métricas independentes do horário real de conclusão continuam disponíveis.
 
 ---

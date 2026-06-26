@@ -23,7 +23,37 @@
 
 # Sprint atual
 
-Coach de Produtividade — Sprint 1 concluído
+Coach de Produtividade — Sprint 2 concluído
+
+---
+
+# Coach de Produtividade — Sprint 2 — Fase 1A: Timestamp honesto mínimo
+
+Data: 2026-06-26
+
+## Objetivo
+Introduzir `completed_at` e `completed_at_confidence` como base honesta mínima para conclusão, com backfill legado marcado explicitamente como aproximação.
+
+## Resultado
+- Criada migration `0014_completed_at.sql`.
+- `TASK_COLUMNS` inclui `completed_at` e `completed_at_confidence`.
+- Tipos `Task`/`TaskInput` aceitam os novos campos.
+- Novas conclusões no Kanban e na Agenda gravam `completed_at` e `completed_at_confidence='confirmed'`.
+- Edições posteriores de tarefas já concluídas não reescrevem `completed_at`.
+- Dashboard usa somente conclusões confirmadas para métricas de semana/hoje e horário de pico.
+- `behaviorEngine.ts` passou a analisar somente `completed_at_confidence='confirmed'`, mas `BehavioralSuggestion` permanece desativado.
+
+## Migration remota
+- `supabase migration list --linked`: pendente de execução no fechamento do sprint.
+- `supabase db push --dry-run`: pendente de execução no fechamento do sprint.
+- `supabase db push --linked`: pendente de execução no fechamento do sprint.
+
+## Validações
+- `npm run lint`: pendente de execução no fechamento do sprint.
+- `npm run build`: pendente de execução no fechamento do sprint.
+
+## Próximo sprint recomendado
+Sprint 3 — Fase 1B: Semântica de resolução (`resolution_type` + `resolved_at`).
 
 ---
 

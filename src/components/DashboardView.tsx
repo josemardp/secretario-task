@@ -130,6 +130,11 @@ export function DashboardView({ tasks }: DashboardViewProps) {
     [tasks]
   );
 
+  const confirmedDoneTasks = useMemo(
+    () => doneTasks.filter(t => t.completed_at && t.completed_at_confidence === 'confirmed'),
+    [doneTasks]
+  );
+
   // contexts pie
   const contextData = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -152,15 +157,14 @@ export function DashboardView({ tasks }: DashboardViewProps) {
   const peakHourData = useMemo(() => {
     const hourCounts: Record<string, number> = {};
     for (let i = 6; i <= 23; i++) hourCounts[`${i}h`] = 0;
-    doneTasks.forEach(t => {
-      if (t.updated_at) {
-        const hour = new Date(t.updated_at).getHours();
-        const key = `${hour}h`;
-        if (hourCounts[key] !== undefined) hourCounts[key]++;
-      }
+    confirmedDoneTasks.forEach(t => {
+      if (!t.completed_at) return;
+      const hour = new Date(t.completed_at).getHours();
+      const key = `${hour}h`;
+      if (hourCounts[key] !== undefined) hourCounts[key]++;
     });
     return Object.entries(hourCounts).map(([hora, concluídas]) => ({ hora, concluídas }));
-  }, [doneTasks]);
+  }, [confirmedDoneTasks]);
 
   // avg priority
   const avgPriority = useMemo(() => {
@@ -179,9 +183,9 @@ export function DashboardView({ tasks }: DashboardViewProps) {
       const key = d.toLocaleDateString('pt-BR', { weekday: 'short' });
       data.push({ dia: key.slice(0, 1).toUpperCase(), tarefas: 0, key });
     }
-    doneTasks.forEach(t => {
-      if (!t.updated_at) return;
-      const d = new Date(t.updated_at);
+    confirmedDoneTasks.forEach(t => {
+      if (!t.completed_at) return;
+      const d = new Date(t.completed_at);
       const diffDays = Math.ceil(Math.abs(today.getTime() - d.getTime()) / (1000 * 60 * 60 * 24));
       if (diffDays <= 7) {
         const k = d.toLocaleDateString('pt-BR', { weekday: 'short' });
@@ -190,10 +194,22 @@ export function DashboardView({ tasks }: DashboardViewProps) {
       }
     });
     return data;
-  }, [doneTasks]);
+  }, [confirmedDoneTasks]);
 
   const weekTotal = dailyData.reduce((a, r) => a + r.tarefas, 0);
   const todayCount = dailyData[dailyData.length - 1]?.tarefas ?? 0;
+
+  const recentConfirmedContextData = useMemo(() => {
+    const counts: Record<string, number> = {};
+    const today = new Date();
+    confirmedDoneTasks.forEach(t => {
+      if (!t.completed_at) return;
+      const completedAt = new Date(t.completed_at);
+      const diffDays = Math.ceil(Math.abs(today.getTime() - completedAt.getTime()) / (1000 * 60 * 60 * 24));
+      if (diffDays <= 7) counts[t.context] = (counts[t.context] || 0) + 1;
+    });
+    return Object.entries(counts).map(([name, value]) => ({ name, value }));
+  }, [confirmedDoneTasks]);
 
   if (doneTasks.length === 0) {
     return (
@@ -208,17 +224,17 @@ export function DashboardView({ tasks }: DashboardViewProps) {
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
             <div className="text-[12px] font-bold uppercase tracking-[0.06em] text-ink-secondary">
-              Editadas recentemente
+              Esta semana
             </div>
             <div className="font-display text-[44px] leading-[1] tracking-[-0.04em] text-ink mt-1 tnum">
               {weekTotal}
-              <span className="text-ink-secondary text-[22px] font-sans not-italic font-normal"> concluídas editadas</span>
+              <span className="text-ink-secondary text-[22px] font-sans not-italic font-normal"> confirmadas</span>
             </div>
             <div className="mt-1.5 text-[11px] text-success font-bold inline-flex items-center gap-1">
-              <ChevronUp size={11} strokeWidth={2.6} /> editadas hoje: {todayCount}
+              <ChevronUp size={11} strokeWidth={2.6} /> hoje: {todayCount}
             </div>
             <div className="mt-1 text-[11px] text-ink-secondary">
-              Aproximação por data de edição enquanto a conclusão real está em revisão.
+              Usa conclusões confirmadas; histórico anterior fica fora das métricas de horário.
             </div>
           </div>
 
@@ -226,10 +242,10 @@ export function DashboardView({ tasks }: DashboardViewProps) {
           <div
             className="w-[88px] h-[88px] rounded-full flex items-center justify-center shrink-0"
             style={{
-              background: contextData.length > 0
-                ? `conic-gradient(${contextData.map((c, i) => {
+              background: recentConfirmedContextData.length > 0 && weekTotal > 0
+                ? `conic-gradient(${recentConfirmedContextData.map((c, i) => {
                     const pct = (c.value / weekTotal) * 100;
-                    const start = contextData.slice(0, i).reduce((a, b) => a + (b.value / weekTotal) * 100, 0);
+                    const start = recentConfirmedContextData.slice(0, i).reduce((a, b) => a + (b.value / weekTotal) * 100, 0);
                     return `${CTX_COLORS[c.name as ContextType] || chartTheme.border} ${start}% ${start + pct}%`;
                   }).join(', ')})`
                 : chartTheme.border,
@@ -240,7 +256,7 @@ export function DashboardView({ tasks }: DashboardViewProps) {
               style={{ boxShadow: `inset 0 0 0 1px ${chartTheme.border}` }}
             >
               <span className="font-display text-[20px] leading-[1] text-ink tnum">{weekTotal}</span>
-              <span className="text-[11px] text-ink-secondary font-semibold mt-0.5">edit.</span>
+              <span className="text-[11px] text-ink-secondary font-semibold mt-0.5">conf.</span>
             </div>
           </div>
         </div>
@@ -274,9 +290,9 @@ export function DashboardView({ tasks }: DashboardViewProps) {
       <div className="grid grid-cols-2 gap-3">
         <StatCard label="Total" value={doneTasks.length} sub="concluídas no histórico" />
         <StatCard
-          label="Edições recentes"
+          label="Confirmadas"
           value={<>{todayCount}<span className="text-ink-secondary font-normal text-[14px]"> hoje</span></>}
-          sub={`aprox. semana ${(weekTotal / 7).toFixed(1)}/dia`}
+          sub={`média semana ${(weekTotal / 7).toFixed(1)}/dia`}
         />
         <StatCard label="Prioridade média" value={avgPriority} sub="das concluídas" />
         <StatCard
@@ -294,7 +310,7 @@ export function DashboardView({ tasks }: DashboardViewProps) {
               .slice()
               .sort((a, b) => b.value - a.value)
               .map((c) => {
-                const pct = ((c.value / weekTotal) * 100).toFixed(0);
+                const pct = ((c.value / doneTasks.length) * 100).toFixed(0);
                 return (
                   <div
                     key={c.name}
@@ -355,9 +371,9 @@ export function DashboardView({ tasks }: DashboardViewProps) {
       )}
 
       {/* Peak hour */}
-      <SectionCard eyebrow="Horário de pico aproximado" title="Maior edição de concluídas">
+      <SectionCard eyebrow="Horário de pico" title="Maior conclusão confirmada">
         <div className="text-[12px] text-ink-secondary -mt-1 mb-3">
-          Aproximação por data de edição; será revisada quando `completed_at` existir.
+          Usa somente conclusões confirmadas; histórico anterior fica fora desta métrica.
         </div>
         <div className="h-48 -ml-3">
           <ResponsiveContainer width="100%" height="100%">
@@ -390,7 +406,7 @@ export function DashboardView({ tasks }: DashboardViewProps) {
                 itemStyle={{ color: chartTheme.inkSecondary }}
                 labelStyle={{ color: chartTheme.inkSecondary }}
               />
-              <Bar dataKey="concluídas" name="Concluídas editadas" fill={chartTheme.accent} radius={[6, 6, 0, 0]} />
+              <Bar dataKey="concluídas" name="Concluídas confirmadas" fill={chartTheme.accent} radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>

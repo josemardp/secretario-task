@@ -19,6 +19,61 @@ Este documento define:
 
 ---
 
+# Coach de Produtividade — Sprint 2 — Fase 1A: Timestamp honesto mínimo
+
+Data: 2026-06-26
+
+## Objetivo
+Criar a base mínima de conclusão honesta com `completed_at`, `completed_at_confidence` e backfill legado como `legacy_approx`.
+
+## Resumo do que foi feito
+- Criada a migration `0014_completed_at.sql` com colunas, CHECK e backfill.
+- Atualizados `Task`, `TaskInput` e `TASK_COLUMNS`.
+- Conclusões no Kanban e na Agenda passam a gravar `completed_at` e `completed_at_confidence='confirmed'`.
+- `DashboardView` deixou de usar `updated_at` para métricas de semana/hoje e horário de pico; usa somente `completed_at` confirmado.
+- `behaviorEngine.ts` deixou de usar `updated_at` como conclusão e ignora legado `legacy_approx`.
+- `BehavioralSuggestion` permanece desativado.
+- `resolution_type`, eventos e origem de estimativas não foram implementados neste sprint.
+
+## Arquivos alterados
+- `supabase/migrations/0014_completed_at.sql`
+- `src/types/index.ts`
+- `src/lib/sync.ts`
+- `src/components/TaskBoard.tsx`
+- `src/components/TimelineView.tsx`
+- `src/components/DashboardView.tsx`
+- `src/lib/behaviorEngine.ts`
+- `STATUS.md`
+- `SPRINT_LOG.md`
+- `ROADMAP.md`
+- `DECISIONS.md`
+- `ARCHITECTURE.md`
+- `PRD.md`
+
+## Validações executadas
+- `npm run lint`: pendente de execução no fechamento do sprint.
+- `npm run build`: pendente de execução no fechamento do sprint.
+- `supabase migration list --linked`: pendente de execução no fechamento do sprint.
+- `supabase db push --dry-run`: pendente de execução no fechamento do sprint.
+- `supabase db push --linked`: pendente de execução no fechamento do sprint.
+
+## Bugs ou achados
+- A Agenda (`TimelineView`) também tinha caminho próprio de conclusão; foi atualizada junto do Kanban para não deixar gravação sem `completed_at`.
+
+## Decisões tomadas
+- Backfill legado usa `updated_at` somente como aproximação marcada `legacy_approx`.
+- Métricas de horário ignoram `legacy_approx` e consideram apenas `confirmed`.
+- Não foram criados eventos retroativos.
+
+## Pendências
+- Sprint 3 deve introduzir `resolution_type` e `resolved_at`.
+- Sprint 4 deve introduzir eventos confiáveis/server-stamped.
+
+## Resultado
+Sprint 2 implementado; validações e aplicação remota pendentes nesta seção até o fechamento.
+
+---
+
 # Coach de Produtividade — Sprint 1 — Fase 0: Contenção imediata
 
 Data: 2026-06-26

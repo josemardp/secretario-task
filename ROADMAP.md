@@ -36,8 +36,18 @@ Entregas:
 - `behaviorEngine.ts` congelado até a introdução de `completed_at`.
 - Nenhuma migration, schema, sync ou `TaskStatus` alterado.
 
+## Sprint 2 — Fase 1A: Timestamp honesto mínimo
+Status: concluído em 2026-06-26.
+
+Entregas:
+- Migration `0014_completed_at.sql` com `completed_at` e `completed_at_confidence`.
+- Backfill de tarefas antigas `done` como `legacy_approx`.
+- Novas conclusões gravam `completed_at_confidence='confirmed'`.
+- Dashboard temporal usa `completed_at` confirmado, não `updated_at`.
+- `TASK_COLUMNS` e tipos TypeScript atualizados.
+
 ## Próximo sprint
-Sprint 2 — Fase 1A: `completed_at` + `completed_at_confidence` + backfill.
+Sprint 3 — Fase 1B: `resolution_type` + `resolved_at`.
 
 ---
 

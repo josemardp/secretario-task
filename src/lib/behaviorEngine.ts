@@ -1,8 +1,7 @@
 import type { Task } from '../types';
 
-// Sprint 1: modulo congelado ate o Sprint 2, quando completed_at passa a ser
-// a fonte honesta de conclusao. A leitura atual de updated_at e historica e
-// nao deve alimentar sugestoes ou metricas comportamentais novas.
+// BehavioralSuggestion segue desativado ate haver massa suficiente de dados
+// confirmados. Este modulo nao usa updated_at como conclusao.
 
 export interface BehavioralProfile {
   highEnergyPeakHour: number | null;
@@ -10,8 +9,11 @@ export interface BehavioralProfile {
 }
 
 export function analyzeBehavior(tasks: Task[]): BehavioralProfile {
-  // Pega apenas tarefas concluídas que tenham a data de alteração
-  const doneTasks = tasks.filter(t => t.status === 'done' && t.updated_at);
+  const doneTasks = tasks.filter(t =>
+    t.status === 'done' &&
+    t.completed_at &&
+    t.completed_at_confidence === 'confirmed'
+  );
   
   // Exige um mínimo de dados para não fazer conclusões precipitadas
   if (doneTasks.length < 3) {
@@ -22,7 +24,8 @@ export function analyzeBehavior(tasks: Task[]): BehavioralProfile {
   const lowEnergyHours: Record<number, number> = {};
 
   doneTasks.forEach(t => {
-    const hour = new Date(t.updated_at).getHours();
+    if (!t.completed_at) return;
+    const hour = new Date(t.completed_at).getHours();
     
     // Alta energia: 7 a 10
     if (t.energy >= 7) {

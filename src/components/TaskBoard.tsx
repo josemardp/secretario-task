@@ -51,6 +51,10 @@ function toLocalDatetimeInput(iso: string | null | undefined): string {
 
 function buildCompleteUpdates(task: Task): Partial<Task> {
   const updates: Partial<Task> = { status: 'done' };
+  if (task.status !== 'done') {
+    updates.completed_at = new Date().toISOString();
+    updates.completed_at_confidence = 'confirmed';
+  }
   if (task.started_at) {
     updates.actual_minutes = Math.round((Date.now() - new Date(task.started_at).getTime()) / 60_000);
   }
