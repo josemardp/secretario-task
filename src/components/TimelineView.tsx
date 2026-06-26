@@ -2,8 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { formatDateTime, rescheduleToDate, postponeToTomorrow, wasEdited } from '../lib/datetime';
 import { describeRecurrenceRule, getNextOccurrenceFromNow } from '../lib/recurrence';
-import { Calendar as CalIcon, Repeat, X, Edit3, Trash2 } from 'lucide-react';
-import type { Task, ContextType } from '../types';
+import { Archive, Calendar as CalIcon, Repeat, X, Edit3, Send, Trash2, XCircle } from 'lucide-react';
+import type { Task, ContextType, ResolutionType } from '../types';
 import { CONTEXTS_LIST } from '../types';
 import { useContextStore } from '../stores/contextStore';
 import { useTaskStore } from '../stores/taskStore';
@@ -30,6 +30,15 @@ function priorityTone(priority: number): string {
   return 'text-ink-tertiary';
 }
 
+function buildResolutionUpdates(resolutionType: Exclude<ResolutionType, 'completed'>): Partial<Task> {
+  return {
+    resolution_type: resolutionType,
+    resolved_at: new Date().toISOString(),
+    completed_at: null,
+    completed_at_confidence: null,
+  };
+}
+
 // ─── Recurrence helpers (importados de src/lib/recurrence.ts) ───
 
 function AgendaQuickActions({
@@ -38,12 +47,14 @@ function AgendaQuickActions({
   onPostponeDate,
   onEdit,
   onDelete,
+  onResolve,
 }: {
   onComplete: () => void;
   onPostponeTomorrow: () => void;
   onPostponeDate: (dateString: string) => void;
   onEdit: () => void;
   onDelete: () => void;
+  onResolve: (type: Exclude<ResolutionType, 'completed'>) => void;
 }) {
   const dateInputRef = useRef<HTMLInputElement>(null);
 
@@ -115,6 +126,17 @@ function AgendaQuickActions({
         >
           <Trash2 size={12} /> Excluir
         </button>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onResolve('cancelled');
+          }}
+          className="h-8 min-w-0 px-2 rounded-lg border border-border-strong bg-surface text-ink text-[12px] font-bold inline-flex items-center justify-center gap-1"
+          title="Cancelar sem concluir"
+        >
+          <XCircle size={12} /> Cancelar
+        </button>
       </div>
     </div>
   );
@@ -130,12 +152,13 @@ interface TimelineTaskCardProps {
   handleComplete: (id: string) => void;
   handlePostponeTomorrow: (id: string) => void;
   handlePostponeDate: (id: string, dateString: string) => void;
+  handleResolve: (id: string, type: Exclude<ResolutionType, 'completed'>) => void;
   formatTime: (date: Date) => string;
 }
 
 function TimelineTaskCard({
   block, now, requestDelete, openEdit,
-  handleComplete, handlePostponeTomorrow, handlePostponeDate, formatTime,
+  handleComplete, handlePostponeTomorrow, handlePostponeDate, handleResolve, formatTime,
 }: TimelineTaskCardProps) {
   const t = block.task!;
   const [dragX, setDragX] = useState(0);
@@ -288,6 +311,7 @@ function TimelineTaskCard({
             onPostponeDate={(d) => handlePostponeDate(t.id, d)}
             onEdit={() => openEdit(t)}
             onDelete={() => requestDelete(t)}
+            onResolve={(type) => handleResolve(t.id, type)}
           />
         </div>
       </div>
@@ -457,14 +481,22 @@ export function TimelineView({ tasks }: TimelineViewProps) {
     const task = tasks.find(t => t.id === taskId);
     const updates: Partial<Task> = { status: 'done' };
     if (task && task.status !== 'done') {
-      updates.completed_at = new Date().toISOString();
+      const completedAt = new Date().toISOString();
+      updates.completed_at = completedAt;
       updates.completed_at_confidence = 'confirmed';
+      updates.resolution_type = 'completed';
+      updates.resolved_at = completedAt;
     }
     if (task?.started_at) {
       updates.actual_minutes = Math.round((Date.now() - new Date(task.started_at).getTime()) / 60000);
     }
     updateTask(taskId, updates);
     toast('Tarefa concluída.', 'success');
+  };
+
+  const handleResolve = (taskId: string, resolutionType: Exclude<ResolutionType, 'completed'>) => {
+    updateTask(taskId, buildResolutionUpdates(resolutionType));
+    toast('Tarefa encerrada.', 'success');
   };
 
   const handlePostponeTomorrow = (taskId: string) => {
@@ -637,6 +669,7 @@ export function TimelineView({ tasks }: TimelineViewProps) {
                     handleComplete={handleComplete}
                     handlePostponeTomorrow={handlePostponeTomorrow}
                     handlePostponeDate={handlePostponeDate}
+                    handleResolve={handleResolve}
                     formatTime={formatTime}
                   />
                 );
@@ -711,6 +744,42 @@ export function TimelineView({ tasks }: TimelineViewProps) {
                 className="h-10 rounded-xl border border-border-strong bg-surface text-danger text-[12px] font-bold"
               >
                 Excluir
+              </button>
+            </div>
+
+            <div className="px-5 pt-2 grid grid-cols-3 gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  handleResolve(editingTask.id, 'cancelled');
+                  setEditingTask(null);
+                }}
+                className="h-11 rounded-xl border border-border-strong bg-surface text-ink text-[12px] font-bold inline-flex items-center justify-center gap-1"
+                title="Cancelar sem concluir"
+              >
+                <XCircle size={13} /> Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  handleResolve(editingTask.id, 'delegated');
+                  setEditingTask(null);
+                }}
+                className="h-11 rounded-xl border border-border-strong bg-surface text-ink text-[12px] font-bold inline-flex items-center justify-center gap-1"
+                title="Delegar sem concluir"
+              >
+                <Send size={13} /> Delegar
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  handleResolve(editingTask.id, 'obsolete');
+                  setEditingTask(null);
+                }}
+                className="h-11 rounded-xl border border-border-strong bg-surface text-ink text-[12px] font-bold inline-flex items-center justify-center gap-1"
+                title="Marcar como obsoleta"
+              >
+                <Archive size={13} /> Obsoleta
               </button>
             </div>
 

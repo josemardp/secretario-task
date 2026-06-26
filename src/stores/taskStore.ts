@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { Task, TaskInput, PendingMutation } from '../types';
 import { computeNextRuleAndDate } from '../lib/recurrence';
+import { isOpenTask } from '../lib/taskFilters';
 
 // Storage customizado que trata erros de quota do localStorage silenciosamente
 const safeStorage = createJSONStorage(() => ({
@@ -104,11 +105,16 @@ export const useTaskStore = create<TaskState>()(
         const payload = sanitizedUpdates;
         let recurringClone: TaskInput | null = null;
 
-        // Se a tarefa está sendo concluída e tem regra de recorrência
+        const isFirstCompletion = updates.status === 'done' && taskToUpdate?.status !== 'done';
+        const isFirstNonExecutionResolution =
+          !!updates.resolution_type &&
+          updates.resolution_type !== 'completed' &&
+          !taskToUpdate?.resolution_type;
+
+        // Se a instância recorrente está sendo encerrada, prepara a próxima.
         if (
           taskToUpdate &&
-          updates.status === 'done' &&
-          taskToUpdate.status !== 'done' &&
+          (isFirstCompletion || isFirstNonExecutionResolution) &&
           taskToUpdate.recurrence_rule
         ) {
           const { nextDueAt, nextRule } = computeNextRuleAndDate(
@@ -144,8 +150,7 @@ export const useTaskStore = create<TaskState>()(
           const originId = taskToUpdate.recurrence_origin_id ?? taskToUpdate.id;
           const cloneAlreadyExists = useTaskStore.getState().tasks.some((t) =>
             t.recurrence_origin_id === originId &&
-            !t.deleted_at &&
-            t.status !== 'done'
+            isOpenTask(t)
           );
 
           if (!cloneAlreadyExists) {

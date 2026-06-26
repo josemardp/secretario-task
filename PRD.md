@@ -136,6 +136,14 @@ Comportamento atual após a Fase 1A:
 - Blocos temporais do Dashboard usam somente conclusões confirmadas.
 - Métricas independentes do horário real de conclusão continuam disponíveis.
 
+## Coach de Produtividade — semântica de resolução
+
+O produto diferencia tarefas feitas de tarefas encerradas sem execução:
+- Concluir significa que a tarefa foi executada e recebe `completed_at`.
+- Cancelar, Delegar e Obsoleta encerram a tarefa sem execução e não contam como conclusão.
+- Encerramentos sem execução saem das listas operacionais sem usar `deleted_at`.
+- Tarefas encerradas permanecem preservadas para histórico e análise.
+
 ---
 
 ## Fora do MVP (v1.1+)
@@ -209,7 +217,11 @@ CREATE TABLE tasks (
   due_at TIMESTAMPTZ,
   deleted_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ DEFAULT now(),
-  updated_at TIMESTAMPTZ DEFAULT now()
+  updated_at TIMESTAMPTZ DEFAULT now(),
+  completed_at TIMESTAMPTZ,
+  completed_at_confidence TEXT,
+  resolution_type TEXT,
+  resolved_at TIMESTAMPTZ
 );
 ```
 
@@ -239,6 +251,15 @@ CREATE TABLE tasks (
 ## Campo `deleted_at`
 - TIMESTAMPTZ nullable (soft delete)
 - queries do MVP filtram `WHERE deleted_at IS NULL`
+- não representa cancelamento, delegação ou obsolescência
+
+## Campos de conclusão e resolução
+- `completed_at`: preenchido apenas quando a tarefa foi concluída de fato
+- `completed_at_confidence`: diferencia conclusões confirmadas de histórico legado aproximado
+- `resolution_type`: `completed`, `cancelled`, `delegated` ou `obsolete`
+- `resolved_at`: momento em que a tarefa deixou de estar aberta
+
+Cancelada, delegada e obsoleta mantêm `completed_at=NULL`.
 
 ---
 

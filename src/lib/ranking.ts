@@ -1,6 +1,9 @@
 import type { Task, ContextType } from '../types';
+import { isOpenTask } from './taskFilters';
 
 export function calculateTaskScore(task: Task, currentEnergy: number, activeContext: ContextType): number {
+  if (!isOpenTask(task)) return 0;
+
   const now = new Date();
   
   // 1. f_due: Proximity to deadline (0 to 1)

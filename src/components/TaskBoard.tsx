@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { formatDateTime, rescheduleToDate, postponeToTomorrow, wasEdited } from '../lib/datetime';
 import { describeRecurrenceRule } from '../lib/recurrence';
-import type { Task, TaskStatus, ContextType } from '../types';
+import type { Task, TaskStatus, ContextType, ResolutionType } from '../types';
 import { CONTEXTS_LIST } from '../types';
 import { RecurrenceModal } from './RecurrenceModal';
 import { useTaskStore } from '../stores/taskStore';
 import { useContextStore } from '../stores/contextStore';
 import { calculateTaskScore } from '../lib/ranking';
+import { isActiveTask, isClosedWithoutExecution } from '../lib/taskFilters';
 import { TaskActions } from './TaskActions';
 import { EmptyState } from './EmptyState';
 import {
@@ -52,13 +53,32 @@ function toLocalDatetimeInput(iso: string | null | undefined): string {
 function buildCompleteUpdates(task: Task): Partial<Task> {
   const updates: Partial<Task> = { status: 'done' };
   if (task.status !== 'done') {
-    updates.completed_at = new Date().toISOString();
+    const completedAt = new Date().toISOString();
+    updates.completed_at = completedAt;
     updates.completed_at_confidence = 'confirmed';
+    updates.resolution_type = 'completed';
+    updates.resolved_at = completedAt;
   }
   if (task.started_at) {
     updates.actual_minutes = Math.round((Date.now() - new Date(task.started_at).getTime()) / 60_000);
   }
   return updates;
+}
+
+function buildResolutionUpdates(resolutionType: Exclude<ResolutionType, 'completed'>): Partial<Task> {
+  return {
+    resolution_type: resolutionType,
+    resolved_at: new Date().toISOString(),
+    completed_at: null,
+    completed_at_confidence: null,
+  };
+}
+
+function resolutionLabel(type: ResolutionType | null | undefined): string {
+  if (type === 'cancelled') return 'Cancelada';
+  if (type === 'delegated') return 'Delegada';
+  if (type === 'obsolete') return 'Obsoleta';
+  return 'Encerrada';
 }
 
 function NowCard({ task, onStart }: { task: Task | undefined; onStart: (task: Task) => void }) {
@@ -122,11 +142,12 @@ interface TaskRowProps {
   onRevert: () => void;
   onPostponeTomorrow: () => void;
   onPostponeDate: (d: string) => void;
+  onResolve: (type: Exclude<ResolutionType, 'completed'>) => void;
   isDone: boolean;
 }
 
 function TaskRow({
-  task, expanded, onToggleExpand, onComplete, onStart, onRevert, onPostponeTomorrow, onPostponeDate, isDone,
+  task, expanded, onToggleExpand, onComplete, onStart, onRevert, onPostponeTomorrow, onPostponeDate, onResolve, isDone,
 }: TaskRowProps) {
   const { updateTask, deleteTask } = useTaskStore();
   const [showRecurrenceModal, setShowRecurrenceModal] = useState(false);
@@ -257,6 +278,7 @@ function TaskRow({
                 onComplete={onComplete}
                 onPostponeTomorrow={onPostponeTomorrow}
                 onPostponeDate={onPostponeDate}
+                onResolve={onResolve}
               />
             </div>
           )}
@@ -390,9 +412,10 @@ export function TaskBoard({ tasks, topTasks = [] }: TaskBoardProps) {
   const { currentEnergy, activeContext } = useContextStore();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [doneOpen, setDoneOpen] = useState(false);
+  const [resolvedOpen, setResolvedOpen] = useState(false);
 
   useEffect(() => {
-    tasks.filter(t => !t.deleted_at).forEach(task => recordViewEvent(task.id));
+    tasks.filter(isActiveTask).forEach(task => recordViewEvent(task.id));
   }, [tasks, recordViewEvent]);
 
   const completeTask = (task: Task) => {
@@ -401,6 +424,10 @@ export function TaskBoard({ tasks, topTasks = [] }: TaskBoardProps) {
 
   const startTask = (task: Task) => {
     updateTask(task.id, { status: 'doing', started_at: new Date().toISOString() });
+  };
+
+  const resolveTask = (task: Task, type: Exclude<ResolutionType, 'completed'>) => {
+    updateTask(task.id, buildResolutionUpdates(type));
   };
 
   const handleStatusRevert = (task: Task) => {
@@ -429,7 +456,7 @@ export function TaskBoard({ tasks, topTasks = [] }: TaskBoardProps) {
       done: [],
     };
     tasks
-      .filter((task) => !task.deleted_at)
+      .filter(isActiveTask)
       .forEach((task) => {
         byStatus[task.status].push({
           ...task,
@@ -441,6 +468,15 @@ export function TaskBoard({ tasks, topTasks = [] }: TaskBoardProps) {
   }, [tasks, currentEnergy, activeContext]);
 
   const doneTasks = scoredTasks.done;
+  const resolvedTasks = useMemo(() => (
+    tasks
+      .filter((task) => !task.deleted_at && isClosedWithoutExecution(task))
+      .sort((a, b) => {
+        const aTime = a.resolved_at ? new Date(a.resolved_at).getTime() : 0;
+        const bTime = b.resolved_at ? new Date(b.resolved_at).getTime() : 0;
+        return bTime - aTime;
+      })
+  ), [tasks]);
 
   return (
     <div className="flex flex-col gap-5">
@@ -473,6 +509,7 @@ export function TaskBoard({ tasks, topTasks = [] }: TaskBoardProps) {
                     onRevert={() => handleStatusRevert(task)}
                     onPostponeTomorrow={() => handlePostponeTomorrow(task)}
                     onPostponeDate={(date) => handlePostponeDate(task, date)}
+                    onResolve={(type) => resolveTask(task, type)}
                     isDone={false}
                   />
                 ))}
@@ -511,6 +548,7 @@ export function TaskBoard({ tasks, topTasks = [] }: TaskBoardProps) {
                   onRevert={() => handleStatusRevert(task)}
                   onPostponeTomorrow={() => handlePostponeTomorrow(task)}
                   onPostponeDate={(date) => handlePostponeDate(task, date)}
+                  onResolve={(type) => resolveTask(task, type)}
                   isDone
                 />
               ))}
@@ -518,6 +556,40 @@ export function TaskBoard({ tasks, topTasks = [] }: TaskBoardProps) {
           )
         )}
       </section>
+
+      {resolvedTasks.length > 0 && (
+        <section>
+          <button
+            type="button"
+            onClick={() => setResolvedOpen((open) => !open)}
+            className="w-full flex items-center justify-between px-1 mb-2 text-left"
+          >
+            <h2 className="text-[16px] font-semibold tracking-tight text-ink">
+              Encerradas
+              <span className="ml-1.5 text-[12px] font-semibold text-ink-2 tnum">{resolvedTasks.length}</span>
+            </h2>
+            <ChevronDown size={16} className={'text-ink-2 transition-transform ' + (resolvedOpen ? 'rotate-180' : '')} />
+          </button>
+
+          {resolvedOpen && (
+            <div className="flex flex-col gap-2">
+              {resolvedTasks.map((task) => (
+                <div
+                  key={task.id}
+                  className={`bg-paper border border-line border-l-4 rounded-2xl px-3 py-2.5 opacity-75 ${CTX_BAR[task.context]}`}
+                >
+                  <div className="min-w-0">
+                    <div className="text-[14px] font-semibold text-ink truncate">{task.title}</div>
+                    <div className="mt-1 text-[12px] text-ink-2">
+                      {resolutionLabel(task.resolution_type)} sem conclusão
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+      )}
     </div>
   );
 }

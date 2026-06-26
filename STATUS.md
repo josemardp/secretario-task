@@ -23,7 +23,43 @@
 
 # Sprint atual
 
-Coach de Produtividade — Sprint 2 concluído
+Coach de Produtividade — Sprint 3 concluído
+
+---
+
+# Coach de Produtividade — Sprint 3 — Fase 1B: Semântica de resolução
+
+Data: 2026-06-26
+
+## Objetivo
+Diferenciar tarefa concluída de tarefa encerrada sem execução, sem alterar `TaskStatus` e sem usar `deleted_at` para cancelamento, delegação ou obsolescência.
+
+## Resultado
+- Criada migration `0015_resolution_semantics.sql`.
+- Adicionados `resolution_type` e `resolved_at` em `tasks`.
+- Backfill planejado: tarefas `status='done'` passam a ter `resolution_type='completed'` e `resolved_at=completed_at`.
+- `TASK_COLUMNS` e tipos TypeScript incluem `resolution_type` e `resolved_at`.
+- Novas conclusões gravam `resolution_type='completed'` e `resolved_at` junto de `completed_at`.
+- Ações discretas de Cancelar, Delegar e Obsoleta gravam `resolution_type`, `resolved_at` e mantêm `completed_at=NULL`.
+- Helper `isActiveTask`/`isOpenTask` exclui canceladas, delegadas e obsoletas das listas operacionais sem usar `deleted_at`.
+- Kanban, Agenda, ranking, briefing, notificações, calendário e Dashboard passaram a respeitar a semântica de tarefa ativa.
+- Índice parcial de recorrência foi ajustado para não tratar tarefas canceladas, delegadas ou obsoletas como ocorrência viva da série.
+- `TaskStatus` não foi alterado.
+- Eventos novos não foram implementados.
+- `BehavioralSuggestion` permanece desativado.
+
+## Migration remota
+- `supabase migration list --linked`: executado antes da aplicação; remoto estava alinhado até `0014`.
+- `supabase db push --dry-run`: passou; listou somente `0015_resolution_semantics.sql`.
+- `supabase db push --linked`: passou; `0015` aplicada no Supabase remoto.
+- `supabase migration list --linked`: confirmado após aplicação; remoto alinhado até `0015`.
+
+## Validações
+- `npm run lint`: passou.
+- `npm run build`: passou; Vite manteve aviso de chunk maior que 500 kB.
+
+## Próximo sprint recomendado
+Sprint 4 — Fase 1C: Eventos confiáveis server-stamped.
 
 ---
 
@@ -44,13 +80,13 @@ Introduzir `completed_at` e `completed_at_confidence` como base honesta mínima 
 - `behaviorEngine.ts` passou a analisar somente `completed_at_confidence='confirmed'`, mas `BehavioralSuggestion` permanece desativado.
 
 ## Migration remota
-- `supabase migration list --linked`: pendente de execução no fechamento do sprint.
-- `supabase db push --dry-run`: pendente de execução no fechamento do sprint.
-- `supabase db push --linked`: pendente de execução no fechamento do sprint.
+- `supabase migration list --linked`: confirmado na revisão do Sprint 3; remoto alinhado até `0014`.
+- `supabase db push --dry-run`: executado no fechamento versionado do Sprint 2.
+- `supabase db push --linked`: aplicado no fechamento versionado do Sprint 2; commit `3ec8800 feat: adicionar timestamp honesto de conclusão (Sprint 2)`.
 
 ## Validações
-- `npm run lint`: pendente de execução no fechamento do sprint.
-- `npm run build`: pendente de execução no fechamento do sprint.
+- `npm run lint`: executado no fechamento versionado do Sprint 2.
+- `npm run build`: executado no fechamento versionado do Sprint 2.
 
 ## Próximo sprint recomendado
 Sprint 3 — Fase 1B: Semântica de resolução (`resolution_type` + `resolved_at`).

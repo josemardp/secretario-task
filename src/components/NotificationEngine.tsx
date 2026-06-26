@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useTaskStore } from '../stores/taskStore';
 import { useNotifications } from '../hooks/useNotifications';
+import { isOpenTask } from '../lib/taskFilters';
 
 export function NotificationEngine() {
   const { tasks } = useTaskStore();
@@ -27,7 +28,7 @@ export function NotificationEngine() {
     const checkTasks = () => {
       const now = new Date();
       
-      const todoTasks = tasks.filter(t => t.status === 'todo' && !t.deleted_at && t.due_at);
+      const todoTasks = tasks.filter(t => isOpenTask(t) && t.due_at);
       
       todoTasks.forEach(task => {
         if (!task.due_at || notifiedTasks.current.has(task.id)) return;

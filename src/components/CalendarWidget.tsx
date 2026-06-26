@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import type { Task } from '../types';
+import { isOpenTask } from '../lib/taskFilters';
 
 interface CalendarWidgetProps {
   selectedDate: Date;
@@ -33,7 +34,7 @@ export function CalendarWidget({ selectedDate, onSelectDate, onClose, tasks }: C
   const daysWithTasks = useMemo(() => {
     const set = new Set<number>();
     tasks
-      .filter((t) => t.status === 'todo' && !t.deleted_at && t.due_at)
+      .filter((t) => isOpenTask(t) && t.due_at)
       .forEach((task) => {
         const due = new Date(task.due_at!);
         if (

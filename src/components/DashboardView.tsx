@@ -6,6 +6,7 @@ import {
 import { ChevronUp } from 'lucide-react';
 import type { Task, ContextType } from '../types';
 import { EmptyState } from './EmptyState';
+import { isClosedWithoutExecution, isOpenTask } from '../lib/taskFilters';
 
 interface DashboardViewProps {
   tasks: Task[];
@@ -126,7 +127,7 @@ export function DashboardView({ tasks }: DashboardViewProps) {
   const chartTheme = useChartTheme();
 
   const doneTasks = useMemo(
-    () => tasks.filter(t => t.status === 'done' && !t.deleted_at),
+    () => tasks.filter(t => t.status === 'done' && !t.deleted_at && !isClosedWithoutExecution(t)),
     [tasks]
   );
 
@@ -297,8 +298,8 @@ export function DashboardView({ tasks }: DashboardViewProps) {
         <StatCard label="Prioridade média" value={avgPriority} sub="das concluídas" />
         <StatCard
           label="Adiadas"
-          value={tasks.filter(t => (t.postponed_count ?? 0) > 0 && !t.deleted_at).length}
-          sub="tarefas com adiamento"
+          value={tasks.filter(t => (t.postponed_count ?? 0) > 0 && isOpenTask(t)).length}
+          sub="tarefas abertas com adiamento"
         />
       </div>
 

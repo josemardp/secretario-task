@@ -158,6 +158,10 @@ CREATE TABLE tasks (
   completed_at_confidence TEXT CHECK (
     completed_at_confidence IN ('confirmed', 'legacy_approx')
   ),
+  resolution_type TEXT CHECK (
+    resolution_type IN ('completed', 'cancelled', 'delegated', 'obsolete')
+  ),
+  resolved_at TIMESTAMPTZ,
   estimated_minutes INTEGER,
   actual_minutes INTEGER,
   started_at TIMESTAMPTZ,
@@ -208,6 +212,22 @@ O backfill da migration `0014_completed_at.sql` marca tarefas antigas `status='d
 
 `updated_at` permanece apenas como timestamp técnico de edição/sync, nunca como conclusão.
 
+## Campos `resolution_type` e `resolved_at`
+
+`resolution_type` descreve por que uma tarefa deixou de estar aberta:
+- `completed`: a tarefa foi executada.
+- `cancelled`: a tarefa foi cancelada sem execução.
+- `delegated`: a tarefa foi delegada sem execução.
+- `obsolete`: a tarefa ficou obsoleta sem execução.
+
+`resolved_at` registra quando a resolução foi definida.
+
+Toda conclusão é uma resolução: quando `resolution_type='completed'`, `resolved_at` deve acompanhar `completed_at`.
+
+Nem toda resolução é conclusão: quando `resolution_type` é `cancelled`, `delegated` ou `obsolete`, `completed_at` permanece `NULL` e a tarefa sai das listas operacionais por filtro semântico, não por `deleted_at`.
+
+`deleted_at` continua reservado exclusivamente para exclusão/remoção. Ele não deve ser usado para cancelar, delegar ou marcar uma tarefa como obsoleta.
+
 ## Campo `recurrence_origin_id`
 
 - UUID nullable referenciando `tasks(id)` com `ON DELETE SET NULL`
@@ -247,9 +267,21 @@ WHERE deleted_at IS NULL AND due_at IS NOT NULL;
 CREATE INDEX idx_recurrence_origin
 ON tasks (recurrence_origin_id)
 WHERE recurrence_origin_id IS NOT NULL;
+
+CREATE UNIQUE INDEX idx_unique_live_recurrence
+ON tasks (user_id, recurrence_origin_id)
+WHERE deleted_at IS NULL
+  AND status <> 'done'
+  AND recurrence_origin_id IS NOT NULL
+  AND (
+    resolution_type IS NULL
+    OR resolution_type NOT IN ('cancelled', 'delegated', 'obsolete')
+  );
 ```
 
 Os índices parciais (`WHERE deleted_at IS NULL`) mantêm performance sem custo de armazenar registros excluídos.
+
+O índice de recorrência considera "viva" apenas a ocorrência aberta de fato. Tarefas canceladas, delegadas ou obsoletas continuam no histórico, mas não bloqueiam a próxima ocorrência recorrente.
 
 ---
 

@@ -22,6 +22,7 @@ import { NotificationEngine } from '../components/NotificationEngine';
 import { FocoSheet } from '../components/FocoSheet';
 import { useToast } from '../components/toastContext';
 import { generateBriefingFromTopTasks, getDailyBriefing } from '../lib/briefing';
+import { isOpenTask } from '../lib/taskFilters';
 import type { Task } from '../types';
 
 function getGreeting(): string {
@@ -137,7 +138,7 @@ export default function Home() {
   }, [tasks, currentEnergy, activeContext]);
 
   const todayCount = useMemo(() => {
-    return tasks.filter((t) => !t.deleted_at && t.status !== 'done' && isTaskForToday(t.due_at)).length;
+    return tasks.filter((t) => isOpenTask(t) && isTaskForToday(t.due_at)).length;
   }, [tasks]);
 
   const handleGenerateBriefing = async () => {
