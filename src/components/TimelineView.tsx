@@ -34,11 +34,11 @@ function estimateTimelineBlockHeight(block: TimelineBlock): number {
   if (block.type === 'break') return 64;
 
   const titleLength = block.title.length;
-  const estimatedLines = Math.max(1, Math.ceil(titleLength / 24));
-  const wrappedTitleExtra = Math.max(0, estimatedLines - 1) * 24;
-  const postponedExtra = (block.task?.postponed_count ?? 0) > 0 ? 24 : 0;
+  const estimatedLines = Math.max(1, Math.ceil(titleLength / 28));
+  const wrappedTitleExtra = Math.max(0, estimatedLines - 1) * 20;
+  const postponedExtra = (block.task?.postponed_count ?? 0) > 0 ? 20 : 0;
 
-  return 96 + wrappedTitleExtra + postponedExtra;
+  return 78 + wrappedTitleExtra + postponedExtra;
 }
 
 // ─── Recurrence helpers (importados de src/lib/recurrence.ts) ───
@@ -329,10 +329,10 @@ function TimelineSlot({
   const slotMinHeight = slotBlocksCount === 0
     ? 28
     : Math.max(
-        112,
+        92,
         slotBlocks.reduce((total, block) => total + estimateTimelineBlockHeight(block), 0) +
           Math.max(0, slotBlocksCount - 1) * 8 +
-          16,
+          10,
       );
 
   return (
