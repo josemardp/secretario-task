@@ -225,7 +225,8 @@ CREATE TABLE tasks (
   estimated_minutes INTEGER,
   actual_minutes INTEGER,
   estimated_minutes_source TEXT,
-  actual_minutes_source TEXT
+  actual_minutes_source TEXT,
+  blocker_type TEXT
 );
 ```
 
@@ -264,10 +265,15 @@ CREATE TABLE tasks (
 - `resolved_at`: momento em que a tarefa deixou de estar aberta
 - `estimated_minutes_source`: origem da estimativa (`default_30`, `manual`, `ai`, `parser`)
 - `actual_minutes_source`: origem do tempo real (`timer`, `manual`, `retroactive`, `unknown`)
+- `blocker_type`: motivo opcional de adiamento (`waiting_third_party`, `no_time`, `priority_changed`, `needs_split`, `dependency`)
 
 Cancelada, delegada e obsoleta mantêm `completed_at=NULL`.
 
 Estimativas e tempos reais carregam origem para evitar misturar dado manual, IA, fallback e timer como se tivessem a mesma confiabilidade.
+
+Reabrir uma tarefa remove a conclusão/resolução atual e o timer aberto, preservando o histórico em `task_events`.
+
+Adiamento pode ser feito sem motivo para preservar velocidade. Quando houver motivo, ele é registrado em `blocker_type`; quando não houver, o dado permanece nulo e identificável como incompleto.
 
 ---
 

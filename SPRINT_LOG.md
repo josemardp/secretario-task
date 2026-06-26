@@ -19,6 +19,69 @@ Este documento define:
 
 ---
 
+# Coach de Produtividade — Sprint 6 — Fase 2: Ajustes nos fluxos existentes
+
+Data: 2026-06-26
+
+## Objetivo
+Fechar lacunas dos fluxos existentes: reabertura limpa, teto plausível de timer e motivo opcional de adiamento, sem adicionar diagnóstico comportamental nem alterar `TaskStatus`.
+
+## Resumo do que foi feito
+- Criada a migration `0018_postpone_blocker_type.sql`.
+- `tasks` ganhou `blocker_type` opcional.
+- `blocker_type` aceita `waiting_third_party`, `no_time`, `priority_changed`, `needs_split` e `dependency`.
+- Adiamentos sem motivo continuam permitidos e ficam identificáveis por `blocker_type=NULL`.
+- Kanban ganhou seletor opcional de motivo antes de adiar; Agenda permite informar o motivo no modal de edição.
+- Eventos `postponed` incluem `blocker_type` no payload quando informado, sem bloquear o fluxo.
+- Reabrir tarefa concluída limpa conclusão, resolução, timer aberto e tempo real do ciclo anterior.
+- Tarefas encerradas sem execução podem ser reabertas no Kanban, preservando histórico de eventos e removendo a resolução atual.
+- Timers com mais de 8 horas abertas são tratados como suspeitos: `actual_minutes` é preservado, mas `actual_minutes_source='unknown'`.
+- `TaskStatus` não foi alterado.
+- `deleted_at` não foi usado para cancelamento, delegação, obsolescência ou reabertura.
+- `BehavioralSuggestion` permanece desativado.
+- Nenhum diagnóstico comportamental foi criado.
+
+## Arquivos alterados
+- `supabase/migrations/0018_postpone_blocker_type.sql`
+- `src/types/index.ts`
+- `src/lib/sync.ts`
+- `src/lib/timeTracking.ts`
+- `src/components/TaskActions.tsx`
+- `src/components/TaskBoard.tsx`
+- `src/components/TimelineView.tsx`
+- `STATUS.md`
+- `SPRINT_LOG.md`
+- `ROADMAP.md`
+- `DECISIONS.md`
+- `ARCHITECTURE.md`
+- `PRD.md`
+
+## Validações executadas
+- `npm run lint`: passou.
+- `npm run build`: passou; Vite manteve aviso de chunk maior que 500 kB.
+- `supabase migration list --linked`: antes da aplicação, remoto alinhado até `0017` e `0018` pendente localmente.
+- `supabase db push --dry-run`: passou; listou somente `0018_postpone_blocker_type.sql`.
+- `supabase db push --linked`: passou; `0018` aplicada no Supabase remoto.
+- `supabase migration list --linked`: após aplicação, remoto alinhado até `0018`.
+
+## Bugs ou achados
+- Reabertura anterior alterava apenas status, deixando campos semânticos de conclusão/resolução ativos.
+- Timer derivado de `started_at` antigo era tratado como tempo confiável sem teto plausível.
+- Sprint 5 estava aplicado e enviado em `4ec04b2`, mas um ponto da documentação ainda dizia que commit/push seriam registrados no relatório final.
+
+## Decisões tomadas
+- Timer aberto por mais de 8 horas é suspeito e recebe `actual_minutes_source='unknown'`.
+- Reabertura limpa remove também `actual_minutes` e `actual_minutes_source` para evitar que o tempo do ciclo anterior contamine a execução reaberta.
+- Motivo de adiamento permanece opcional; ausência de motivo é dado incompleto, não bloqueio operacional.
+
+## Pendências
+- Sprint 7 deve consolidar o Dashboard confiável mínimo consumindo as fontes e confidências já registradas.
+
+## Resultado
+Sprint 6 implementado e migration `0018` aplicada remotamente. Commit/push serão registrados no relatório final.
+
+---
+
 # Coach de Produtividade — Sprint 5 — Fase 1D: Origem dos dados e governança de campos
 
 Data: 2026-06-26
@@ -78,7 +141,7 @@ Marcar a procedência de todo dado de estimativa e tempo real que possa vir de I
 - Sprint 7 deve consumir o eixo de confiabilidade no Dashboard honesto.
 
 ## Resultado
-Sprint 5 implementado e migration `0017` aplicada remotamente. Commit/push serão registrados no relatório final.
+Sprint 5 implementado, migration `0017` aplicada remotamente e enviado para `origin/main` no commit `4ec04b2 feat: rastrear origem dos tempos (Sprint 5)`.
 
 ---
 

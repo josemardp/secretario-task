@@ -292,6 +292,27 @@ Motivo: estimativas antigas podem ter vindo de IA, default ou ajuste manual, e o
 Alternativas descartadas: marcar todo `estimated_minutes=30` como `default_30` — descartada porque a IA também pode retornar 30; marcar todo tempo real antigo como `timer` — descartada quando falta `started_at`; apagar ou recalcular tempos antigos — descartada por reescrever histórico fora do escopo.
 Contexto: Coach de Produtividade, Sprint 5 — Fase 1D: Origem dos dados.
 
+## 2026-06-26 — Sprint 6 Coach: teto plausível de timer em 8 horas
+
+Decisão: timer aberto por mais de 8 horas é tratado como suspeito. O valor calculado de `actual_minutes` é preservado, mas `actual_minutes_source` passa a ser `unknown`.
+Motivo: o plano oficial indicava um limite plausível com exemplo de 8 horas, sem fixar outro valor. Esse teto evita transformar um `started_at` esquecido em trabalho confiável e mantém o dado disponível para auditoria futura.
+Alternativas descartadas: bloquear a conclusão — descartada por quebrar execução diária; truncar o tempo em 8 horas — descartada por reescrever o fato bruto; confiar em qualquer intervalo — descartada por contaminar métricas futuras.
+Contexto: Coach de Produtividade, Sprint 6 — Fase 2: Ajustes nos fluxos existentes.
+
+## 2026-06-26 — Sprint 6 Coach: reabertura limpa remove tempo do ciclo anterior
+
+Decisão: reabrir uma tarefa limpa conclusão, resolução, `started_at`, `actual_minutes` e `actual_minutes_source`, preservando apenas o histórico em `task_events`.
+Motivo: uma tarefa reaberta volta ao estado operacional aberto. Manter tempo real do ciclo anterior faria a tarefa aberta continuar influenciando leituras de tempo e poderia contaminar uma nova conclusão sem timer.
+Alternativas descartadas: limpar apenas `completed_at`/`resolved_at` — descartada por deixar tempo antigo grudado na tarefa atual; apagar eventos antigos — descartada por destruir trilha auditável; criar um novo status — descartada por violar a regra de não alterar `TaskStatus`.
+Contexto: Coach de Produtividade, Sprint 6 — Fase 2: Ajustes nos fluxos existentes.
+
+## 2026-06-26 — Sprint 6 Coach: motivo de adiamento opcional
+
+Decisão: `blocker_type` é opcional. Adiar sem motivo grava `NULL`; adiar com motivo grava um dos valores controlados.
+Motivo: captura e reagendamento precisam continuar rápidos. A ausência de motivo é informação incompleta, não erro operacional.
+Alternativas descartadas: exigir motivo para todo adiamento — descartada por aumentar fricção; texto livre sem constraint — descartada por prejudicar agregações futuras; criar tabela separada de motivos — descartada por complexidade desnecessária neste sprint.
+Contexto: Coach de Produtividade, Sprint 6 — Fase 2: Ajustes nos fluxos existentes.
+
 ## 2026-05-24 — Extração de "energia" no Parser
 Decisão: O parser agora extrai o campo `energia` através de palavras-chave (`energia alta|media|baixa`) ou prefixos explícitos (`e8`, `e2`), assim como faz com prioridade.
 Motivo: Durante testes de validação, constatamos que sem a definição da energia individual da tarefa, o algoritmo do Ranking Engine aplicava penalidades idênticas a todas as tarefas simultaneamente ao mudar a Energia Atual (já que todas as tarefas nasciam com energy=0). Isso alterava a nota, mas não reordenava as tarefas. Extrair a energia via texto resolve o problema matematicamente.

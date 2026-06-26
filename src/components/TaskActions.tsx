@@ -1,11 +1,12 @@
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
 import { Archive, Check, Send, Sun, Calendar, XCircle } from 'lucide-react';
-import type { ResolutionType } from '../types';
+import { BLOCKER_TYPES } from '../types';
+import type { BlockerType, ResolutionType } from '../types';
 
 interface TaskActionsProps {
   onComplete: () => void;
-  onPostponeTomorrow: () => void;
-  onPostponeDate: (dateString: string) => void;
+  onPostponeTomorrow: (blockerType?: BlockerType | null) => void;
+  onPostponeDate: (dateString: string, blockerType?: BlockerType | null) => void;
   onResolve?: (type: Exclude<ResolutionType, 'completed'>) => void;
   showComplete?: boolean;
 }
@@ -18,6 +19,8 @@ export function TaskActions({
   showComplete = true,
 }: TaskActionsProps) {
   const dateInputRef = useRef<HTMLInputElement>(null);
+  const [blockerType, setBlockerType] = useState<BlockerType | ''>('');
+  const selectedBlockerType = blockerType || null;
 
   return (
     <div className="flex gap-1.5 items-center flex-wrap">
@@ -32,7 +35,7 @@ export function TaskActions({
       )}
 
       <button
-        onClick={onPostponeTomorrow}
+        onClick={() => onPostponeTomorrow(selectedBlockerType)}
         className="min-h-11 inline-flex items-center gap-1 text-[12px] font-bold px-3 py-2 rounded-lg bg-paper2 text-ink hover:bg-paper3 transition-colors"
         title="Adiar para amanhã"
       >
@@ -52,10 +55,23 @@ export function TaskActions({
           type="date"
           className="absolute opacity-0 w-0 h-0 p-0 m-0 border-0"
           onChange={(e) => {
-            if (e.target.value) onPostponeDate(e.target.value);
+            if (e.target.value) onPostponeDate(e.target.value, selectedBlockerType);
           }}
         />
       </div>
+
+      <select
+        value={blockerType}
+        onChange={(e) => setBlockerType(e.target.value as BlockerType | '')}
+        className="min-h-11 max-w-[180px] rounded-lg bg-paper2 px-2 text-[12px] font-semibold text-ink outline-none"
+        title="Motivo opcional do adiamento"
+        aria-label="Motivo opcional do adiamento"
+      >
+        <option value="">Sem motivo</option>
+        {BLOCKER_TYPES.map((type) => (
+          <option key={type} value={type}>{blockerTypeLabel(type)}</option>
+        ))}
+      </select>
 
       {onResolve && (
         <div className="inline-flex items-center gap-1">
@@ -90,4 +106,12 @@ export function TaskActions({
       )}
     </div>
   );
+}
+
+function blockerTypeLabel(type: BlockerType): string {
+  if (type === 'waiting_third_party') return 'Aguardando terceiro';
+  if (type === 'no_time') return 'Sem tempo';
+  if (type === 'priority_changed') return 'Prioridade mudou';
+  if (type === 'needs_split') return 'Precisa dividir';
+  return 'Dependência';
 }

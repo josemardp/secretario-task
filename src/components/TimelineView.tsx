@@ -3,14 +3,15 @@ import { createPortal } from 'react-dom';
 import { formatDateTime, rescheduleToDate, postponeToTomorrow, wasEdited } from '../lib/datetime';
 import { describeRecurrenceRule, getNextOccurrenceFromNow } from '../lib/recurrence';
 import { Archive, Calendar as CalIcon, Repeat, X, Edit3, Send, Trash2, XCircle } from 'lucide-react';
-import type { Task, ContextType, ResolutionType } from '../types';
-import { CONTEXTS_LIST } from '../types';
+import { BLOCKER_TYPES, CONTEXTS_LIST } from '../types';
+import type { Task, ContextType, ResolutionType, BlockerType } from '../types';
 import { useContextStore } from '../stores/contextStore';
 import { useTaskStore } from '../stores/taskStore';
 import { CalendarWidget } from './CalendarWidget';
 import { RecurrenceModal } from './RecurrenceModal';
 import { useToast } from './toastContext';
 import { useAgendaPositions, type TimelineBlock } from '../hooks/useAgendaPositions';
+import { buildActualMinutesFromStartedAt } from '../lib/timeTracking';
 
 
 interface TimelineViewProps {
@@ -28,6 +29,14 @@ function priorityTone(priority: number): string {
   if (priority >= 8) return 'text-danger';
   if (priority >= 6) return 'text-warning';
   return 'text-ink-tertiary';
+}
+
+function blockerTypeLabel(type: BlockerType): string {
+  if (type === 'waiting_third_party') return 'Aguardando terceiro';
+  if (type === 'no_time') return 'Sem tempo';
+  if (type === 'priority_changed') return 'Prioridade mudou';
+  if (type === 'needs_split') return 'Precisa dividir';
+  return 'Dependência';
 }
 
 function buildResolutionUpdates(resolutionType: Exclude<ResolutionType, 'completed'>): Partial<Task> {
@@ -150,8 +159,8 @@ interface TimelineTaskCardProps {
   requestDelete: (task: Task) => void;
   openEdit: (task: Task) => void;
   handleComplete: (id: string) => void;
-  handlePostponeTomorrow: (id: string) => void;
-  handlePostponeDate: (id: string, dateString: string) => void;
+  handlePostponeTomorrow: (id: string, blockerType?: BlockerType | null) => void;
+  handlePostponeDate: (id: string, dateString: string, blockerType?: BlockerType | null) => void;
   handleResolve: (id: string, type: Exclude<ResolutionType, 'completed'>) => void;
   formatTime: (date: Date) => string;
 }
@@ -404,10 +413,12 @@ export function TimelineView({ tasks }: TimelineViewProps) {
     priority: number;
     energy: number;
     recurrence_rule: string | null;
+    blocker_type: BlockerType | '';
   }>({
     title: '', due_at: '', estimated_minutes: 30,
     context: 'Pessoal' as ContextType, priority: 0, energy: 0,
     recurrence_rule: null,
+    blocker_type: '',
   });
 
   const anchorRef = useRef<HTMLDivElement>(null);
@@ -445,6 +456,7 @@ export function TimelineView({ tasks }: TimelineViewProps) {
       priority: task.priority,
       energy: task.energy,
       recurrence_rule: typeof task.recurrence_rule === 'string' ? task.recurrence_rule : null,
+      blocker_type: task.blocker_type ?? '',
     });
   };
 
@@ -472,6 +484,7 @@ export function TimelineView({ tasks }: TimelineViewProps) {
       priority: editForm.priority,
       energy: editForm.energy,
       recurrence_rule: editForm.recurrence_rule,
+      blocker_type: editForm.blocker_type || null,
     };
 
     if (editForm.estimated_minutes !== (editingTask.estimated_minutes ?? 30)) {
@@ -494,8 +507,7 @@ export function TimelineView({ tasks }: TimelineViewProps) {
       updates.resolved_at = completedAt;
     }
     if (task && task.status !== 'done' && task.started_at) {
-      updates.actual_minutes = Math.round((Date.now() - new Date(task.started_at).getTime()) / 60000);
-      updates.actual_minutes_source = 'timer';
+      Object.assign(updates, buildActualMinutesFromStartedAt(task.started_at));
     }
     updateTask(taskId, updates);
     recordTaskEvent(taskId, 'completed', {
@@ -514,22 +526,32 @@ export function TimelineView({ tasks }: TimelineViewProps) {
     toast('Tarefa encerrada.', 'success');
   };
 
-  const handlePostponeTomorrow = (taskId: string) => {
+  const handlePostponeTomorrow = (taskId: string, blockerType?: BlockerType | null) => {
     const task = tasks.find(t => t.id === taskId);
-    updateTask(taskId, { due_at: postponeToTomorrow(task?.due_at ?? null), postponed_count: (task?.postponed_count || 0) + 1 });
+    updateTask(taskId, {
+      due_at: postponeToTomorrow(task?.due_at ?? null),
+      postponed_count: (task?.postponed_count || 0) + 1,
+      blocker_type: blockerType ?? null,
+    });
     recordTaskEvent(taskId, 'postponed', {
       mode: 'tomorrow',
+      blocker_type: blockerType ?? null,
       source: 'timeline',
     });
     toast('Adiada para amanhã.', 'success');
   };
 
-  const handlePostponeDate = (taskId: string, dateString: string) => {
+  const handlePostponeDate = (taskId: string, dateString: string, blockerType?: BlockerType | null) => {
     const task = tasks.find(t => t.id === taskId);
-    updateTask(taskId, { due_at: rescheduleToDate(dateString, task?.due_at ?? null), postponed_count: (task?.postponed_count || 0) + 1 });
+    updateTask(taskId, {
+      due_at: rescheduleToDate(dateString, task?.due_at ?? null),
+      postponed_count: (task?.postponed_count || 0) + 1,
+      blocker_type: blockerType ?? null,
+    });
     recordTaskEvent(taskId, 'postponed', {
       mode: 'date',
       date: dateString,
+      blocker_type: blockerType ?? null,
       source: 'timeline',
     });
     toast('Tarefa adiada.', 'success');
@@ -752,7 +774,7 @@ export function TimelineView({ tasks }: TimelineViewProps) {
               <button
                 type="button"
                 onClick={() => {
-                  handlePostponeTomorrow(editingTask.id);
+                  handlePostponeTomorrow(editingTask.id, editForm.blocker_type || null);
                   setEditingTask(null);
                 }}
                 className="h-10 rounded-xl border border-border-strong bg-surface text-ink text-[12px] font-bold"
@@ -851,6 +873,20 @@ export function TimelineView({ tasks }: TimelineViewProps) {
                 className="bg-paper2 rounded-xl px-3 py-2.5 text-[13px] font-semibold text-ink outline-none border-0"
               >
                 {CONTEXTS_LIST.map((ctx) => (<option key={ctx} value={ctx}>{ctx}</option>))}
+              </select>
+            </label>
+
+            <label className="flex flex-col gap-1">
+              <span className="text-[12px] font-semibold uppercase tracking-wide text-ink-2">Motivo do adiamento</span>
+              <select
+                value={editForm.blocker_type}
+                onChange={(e) => setEditForm((f) => ({ ...f, blocker_type: e.target.value as BlockerType | '' }))}
+                className="bg-paper2 rounded-xl px-3 py-2.5 text-[13px] font-semibold text-ink outline-none border-0"
+              >
+                <option value="">Sem motivo</option>
+                {BLOCKER_TYPES.map((type) => (
+                  <option key={type} value={type}>{blockerTypeLabel(type)}</option>
+                ))}
               </select>
             </label>
 
