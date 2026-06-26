@@ -1,6 +1,6 @@
 # DECISIONS.md — SecretárioTask
 
-Última atualização: 2026-06-07
+Última atualização: 2026-06-26
 Status: registro vivo de decisões técnicas e operacionais
 
 ---
@@ -369,3 +369,10 @@ Motivo: reduzir competição visual no mobile, encurtar o fluxo da ação mais f
 Padrões adotados: `ToastProvider` substitui `alert()` para feedback discreto; `EmptyState` padroniza vazios; linguagem de UI fica direta/profissional, sem emojis por padrão e com IA tratada como recurso avançado opcional; tokens Direction B continuam como base visual.
 Alternativas descartadas: manter capture bar em todas as abas — descartada por ocupar espaço permanente em telas de consulta; transformar captura em FAB expansível nesta rodada — descartada por exigir mais estados/interações e aumentar risco de regressão; manter score/UUID na UI — descartada por expor telemetria interna ao usuário final.
 Contexto: implementação do relatório de design mobile funcional solicitado em 26/06/2026.
+
+## 2026-06-26 — Agenda mobile por gestos, não por parede de botões
+
+Decisão: no mobile, os cards da Agenda exibem apenas a ação primária de concluir como círculo, um lápis discreto para abrir edição/ações completas e gestos laterais: swipe à direita adia para amanhã; swipe à esquerda solicita confirmação de exclusão. Ações secundárias completas ficam no modal de edição.
+Motivo: a visualização anterior transformava cada tarefa em um bloco alto com muitos botões, reduzindo densidade, poluindo a hierarquia visual e destoando de referências maduras como Google Tasks. A nova direção prioriza leitura, escaneabilidade e ação principal imediata.
+Alternativas descartadas: manter todos os botões sempre visíveis no mobile — descartada por aparência pesada e corte em telas estreitas; esconder tudo em menu de três pontos — descartada por tornar concluir e adiar lentos demais; excluir direto no swipe — descartada por risco de perda acidental.
+Contexto: refinamento visual solicitado em 26/06/2026 após comparação direta com Google Tasks.
