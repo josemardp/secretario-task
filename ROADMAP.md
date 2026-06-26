@@ -22,6 +22,25 @@ O roadmap prioriza:
 
 ---
 
+# Evolução Coach de Produtividade
+
+## Sprint 0 — Baseline e congelamento de referência
+Status: concluído em 2026-06-26.
+
+## Sprint 1 — Fase 0: Contenção imediata
+Status: concluído em 2026-06-26.
+
+Entregas:
+- Sugestão comportamental desativada enquanto depender de `updated_at`.
+- Dashboard rotulado para deixar explícitas as aproximações por data de edição.
+- `behaviorEngine.ts` congelado até a introdução de `completed_at`.
+- Nenhuma migration, schema, sync ou `TaskStatus` alterado.
+
+## Próximo sprint
+Sprint 2 — Fase 1A: `completed_at` + `completed_at_confidence` + backfill.
+
+---
+
 # Sprint 1 — Fundação
 
 ## Objetivo

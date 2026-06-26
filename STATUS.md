@@ -23,7 +23,30 @@
 
 # Sprint atual
 
-Uso Real e Monitoramento Pós-Auditoria
+Coach de Produtividade — Sprint 1 concluído
+
+---
+
+# Coach de Produtividade — Sprint 1 — Fase 0: Contenção
+
+Data: 2026-06-26
+
+## Objetivo
+Parar a exibição de conclusões falsas sem tocar banco, schema, sync ou `TaskStatus`.
+
+## Resultado
+- `BehavioralSuggestion` não renderiza mais enquanto o motor ainda depende de `updated_at`.
+- `src/lib/behaviorEngine.ts` foi congelado com comentário de bloqueio até o Sprint 2.
+- Blocos do Dashboard que dependem de `updated_at` foram rotulados como aproximação por data de edição.
+- Métricas sem dependência de horário de conclusão continuam visíveis: total histórico, contexto, estimado vs. real, prioridade média e adiadas.
+- Nenhuma migration foi criada ou aplicada.
+
+## Validações
+- `npm run lint`: passou.
+- `npm run build`: passou; Vite manteve aviso de chunk maior que 500 kB (`index-CmCc5LC0.js` com 935.89 kB / gzip 269.69 kB).
+
+## Próximo sprint recomendado
+Sprint 2 — Fase 1A: `completed_at` + `completed_at_confidence` + backfill.
 
 ---
 

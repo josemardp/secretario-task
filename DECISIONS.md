@@ -236,6 +236,13 @@ Contexto: pré-Sprint 1.
 
 # Decisões durante o desenvolvimento
 
+## 2026-06-26 — Sprint 1 Coach: updated_at não é conclusão
+
+Decisão: `updated_at` não deve ser tratado como data/hora de conclusão. A sugestão comportamental foi desativada temporariamente e os blocos do Dashboard que ainda dependem de `status='done' + updated_at` passaram a ser rotulados como aproximação por edição.
+Motivo: `updated_at` muda em qualquer edição posterior da tarefa e, portanto, não representa execução concluída. Enquanto `completed_at` não existir, recomendações baseadas nesse campo podem orientar ação com dado falso.
+Alternativas descartadas: manter a sugestão ativa com aviso textual — descartada porque ela recomenda uma tarefa específica; esconder todo o Dashboard — descartada porque métricas que não dependem de horário de conclusão continuam úteis; criar `completed_at` já neste sprint — descartada porque schema entra somente no Sprint 2.
+Contexto: Coach de Produtividade, Sprint 1 — Fase 0: Contenção imediata.
+
 ## 2026-05-24 — Extração de "energia" no Parser
 Decisão: O parser agora extrai o campo `energia` através de palavras-chave (`energia alta|media|baixa`) ou prefixos explícitos (`e8`, `e2`), assim como faz com prioridade.
 Motivo: Durante testes de validação, constatamos que sem a definição da energia individual da tarefa, o algoritmo do Ranking Engine aplicava penalidades idênticas a todas as tarefas simultaneamente ao mudar a Energia Atual (já que todas as tarefas nasciam com energy=0). Isso alterava a nota, mas não reordenava as tarefas. Extrair a energia via texto resolve o problema matematicamente.

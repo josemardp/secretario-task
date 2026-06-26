@@ -1,5 +1,9 @@
 import type { Task } from '../types';
 
+// Sprint 1: modulo congelado ate o Sprint 2, quando completed_at passa a ser
+// a fonte honesta de conclusao. A leitura atual de updated_at e historica e
+// nao deve alimentar sugestoes ou metricas comportamentais novas.
+
 export interface BehavioralProfile {
   highEnergyPeakHour: number | null;
   lowEnergyPeakHour: number | null;
