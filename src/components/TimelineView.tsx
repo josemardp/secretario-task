@@ -30,6 +30,17 @@ function priorityTone(priority: number): string {
   return 'text-ink-tertiary';
 }
 
+function estimateTimelineBlockHeight(block: TimelineBlock): number {
+  if (block.type === 'break') return 64;
+
+  const titleLength = block.title.length;
+  const estimatedLines = Math.max(1, Math.ceil(titleLength / 24));
+  const wrappedTitleExtra = Math.max(0, estimatedLines - 1) * 24;
+  const postponedExtra = (block.task?.postponed_count ?? 0) > 0 ? 24 : 0;
+
+  return 96 + wrappedTitleExtra + postponedExtra;
+}
+
 // ─── Recurrence helpers (importados de src/lib/recurrence.ts) ───
 
 function AgendaQuickActions({
@@ -199,22 +210,22 @@ function TimelineTaskCard({
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerCancel={resetGesture}
-      className="relative z-20 w-full min-w-0 overflow-hidden rounded-xl sm:overflow-visible"
+      className="relative z-20 w-full min-w-0 overflow-visible rounded-xl"
     >
-      <div className="absolute inset-0 flex items-center justify-between px-4 bg-surface-sunken sm:hidden">
+      <div className="absolute inset-0 flex items-center justify-between rounded-xl px-4 bg-surface-sunken sm:hidden">
         <span className="text-[12px] font-bold text-success">Amanhã</span>
         <span className="text-[12px] font-bold text-danger">Excluir</span>
       </div>
 
       <div
         className={[
-          'relative min-w-0 flex flex-col bg-surface border border-border rounded-xl sm:min-h-[104px]',
+          'relative min-w-0 h-auto flex flex-col bg-surface border border-border rounded-xl sm:min-h-[104px]',
           'transition-transform',
           isDragging ? 'duration-0' : 'duration-200',
         ].join(' ')}
         style={{ transform: `translateX(${dragX}px)` }}
       >
-      <div className="px-2.5 py-2.5 sm:px-4 sm:py-3">
+      <div className="px-2.5 py-3 sm:px-4 sm:py-3">
         <div className="flex items-start gap-2">
           <button
             type="button"
@@ -303,20 +314,26 @@ interface TimelineSlotProps {
   isCurrentSlot: boolean;
   topPercent: number;
   now: Date;
-  slotBlocksCount: number;
+  slotBlocks: TimelineBlock[];
   children: React.ReactNode;
   anchorRef?: React.Ref<HTMLDivElement>;
 }
 
 function TimelineSlot({
   slot, isCurrentSlot, topPercent, now,
-  slotBlocksCount, children, anchorRef,
+  slotBlocks, children, anchorRef,
 }: TimelineSlotProps) {
   // half-hour vs hour boundary
   const onHourBoundary = slot.dateObj.getMinutes() === 0;
+  const slotBlocksCount = slotBlocks.length;
   const slotMinHeight = slotBlocksCount === 0
     ? 28
-    : Math.max(88, slotBlocksCount * 86 + Math.max(0, slotBlocksCount - 1) * 8 + 16);
+    : Math.max(
+        112,
+        slotBlocks.reduce((total, block) => total + estimateTimelineBlockHeight(block), 0) +
+          Math.max(0, slotBlocksCount - 1) * 8 +
+          16,
+      );
 
   return (
     <div
@@ -595,7 +612,7 @@ export function TimelineView({ tasks }: TimelineViewProps) {
               isCurrentSlot={isCurrentSlot}
               topPercent={topPercent}
               now={now}
-              slotBlocksCount={slotBlocks.length}
+              slotBlocks={slotBlocks}
               anchorRef={idx === anchorIndex ? anchorRef : undefined}
             >
               {slotBlocks.map((block) => {
