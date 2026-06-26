@@ -27,6 +27,7 @@ export type RecurrenceRuleV2 = {
 
 export const CONTEXTS_LIST: ContextType[] = ['PM', 'Esdra', 'Pessoal', 'Familia', 'CCB', 'Estudo', 'Saude'];
 export type TaskStatus = 'todo' | 'doing' | 'done';
+export type CompletedAtConfidence = 'confirmed' | 'legacy_approx';
 
 export interface Task {
   id: string;
@@ -41,6 +42,8 @@ export interface Task {
   deleted_at: string | null;
   created_at: string;
   updated_at: string;
+  completed_at?: string | null;
+  completed_at_confidence?: CompletedAtConfidence | null;
   estimated_minutes?: number | null;
   actual_minutes?: number | null;
   started_at?: string | null;

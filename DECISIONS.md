@@ -243,6 +243,13 @@ Motivo: `updated_at` muda em qualquer edição posterior da tarefa e, portanto, 
 Alternativas descartadas: manter a sugestão ativa com aviso textual — descartada porque ela recomenda uma tarefa específica; esconder todo o Dashboard — descartada porque métricas que não dependem de horário de conclusão continuam úteis; criar `completed_at` já neste sprint — descartada porque schema entra somente no Sprint 2.
 Contexto: Coach de Produtividade, Sprint 1 — Fase 0: Contenção imediata.
 
+## 2026-06-26 — Sprint 2 Coach: completed_at e legado legacy_approx
+
+Decisão: adicionar `tasks.completed_at` e `tasks.completed_at_confidence` como timestamp honesto mínimo de conclusão. Tarefas antigas `status='done'` recebem backfill com `completed_at=updated_at` marcado como `legacy_approx`; novas conclusões gravam `completed_at_confidence='confirmed'`.
+Motivo: métricas de horário precisam de um campo semanticamente estável. O legado ainda pode preservar volume histórico, mas não deve alimentar padrão de horário porque nasceu da mesma aproximação por edição que originou o problema.
+Alternativas descartadas: marcar backfill como `confirmed` — descartada por transformar aproximação em verdade; criar evento retroativo `completed` — descartada por fabricar histórico auditável falso; implementar `resolution_type` junto — descartada porque pertence ao Sprint 3.
+Contexto: Coach de Produtividade, Sprint 2 — Fase 1A: Timestamp honesto mínimo.
+
 ## 2026-05-24 — Extração de "energia" no Parser
 Decisão: O parser agora extrai o campo `energia` através de palavras-chave (`energia alta|media|baixa`) ou prefixos explícitos (`e8`, `e2`), assim como faz com prioridade.
 Motivo: Durante testes de validação, constatamos que sem a definição da energia individual da tarefa, o algoritmo do Ranking Engine aplicava penalidades idênticas a todas as tarefas simultaneamente ao mudar a Energia Atual (já que todas as tarefas nasciam com energy=0). Isso alterava a nota, mas não reordenava as tarefas. Extrair a energia via texto resolve o problema matematicamente.
