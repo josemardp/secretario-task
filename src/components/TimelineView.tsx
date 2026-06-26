@@ -51,15 +51,15 @@ function AgendaQuickActions({
   const dateInputRef = useRef<HTMLInputElement>(null);
 
   return (
-    <div className="flex items-center justify-between gap-2">
-      <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+    <div className="grid grid-cols-3 gap-1.5 sm:flex sm:items-center sm:justify-between sm:gap-2">
+      <div className="contents sm:flex sm:items-center sm:gap-1.5 sm:min-w-0">
         <button
           type="button"
           onClick={(e) => {
             e.stopPropagation();
             onComplete();
           }}
-          className="h-8 px-2.5 rounded-lg bg-success text-white text-[12px] font-bold"
+          className="h-8 min-w-0 px-2 rounded-lg bg-success text-white text-[12px] font-bold"
         >
           Concluir
         </button>
@@ -69,7 +69,7 @@ function AgendaQuickActions({
             e.stopPropagation();
             onPostponeTomorrow();
           }}
-          className="h-8 px-2.5 rounded-lg bg-paper2 text-ink text-[12px] font-bold"
+          className="h-8 min-w-0 px-2 rounded-lg bg-paper2 text-ink text-[12px] font-bold"
         >
           Amanhã
         </button>
@@ -80,7 +80,7 @@ function AgendaQuickActions({
               e.stopPropagation();
               dateInputRef.current?.showPicker?.();
             }}
-            className="h-8 px-2.5 rounded-lg bg-paper2 text-ink text-[12px] font-bold"
+            className="h-8 w-full min-w-0 px-2 rounded-lg bg-paper2 text-ink text-[12px] font-bold"
           >
             Adiar
           </button>
@@ -95,14 +95,14 @@ function AgendaQuickActions({
           />
         </div>
       </div>
-      <div className="flex items-center gap-1.5 shrink-0">
+      <div className="col-span-3 grid grid-cols-2 gap-1.5 sm:flex sm:items-center sm:gap-1.5 sm:shrink-0">
         <button
           type="button"
           onClick={(e) => {
             e.stopPropagation();
             onEdit();
           }}
-          className="h-8 px-2.5 rounded-lg bg-paper2 text-ink text-[12px] font-bold inline-flex items-center gap-1"
+          className="h-8 min-w-0 px-2 rounded-lg bg-paper2 text-ink text-[12px] font-bold inline-flex items-center justify-center gap-1"
           title="Editar"
         >
           <Edit3 size={12} /> Editar
@@ -113,7 +113,7 @@ function AgendaQuickActions({
             e.stopPropagation();
             onDelete();
           }}
-          className="h-8 px-2.5 rounded-lg bg-danger-light text-danger text-[12px] font-bold inline-flex items-center gap-1"
+          className="h-8 min-w-0 px-2 rounded-lg bg-danger-light text-danger text-[12px] font-bold inline-flex items-center justify-center gap-1"
           title="Excluir"
         >
           <Trash2 size={12} /> Excluir
@@ -235,7 +235,7 @@ function TimelineSlot({
   const onHourBoundary = slot.dateObj.getMinutes() === 0;
   const slotMinHeight = slotBlocksCount === 0
     ? 28
-    : Math.max(104, slotBlocksCount * 118 + Math.max(0, slotBlocksCount - 1) * 8 + 16);
+    : Math.max(132, slotBlocksCount * 168 + Math.max(0, slotBlocksCount - 1) * 8 + 16);
 
   return (
     <div
