@@ -19,6 +19,53 @@ Este documento define:
 
 ---
 
+# Coach de Produtividade — Sprint 0 — Preparação e congelamento de referência
+
+Data: 2026-06-26
+
+## Objetivo
+Confirmar a integridade do repositório antes da evolução do Coach de Produtividade e registrar uma baseline objetiva, sem alterar comportamento, código funcional, schema ou sync.
+
+## Resumo do que foi feito
+- Lidos os documentos obrigatórios do Coach e os documentos de controle existentes.
+- Confirmada a fonte oficial: `docs/coach/SecretarioTask_Plano_Executor_Completo_v2_OFICIAL.md`.
+- Confirmadas as versões reais em `package.json`.
+- Confirmada a presença dos arquivos críticos: `sync.ts`, `taskStore.ts`, `behaviorEngine.ts`, `DashboardView.tsx`, `BehavioralSuggestion.tsx`, `types/index.ts` e `supabase/migrations`.
+- Registrados hashes SHA256 dos arquivos críticos em `STATUS.md`.
+- Mapeados os pontos atuais em que `updated_at` é usado como aproximação de conclusão.
+- Nenhuma migration foi criada.
+- Nenhum código funcional foi alterado.
+- Nenhum push ou commit foi feito.
+
+## Arquivos alterados
+- `STATUS.md`
+- `SPRINT_LOG.md`
+
+## Validações executadas
+- `npm ci`: passou.
+- `npm run lint`: passou.
+- `npm run build`: passou.
+
+## Bugs ou achados
+- A árvore Git já estava suja antes das alterações deste sprint: `AGENTS.md` modificado e `docs/` não rastreado.
+- `npm ci` reportou 2 vulnerabilidades no audit (1 low, 1 high). Correção não aplicada por estar fora do escopo do Sprint 0.
+- `npm run build` reportou aviso de chunk maior que 500 kB. Build permaneceu verde.
+- `updated_at` ainda alimenta conclusão em `behaviorEngine.ts` e em blocos do `DashboardView.tsx`, exatamente o alvo do Sprint 1.
+
+## Decisões tomadas
+- Nenhuma decisão nova de arquitetura/produto foi tomada neste sprint.
+- A árvore suja pré-existente foi preservada e registrada como condição de baseline.
+
+## Pendências
+- Aplicar o Sprint 1 para conter imediatamente a sugestão comportamental e rotular métricas derivadas de `updated_at`.
+- Avaliar vulnerabilidades de dependências em sprint próprio ou manutenção dedicada, sem `npm audit fix` automático.
+- Confirmar operacionalmente se a migration `0013` já foi aplicada no Supabase remoto, conforme pendência anterior do `STATUS.md`.
+
+## Resultado
+Sprint 0 concluído com lint/build verdes e baseline registrada.
+
+---
+
 # Sprint 1 — Fundação
 
 ## Objetivo

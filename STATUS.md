@@ -25,6 +25,59 @@
 
 Uso Real e Monitoramento Pós-Auditoria
 
+---
+
+# Baseline Coach v4 — Sprint 0
+
+Data: 2026-06-26
+
+## Fonte oficial lida
+- `docs/coach/SecretarioTask_Plano_Executor_Completo_v2_OFICIAL.md`
+- `docs/coach/Prompt_Codex_Executar_Sprints_SecretarioTask_SEGURO.md`
+- `docs/coach/SecretarioTask_Plano_Coach_Produtividade_v4.md`
+- `AGENTS.md`
+- Documentos de controle existentes: `STATUS.md`, `ROADMAP.md`, `SPRINT_LOG.md`, `DECISIONS.md`, `ARCHITECTURE.md`, `PRD.md`, `PHILOSOPHY.md`
+
+## Versões confirmadas no `package.json`
+- React: `^19.2.6`
+- Vite: `^8.0.12`
+- TypeScript: `~6.0.2`
+- Tailwind CSS: `^3.4.19`
+- Zustand: `^5.0.13`
+- Supabase JS: `^2.106.1`
+- React Router DOM: `^7.15.1`
+- Recharts: `^3.8.1`
+- DnD Kit: `^6.3.1`
+- Lucide React: `^1.16.0`
+
+## Validações de baseline
+- `npm ci`: passou; audit reportou 2 vulnerabilidades (1 low, 1 high), sem correção automática neste sprint.
+- `npm run lint`: passou.
+- `npm run build`: passou; Vite reportou aviso de chunk maior que 500 kB (`index-d4PluYSh.js` com 937.75 kB / gzip 270.17 kB).
+
+## Estado Git antes das alterações deste sprint
+- Branch: `main...origin/main`
+- Árvore já não estava limpa antes do Sprint 0: `AGENTS.md` modificado e `docs/` não rastreado.
+- Nenhuma alteração funcional foi feita no Sprint 0.
+
+## Arquivos críticos confirmados
+- `src/lib/sync.ts`: presente; contém `TASK_COLUMNS`, `stripReadonlyTaskFields`, `fetchRemoteTasks` e `processSyncQueue`. SHA256 `CB1007345181A3CA449D3763FFAB8015488D7A3FFFA8EFF3D345EEFE7DA2FC9F`.
+- `src/stores/taskStore.ts`: presente; contém store offline-first, fila de mutações, `updateTask`, `recordViewEvent` e `partialize`. SHA256 `3943448479E186A2D1FEEA51027D8BB49A00F3092C8EFB3D1F82D49B5B6A5E07`.
+- `src/lib/behaviorEngine.ts`: presente; motor comportamental atual. SHA256 `67A504665EBD1DB26A362C06CB3F4302E7668708315FE7840EADC74FFC52CE48`.
+- `src/components/DashboardView.tsx`: presente; dashboard analítico atual. SHA256 `81F58BC89F7A90424EA7DD4206814D940ED57B2F5D9A6FABF55DDD99797F39A6`.
+- `src/components/BehavioralSuggestion.tsx`: presente; sugestão comportamental ativa. SHA256 `023E88E23EAC6AF94A34B8A862DF52EA7E11FDA5E7375F1286E82910E5DC8BBE`.
+- `src/types/index.ts`: presente; tipos centrais de tarefa/contexto. SHA256 `7ABD65275CBE18E629F6682F90D25905AA30D15A797380C8BB63E08FB7575CC7`.
+- `supabase/migrations`: presente com migrations `0001` a `0013`; nenhuma migration `0014` criada neste sprint.
+
+## Pontos atuais de `updated_at` como conclusão
+- `src/lib/behaviorEngine.ts`: `analyzeBehavior` filtra tarefas `status === 'done'` e usa `new Date(t.updated_at).getHours()` para calcular picos de energia.
+- `src/components/DashboardView.tsx`: `peakHourData` usa `updated_at` para "Horário de pico".
+- `src/components/DashboardView.tsx`: `dailyData` usa `updated_at` para distribuir tarefas nos últimos 7 dias.
+- `src/components/DashboardView.tsx`: `weekTotal` e `todayCount` derivam de `dailyData`, portanto herdando `updated_at` como aproximação de conclusão.
+
+## Próximo sprint recomendado
+Sprint 1 — Fase 0: Contenção imediata do coach atual, sem schema e sem migration.
+
 ## Observação
 Todos os épicos de refinamento de PWA e melhorias críticas de UX Mobile-First foram concluídos com sucesso absoluto. O app está consolidado nas melhores práticas de interfaces móveis e pronto para produção robusta.
 
