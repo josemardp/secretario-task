@@ -203,23 +203,23 @@ function TimelineTaskCard({
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerCancel={resetGesture}
-      className="relative z-20 w-full min-w-0 overflow-hidden rounded-2xl"
+      className="relative z-20 w-full min-w-0 overflow-hidden rounded-2xl sm:overflow-visible sm:rounded-xl"
     >
-      <div className="absolute inset-0 flex items-center justify-between px-4 bg-paper2">
+      <div className="absolute inset-0 flex items-center justify-between px-4 bg-paper2 sm:hidden">
         <span className="text-[12px] font-bold text-success">Amanhã</span>
         <span className="text-[12px] font-bold text-danger">Excluir</span>
       </div>
 
       <div
         className={[
-          'relative min-w-0 flex flex-col bg-paper border border-line border-l-4 rounded-2xl',
+          'relative min-w-0 flex flex-col bg-paper border border-line border-l-4 rounded-2xl sm:rounded-xl sm:min-h-[104px]',
           CTX_BAR[t.context],
           'shadow-card transition-transform active:shadow-none',
           isDragging ? 'duration-0' : 'duration-200',
         ].join(' ')}
         style={{ transform: `translateX(${dragX}px)` }}
       >
-      <div className="px-2.5 py-2.5 sm:px-3">
+      <div className="px-2.5 py-2.5 sm:px-4 sm:py-3">
         <div className="flex items-start gap-2">
           <button
             type="button"
@@ -227,7 +227,7 @@ function TimelineTaskCard({
               e.stopPropagation();
               handleComplete(t.id);
             }}
-            className="w-11 h-11 -ml-1.5 -mt-1.5 shrink-0 inline-flex items-center justify-center rounded-full text-success"
+            className="w-11 h-11 -ml-1.5 -mt-1.5 shrink-0 inline-flex items-center justify-center rounded-full text-success sm:hidden"
             aria-label="Concluir tarefa"
             title="Concluir"
           >
@@ -272,7 +272,7 @@ function TimelineTaskCard({
               </div>
             </div>
 
-            <h3 className="mt-1 text-[15px] font-bold text-ink leading-snug tracking-tight break-words flex items-start gap-1.5">
+            <h3 className="mt-1 text-[15px] font-bold text-ink leading-snug tracking-tight break-words flex items-start gap-1.5 sm:text-[14px] sm:leading-tight">
               {t.recurrence_rule && <Repeat size={13} className="mt-0.5 shrink-0 text-ink-2" />}
               <span className="min-w-0">{block.title}</span>
             </h3>
@@ -288,7 +288,7 @@ function TimelineTaskCard({
         </div>
 
         <div
-          className="hidden sm:mt-2 sm:grid"
+          className="hidden sm:block sm:mt-2"
           onMouseDown={(e) => e.stopPropagation()}
         >
           <AgendaQuickActions
