@@ -1,6 +1,6 @@
 # ROADMAP.md — SecretárioTask
 
-Última revisão: 2026-05-12
+Última revisão: 2026-06-27
 Linha de base oficial: MVP enxuto
 Duração sugerida por sprint: 1–2 semanas
 
@@ -155,8 +155,17 @@ Entregas:
 - Nenhuma violação estrutural encontrada.
 - Nenhuma migration foi criada.
 
+## Sprint 12-A — Hotfix pós-auditoria
+Status: concluído em 2026-06-27.
+
+Entregas:
+- "Conclusões por área" mantém histórico aproximado no agregado de volume, com rótulo explícito abaixo do título.
+- `npm audit fix` aplicado; audit final sem vulnerabilidades.
+- Log de PWA em produção trocado de `console.log` para `console.debug`.
+- Nenhuma migration e nenhum comando Supabase.
+
 ## Próximo passo
-Evolução Coach v4 encerrada. Próximas mudanças devem entrar como manutenção leve ou novo ciclo planejado, com auditoria independente antes de qualquer feature nova de diagnóstico ou IA.
+Sprint 12-B — Housekeeping pós-auditoria, sem adiantar novas features.
 
 ---
 

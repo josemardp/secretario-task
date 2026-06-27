@@ -1,6 +1,6 @@
 # SPRINT_LOG.md — SecretárioTask
 
-Última revisão: 2026-06-26
+Última revisão: 2026-06-27
 Status: alinhado ao ROADMAP oficial
 Duração sugerida por sprint: 1–2 semanas
 
@@ -16,6 +16,47 @@ Este documento define:
 - critérios de conclusão
 - limites de escopo
 - direção operacional do desenvolvimento
+
+---
+
+# Coach de Produtividade — Sprint 12-A — Hotfix pós-auditoria
+
+Data: 2026-06-27
+
+## Objetivo
+Corrigir o achado BUG-01 do Dashboard e aplicar higiene mínima de segurança/produção, sem migration, sem Supabase e sem adiantar o Sprint 12-B.
+
+## Resumo do que foi feito
+- A seção "Conclusões por área" manteve `completedTasks` como base do agregado.
+- Foi adicionado subtexto abaixo do título informando que o agregado inclui histórico aproximado anterior ao saneamento.
+- `npm audit fix` foi executado e deixou `npm audit` com 0 vulnerabilidades.
+- O `console.log` de PWA em `src/main.tsx` foi substituído por `console.debug`.
+- Nenhuma migration foi criada.
+- Nenhum comando de escrita no Supabase foi executado.
+
+## Arquivos alterados
+- `src/components/DashboardView.tsx`
+- `src/main.tsx`
+- `package-lock.json`
+- `STATUS.md`
+- `SPRINT_LOG.md`
+- `ROADMAP.md`
+- `DECISIONS.md`
+
+## Validações executadas
+- `npm run lint`: passou.
+- `npm run build`: passou.
+- `npm run test`: passou.
+- `npm audit`: passou, 0 vulnerabilidades.
+
+## Decisões tomadas
+- Manter histórico `legacy_approx` no agregado de volume e rotular visualmente a fragilidade do dado, conforme v4 §4.2.
+
+## Pendências
+- Sprint 12-B deve tratar housekeeping pós-auditoria: dead code, idempotência de constraints, paridade de reabertura na Agenda e ajustes documentais próprios.
+
+## Resultado
+Sprint 12-A implementado com validações verdes, sem migration e sem Supabase.
 
 ---
 

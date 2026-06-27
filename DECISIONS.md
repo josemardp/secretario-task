@@ -1,6 +1,6 @@
 # DECISIONS.md — SecretárioTask
 
-Última atualização: 2026-06-26
+Última atualização: 2026-06-27
 Status: registro vivo de decisões técnicas e operacionais
 
 ---
@@ -235,6 +235,13 @@ Contexto: pré-Sprint 1.
 ---
 
 # Decisões durante o desenvolvimento
+
+## 2026-06-27 — Sprint 12-A: legado rotulado em conclusões por área
+
+Decisão: manter conclusões `legacy_approx` no agregado "Conclusões por área" e adicionar rótulo curto informando que a seção inclui histórico aproximado anterior ao saneamento.
+Motivo: conforme v4 §4.2, métricas de volume podem incluir legado porque a contagem total não depende do horário fino; o problema é tratar esse histórico frágil como padrão temporal ou conclusão confirmada sem aviso.
+Alternativas descartadas: trocar `completedTasks` por `confirmedCompletedTasks` — descartada por remover dado real de volume; ocultar todo o histórico legado — descartada por empobrecer a leitura histórica; deixar sem aviso — descartada por manter ambiguidade visual apontada pela auditoria.
+Contexto: Coach de Produtividade, Sprint 12-A — hotfix pós-auditoria BUG-01.
 
 ## 2026-06-26 — Sprint 1 Coach: updated_at não é conclusão
 
