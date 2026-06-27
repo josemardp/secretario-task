@@ -6,6 +6,34 @@ Duração sugerida por sprint: 1–2 semanas
 
 ---
 
+# v4.3-fix-01 — Hardening pós-auditoria v4.2
+
+Data: 2026-06-27
+
+## Objetivo
+Corrigir os três achados acionáveis da auditoria pós-v4.2 sem alterar UI, sem mexer na tag `coach-v4.2-agenda-only` e sem introduzir Kanban.
+
+## Resumo do que foi feito
+- **BUG-1 corrigido:** `partialize` em `taskStore.ts` passou de `slice(0, 100)` para `slice(-100)`. Com mais de 100 tarefas no store, a versão anterior descartava as mais recentes (inseridas no fim do array) em vez das mais antigas. O comportamento agora corresponde ao comentário "100 tasks recentes".
+- **MIGRATION-1 criada:** `supabase/migrations/0020_idempotent_blocker_constraint.sql` — migration defensiva via `DO $$ IF NOT EXISTS` que garante a existência de `tasks_blocker_type_check` sem alterar dados ou schema. Corrige a não-idempotência de `0018_postpone_blocker_type.sql`.
+- **BUG-4 corrigido:** `saveApiKeyToCloud` em `sync.ts` passou a usar `{ onConflict: 'id' }`, alinhando com `pushEnergyToCloud` e tornando o comportamento do upsert explícito.
+- **Teste adicionado:** fixture `'partialize. slice(-100) preserva tarefa mais recente com 101+ tasks'` em `coachV41Flows.fixtures.ts`.
+
+## Critérios de conclusão
+- [x] `npm run lint` — zero erros
+- [x] `npm run build` — zero erros TypeScript
+- [x] `npm run test` — 14/14 fixtures passando (incluindo o novo)
+- [x] `npm audit` — 0 vulnerabilidades
+- [x] Zero referências a Kanban/TaskBoard em `src/`
+- [x] Tag `coach-v4.2-agenda-only` intocada
+- [x] Nenhuma alteração de UI
+
+## Fora do escopo (adiado por decisão)
+- BUG-2: dead code `!t.due_at` em `calculateAgendaBlocks` (sem impacto)
+- BUG-3: dupla chamada de `getTaskResolvedAt` no sort (micro-otimização irrelevante)
+
+---
+
 # Objetivo do Documento
 
 Registrar a evolução operacional oficial do MVP do SecretárioTask sprint por sprint.

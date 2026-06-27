@@ -323,8 +323,9 @@ export const useTaskStore = create<TaskState>()(
       },
       partialize: (state) => ({
         // Salva apenas mutations pendentes e no máximo 100 tasks recentes
-        // para evitar estouro de quota no localStorage do celular
-        tasks: state.tasks.slice(0, 100),
+        // para evitar estouro de quota no localStorage do celular.
+        // slice(-100) preserva as mais recentes (addTask insere no fim do array).
+        tasks: state.tasks.slice(-100),
         mutations: state.mutations,
         viewedRecords: state.viewedRecords,
       }),
