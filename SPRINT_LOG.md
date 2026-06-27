@@ -19,6 +19,60 @@ Este documento define:
 
 ---
 
+# Remoção do Kanban — Fase 1 — Preparação sem remover Kanban
+
+Data: 2026-06-27
+
+## Objetivo
+Extrair regras que ainda dependiam do Kanban, migrar a captura rápida para a Agenda e ajustar FocoSheet/Dashboard antes da remoção definitiva do Kanban.
+
+## Resumo do que foi feito
+- Criado `src/lib/taskLifecycle.ts` com `buildCompleteUpdates` e `buildResolutionUpdates`.
+- `TaskBoard.tsx` e `TimelineView.tsx` passaram a consumir esses helpers compartilhados.
+- A barra de captura rápida ficou disponível na Agenda e no Kanban durante a Fase 1.
+- O Kanban perdeu os botões "Iniciar agora"/"Iniciar" como entrada nova de timer.
+- O FocoSheet perdeu o botão "Iniciar agora" e não possui mais prop/callback para iniciar timer.
+- O `Home.tsx` deixou de escrever `started_at` e registrar evento `started` pelo FocoSheet.
+- O Dashboard substituiu o gráfico "Estimado vs. real" por contadores de qualidade dos registros de tempo.
+- `scripts/coachV41Flows.fixtures.ts` passou a validar conclusão/encerramento por `src/lib/taskLifecycle.ts`.
+
+## Arquivos alterados
+- `src/lib/taskLifecycle.ts`
+- `src/components/TaskBoard.tsx`
+- `src/components/TimelineView.tsx`
+- `src/components/FocoSheet.tsx`
+- `src/components/DashboardView.tsx`
+- `src/pages/Home.tsx`
+- `scripts/coachV41Flows.fixtures.ts`
+- `tsconfig.coach-tests.json`
+- `DECISIONS.md`
+- `ARCHITECTURE.md`
+- `STATUS.md`
+- `SPRINT_LOG.md`
+
+## Migration remota
+- Nenhuma migration criada.
+- Nenhum comando Supabase executado.
+
+## Validações executadas
+- `npm run lint`: passou.
+- `npm run build`: passou, com aviso conhecido de chunk maior que 500 kB.
+- `npm run test`: passou; manteve achado não bloqueante conhecido sobre destino visual diferente na reabertura Kanban/Agenda.
+
+## Decisões tomadas
+- Ciclo de vida de tarefa passa a morar em `src/lib/taskLifecycle.ts`.
+- Timer fica aposentado como entrada nova, mas histórico e campos permanecem.
+- Dashboard deve mostrar qualidade/completude de registros de tempo, sem score e sem veredito comparativo.
+- Kanban permanece nesta fase apenas como rede de segurança; remoção fica reservada à Fase 2.
+
+## Pendências
+- Revisar a Fase 1 antes de autorizar a Fase 2.
+
+## Resultado
+Fase 1 implementada em código e documentação, com validações verdes.
+
+---
+
 # Coach de Produtividade — Sprint 12-B — Housekeeping pós-auditoria
 
 Data: 2026-06-27

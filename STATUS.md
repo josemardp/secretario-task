@@ -23,7 +23,36 @@
 
 # Sprint atual
 
-Coach de Produtividade — Sprint 12-B concluído
+Remoção do Kanban — Fase 1 concluída
+
+---
+
+# Remoção do Kanban — Fase 1 — Preparação sem remover Kanban
+
+Data: 2026-06-27
+
+## Objetivo
+Preparar a Agenda/Timeline para sobreviver à remoção futura do Kanban, sem remover o Kanban nesta etapa e sem migration/Supabase.
+
+## Resultado
+- Criado `src/lib/taskLifecycle.ts` com `buildCompleteUpdates` e `buildResolutionUpdates`.
+- Kanban e Agenda passaram a usar os helpers compartilhados para conclusão/encerramento.
+- A captura rápida aparece também na Agenda, mantendo parser determinístico, IA opcional e origem de estimativa.
+- O Kanban não oferece mais "Iniciar agora"/"Iniciar" como entrada nova de timer.
+- O FocoSheet continua existindo, mas não tem mais ação de iniciar Top 1, não escreve `started_at` e não emite evento `started`.
+- O Dashboard trocou "Estimado vs. real" por "Qualidade dos registros de tempo", com contadores agregados e sem score/comparação.
+- Testes agênticos passaram a validar o ciclo de vida por `src/lib/taskLifecycle.ts`.
+- Nenhuma migration foi criada.
+- Nenhum comando Supabase foi executado.
+- O Kanban permanece disponível como rede de segurança até a Fase 2.
+
+## Validações
+- `npm run lint`: passou.
+- `npm run build`: passou, com aviso conhecido de chunk maior que 500 kB.
+- `npm run test`: passou; manteve achado não bloqueante conhecido sobre destino visual diferente na reabertura Kanban/Agenda.
+
+## Próximo passo recomendado
+Após validações verdes e revisão humana da Fase 1, executar somente a Fase 2 para remover Kanban, `TaskBoard`, possíveis órfãos e `@dnd-kit`.
 
 ---
 

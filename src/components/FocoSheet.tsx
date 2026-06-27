@@ -1,5 +1,5 @@
 import { createPortal } from 'react-dom';
-import { Sparkles, Clock, Flag, ArrowRight, X } from 'lucide-react';
+import { Sparkles, Clock, Flag, X } from 'lucide-react';
 import type { Task, ContextType } from '../types';
 
 interface FocoSheetProps {
@@ -9,7 +9,6 @@ interface FocoSheetProps {
   briefingText: string | null;
   isGeneratingBriefing: boolean;
   onGenerateBriefing: () => void;
-  onStartTop1?: (task: Task) => void;
 }
 
 const CTX_BAR: Record<ContextType, string> = {
@@ -42,7 +41,6 @@ export function FocoSheet({
   briefingText,
   isGeneratingBriefing,
   onGenerateBriefing,
-  onStartTop1,
 }: FocoSheetProps) {
   if (!isOpen) return null;
 
@@ -126,12 +124,6 @@ export function FocoSheet({
                 <span>·</span>
                 <span>{ctxLabel(top1.context)}</span>
               </div>
-              <button
-                onClick={() => onStartTop1?.(top1)}
-                className="relative mt-2.5 w-full h-11 rounded-xl bg-white text-ink text-[13px] font-bold inline-flex items-center justify-center gap-1.5"
-              >
-                <ArrowRight size={14} strokeWidth={2.4} /> Iniciar agora
-              </button>
             </div>
           </div>
         ) : (

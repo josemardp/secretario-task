@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  LineChart, Line, Legend,
 } from 'recharts';
 import { ChevronUp } from 'lucide-react';
 import type { Task, ContextType } from '../types';
@@ -217,19 +216,6 @@ export function DashboardView({ tasks }: DashboardViewProps) {
     return Object.entries(counts).map(([name, value]) => ({ name, value }));
   }, [completedTasks]);
 
-  // estimated vs real
-  const timeData = useMemo(() => completedTasks
-    .filter(t => t.estimated_minutes && isTrustedActualMinutes(t))
-    .slice(-15)
-    .map(t => ({
-      name: t.title.length > 14 ? t.title.slice(0, 14) + '…' : t.title,
-      estimado: t.estimated_minutes,
-      real: Math.round(t.actual_minutes || 0),
-      estimativa: t.estimated_minutes_source ?? 'sem origem',
-      origemReal: t.actual_minutes_source ?? 'sem origem',
-    })),
-  [completedTasks]);
-
   // peak hour
   const peakHourData = useMemo(() => {
     const hourCounts: Record<string, number> = {};
@@ -314,6 +300,21 @@ export function DashboardView({ tasks }: DashboardViewProps) {
   const trustedActualCount = completedTasks.filter(isTrustedActualMinutes).length;
   const lowConfidenceActualCount = completedTasks.filter(t => t.actual_minutes != null && t.actual_minutes_source === 'unknown').length;
   const actualWithoutSourceCount = completedTasks.filter(t => t.actual_minutes != null && !t.actual_minutes_source).length;
+
+  const timeRecordCounts = useMemo(() => {
+    const withEstimate = completedTasks.filter(t => t.estimated_minutes != null).length;
+    const withActual = completedTasks.filter(t => t.actual_minutes != null).length;
+    return {
+      withEstimate,
+      withActual,
+      withoutActual: completedTasks.length - withActual,
+      manualActual: completedTasks.filter(t => t.actual_minutes != null && t.actual_minutes_source === 'manual').length,
+      timerActual: completedTasks.filter(t => t.actual_minutes != null && t.actual_minutes_source === 'timer').length,
+      unknownActual: completedTasks.filter(t => t.actual_minutes != null && (
+        t.actual_minutes_source === 'unknown' || !t.actual_minutes_source
+      )).length,
+    };
+  }, [completedTasks]);
 
   const estimateSourceCounts = {
     manual: completedTasks.filter(t => t.estimated_minutes_source === 'manual').length,
@@ -486,51 +487,24 @@ export function DashboardView({ tasks }: DashboardViewProps) {
         </SectionCard>
       )}
 
-      {/* Time est vs real */}
-      {timeData.length > 0 && (
-        <SectionCard eyebrow="Estimativa" title="Estimado vs. real">
-          <div className="text-[12px] text-ink-secondary -mt-1 mb-3">
-            O gráfico usa tempo real com origem conhecida. Itens `unknown` ficam fora e aparecem em qualidade do dado.
+      {/* Time records */}
+      <SectionCard eyebrow="Tempo" title="Qualidade dos registros de tempo">
+        <div className="text-[12px] text-ink-secondary -mt-1 mb-3">
+          Mostra preenchimento dos registros concluídos, sem comparar estimado e real como meta de cronômetro ativo.
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="rounded-xl bg-surface-sunken px-3 py-2.5">
+            <DataLine label="Tarefas com estimativa" value={timeRecordCounts.withEstimate} detail="Conclusões com estimativa informada." />
+            <DataLine label="Com tempo real registrado" value={timeRecordCounts.withActual} detail="Inclui histórico manual, timer antigo e origem desconhecida." />
+            <DataLine label="Sem tempo real" value={timeRecordCounts.withoutActual} detail="Conclusões sem duração registrada." />
           </div>
-          <div className="h-56 -ml-3">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={timeData}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartTheme.border} />
-                <XAxis
-                  dataKey="name"
-                  stroke={chartTheme.inkTertiary}
-                  tick={{ fontSize: 10, fill: chartTheme.inkSecondary }}
-                  interval="preserveStartEnd"
-                  axisLine={false}
-                  tickLine={false}
-                />
-                <YAxis
-                  stroke={chartTheme.inkTertiary}
-                  tick={{ fontSize: 10, fill: chartTheme.inkSecondary }}
-                  axisLine={false}
-                  tickLine={false}
-                  width={28}
-                />
-                <Tooltip
-                  cursor={{ stroke: chartTheme.surfaceSunken }}
-                  contentStyle={{
-                    backgroundColor: chartTheme.surface,
-                    border: `1px solid ${chartTheme.border}`,
-                    borderRadius: 12,
-                    color: chartTheme.inkSecondary,
-                    fontSize: 12,
-                  }}
-                  itemStyle={{ color: chartTheme.inkSecondary }}
-                  labelStyle={{ color: chartTheme.inkSecondary }}
-                />
-                <Legend wrapperStyle={{ color: chartTheme.inkSecondary, fontSize: 11 }} iconType="circle" />
-                <Line type="monotone" dataKey="estimado" name="Estimado" stroke={chartTheme.inkTertiary} strokeWidth={2} dot={false} />
-                <Line type="monotone" dataKey="real" name="Real" stroke={chartTheme.accent} strokeWidth={3} activeDot={{ r: 5 }} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
+          <div className="rounded-xl bg-surface-sunken px-3 py-2.5">
+            <DataLine label="Tempo manual" value={timeRecordCounts.manualActual} detail="actual_minutes_source='manual'." />
+            <DataLine label="Tempo antigo de timer" value={timeRecordCounts.timerActual} detail="Histórico preservado do cronômetro antigo." />
+            <DataLine label="Tempo unknown/baixa confiança" value={timeRecordCounts.unknownActual} detail="Origem desconhecida ou ausente." />
           </div>
-        </SectionCard>
-      )}
+        </div>
+      </SectionCard>
 
       {/* Peak hour */}
       <SectionCard eyebrow="Horário de pico" title="Maior conclusão confirmada">

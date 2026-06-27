@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { formatDateTime, rescheduleToDate, postponeToTomorrow, wasEdited } from '../lib/datetime';
 import { describeRecurrenceRule } from '../lib/recurrence';
-import { buildActualMinutesFromStartedAt, buildReopenUpdates } from '../lib/timeTracking';
+import { buildReopenUpdates } from '../lib/timeTracking';
+import { buildCompleteUpdates, buildResolutionUpdates } from '../lib/taskLifecycle';
 import type { Task, TaskStatus, ContextType, ResolutionType, BlockerType } from '../types';
 import { CONTEXTS_LIST } from '../types';
 import { RecurrenceModal } from './RecurrenceModal';
@@ -12,7 +13,7 @@ import { isActiveTask, isClosedWithoutExecution } from '../lib/taskFilters';
 import { TaskActions } from './TaskActions';
 import { EmptyState } from './EmptyState';
 import {
-  Check, Flag, Clock, Repeat, ChevronDown, Trash2, ArrowRight, RotateCcw,
+  Check, Flag, Clock, Repeat, ChevronDown, Trash2, RotateCcw,
 } from 'lucide-react';
 
 interface TaskBoardProps {
@@ -51,30 +52,6 @@ function toLocalDatetimeInput(iso: string | null | undefined): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
-function buildCompleteUpdates(task: Task): Partial<Task> {
-  const updates: Partial<Task> = { status: 'done' };
-  if (task.status !== 'done') {
-    const completedAt = new Date().toISOString();
-    updates.completed_at = completedAt;
-    updates.completed_at_confidence = 'confirmed';
-    updates.resolution_type = 'completed';
-    updates.resolved_at = completedAt;
-  }
-  if (task.status !== 'done' && task.started_at) {
-    Object.assign(updates, buildActualMinutesFromStartedAt(task.started_at));
-  }
-  return updates;
-}
-
-function buildResolutionUpdates(resolutionType: Exclude<ResolutionType, 'completed'>): Partial<Task> {
-  return {
-    resolution_type: resolutionType,
-    resolved_at: new Date().toISOString(),
-    completed_at: null,
-    completed_at_confidence: null,
-  };
-}
-
 function resolutionLabel(type: ResolutionType | null | undefined): string {
   if (type === 'cancelled') return 'Cancelada';
   if (type === 'delegated') return 'Delegada';
@@ -82,7 +59,7 @@ function resolutionLabel(type: ResolutionType | null | undefined): string {
   return 'Encerrada';
 }
 
-function NowCard({ task, onStart }: { task: Task | undefined; onStart: (task: Task) => void }) {
+function NowCard({ task }: { task: Task | undefined }) {
   if (!task) {
     return (
       <section>
@@ -123,12 +100,6 @@ function NowCard({ task, onStart }: { task: Task | undefined; onStart: (task: Ta
           <span>·</span>
           <span>{ctxLabel(task.context)}</span>
         </div>
-        <button
-          onClick={() => onStart(task)}
-          className="mt-3 w-full h-11 rounded-xl bg-white text-ink text-[13px] font-bold inline-flex items-center justify-center gap-1.5 active:bg-paper2"
-        >
-          <ArrowRight size={15} strokeWidth={2.4} /> Iniciar agora
-        </button>
       </div>
     </section>
   );
@@ -139,7 +110,6 @@ interface TaskRowProps {
   expanded: boolean;
   onToggleExpand: () => void;
   onComplete: () => void;
-  onStart: () => void;
   onRevert: () => void;
   onPostponeTomorrow: (blockerType?: BlockerType | null) => void;
   onPostponeDate: (d: string, blockerType?: BlockerType | null) => void;
@@ -148,7 +118,7 @@ interface TaskRowProps {
 }
 
 function TaskRow({
-  task, expanded, onToggleExpand, onComplete, onStart, onRevert, onPostponeTomorrow, onPostponeDate, onResolve, isDone,
+  task, expanded, onToggleExpand, onComplete, onRevert, onPostponeTomorrow, onPostponeDate, onResolve, isDone,
 }: TaskRowProps) {
   const { updateTask, deleteTask } = useTaskStore();
   const [showRecurrenceModal, setShowRecurrenceModal] = useState(false);
@@ -266,14 +236,6 @@ function TaskRow({
         <div className="px-3 pb-3 pt-1 border-t border-line2 bg-paper">
           {!isDone && (
             <div className="mb-2.5 flex flex-wrap items-center gap-2">
-              {task.status === 'todo' && (
-                <button
-                  onClick={(e) => { e.stopPropagation(); onStart(); }}
-                  className="h-11 px-3 rounded-lg bg-ink text-white text-[12px] font-bold"
-                >
-                  Iniciar
-                </button>
-              )}
               <TaskActions
                 showComplete={true}
                 onComplete={onComplete}
@@ -434,11 +396,6 @@ export function TaskBoard({ tasks, topTasks = [] }: TaskBoardProps) {
     });
   };
 
-  const startTask = (task: Task) => {
-    updateTask(task.id, { status: 'doing', started_at: new Date().toISOString() });
-    recordTaskEvent(task.id, 'started', { source: 'task_board' });
-  };
-
   const resolveTask = (task: Task, type: Exclude<ResolutionType, 'completed'>) => {
     updateTask(task.id, buildResolutionUpdates(type));
     recordTaskEvent(task.id, 'resolved', {
@@ -526,7 +483,7 @@ export function TaskBoard({ tasks, topTasks = [] }: TaskBoardProps) {
 
   return (
     <div className="flex flex-col gap-5">
-      <NowCard task={topTasks[0]} onStart={startTask} />
+      <NowCard task={topTasks[0]} />
 
       {ACTIVE_COLUMNS.map(column => {
         const columnTasks = scoredTasks[column.id];
@@ -551,7 +508,6 @@ export function TaskBoard({ tasks, topTasks = [] }: TaskBoardProps) {
                     expanded={expandedId === task.id}
                     onToggleExpand={() => setExpandedId(expandedId === task.id ? null : task.id)}
                     onComplete={() => completeTask(task)}
-                    onStart={() => startTask(task)}
                     onRevert={() => handleStatusRevert(task)}
                     onPostponeTomorrow={(blockerType) => handlePostponeTomorrow(task, blockerType)}
                     onPostponeDate={(date, blockerType) => handlePostponeDate(task, date, blockerType)}
@@ -590,7 +546,6 @@ export function TaskBoard({ tasks, topTasks = [] }: TaskBoardProps) {
                   expanded={expandedId === task.id}
                   onToggleExpand={() => setExpandedId(expandedId === task.id ? null : task.id)}
                   onComplete={() => completeTask(task)}
-                  onStart={() => startTask(task)}
                   onRevert={() => handleStatusRevert(task)}
                   onPostponeTomorrow={(blockerType) => handlePostponeTomorrow(task, blockerType)}
                   onPostponeDate={(date, blockerType) => handlePostponeDate(task, date, blockerType)}
