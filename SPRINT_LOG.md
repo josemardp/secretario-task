@@ -6,6 +6,33 @@ Duração sugerida por sprint: 1–2 semanas
 
 ---
 
+# v4.3-fix-02 — Contraste do card TOP 1 no FocoSheet (dark mode)
+
+Data: 2026-06-27
+
+## Objetivo
+Corrigir ilegibilidade do card TOP 1 ("Suas três prioridades") no FocoSheet em tema escuro, sem alterar lógica, schema ou comportamento.
+
+## Causa
+`FocoSheet.tsx` linha 110 usava `bg-ink text-white`. O token `bg-ink` = `var(--ink)` inverte com o tema (#18181B no light, #FAFAFA no dark), mas `text-white` é fixo (#FFFFFF). No dark mode: texto branco sobre fundo quase branco → contraste ~1:1 → invisível. Os textos secundários "TOP 1", prioridade e horário usavam `text-amber-soft` / `text-white/80` — igualmente fixos ou mal combinados com o fundo.
+
+## Correção
+Par `bg-ink text-canvas` onde `canvas` = `var(--bg)` — o inverso semântico natural de `bg-ink`:
+- **Light:** `#FAFAFA` (canvas) sobre `#18181B` (ink) → 19:1 contraste ✅
+- **Dark:** `#0A0A0B` (canvas) sobre `#FAFAFA` (ink) → 19:1 contraste ✅
+
+Todos os textos secundários (label "TOP 1", badge de prioridade, horário) atualizados para `text-canvas`. Nenhum token compartilhado foi alterado.
+
+## Critérios de conclusão
+- [x] `npm run lint` — zero erros
+- [x] `npm run build` — zero erros TypeScript
+- [x] `npm run test` — 14/14 fixtures passando
+- [x] TOP 1 legível em ambos os temas (contraste 19:1)
+- [x] TOP 2/3 inalterados
+- [x] Nenhuma lógica ou schema alterado
+
+---
+
 # v4.3-fix-01 — Hardening pós-auditoria v4.2
 
 Data: 2026-06-27
