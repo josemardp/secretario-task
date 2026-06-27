@@ -76,7 +76,7 @@ export function FocoSheet({
             <button
               onClick={onGenerateBriefing}
               disabled={isGeneratingBriefing}
-              className="inline-flex items-center gap-1.5 min-h-11 px-3 rounded-xl bg-ink text-white text-[12px] font-bold disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 min-h-11 px-3 rounded-xl bg-ink text-canvas text-[12px] font-bold disabled:opacity-50"
             >
               <Sparkles size={12} strokeWidth={2.2} />
               {isGeneratingBriefing ? 'Gerando...' : 'Briefing'}
