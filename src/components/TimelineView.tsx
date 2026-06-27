@@ -11,7 +11,8 @@ import { CalendarWidget } from './CalendarWidget';
 import { RecurrenceModal } from './RecurrenceModal';
 import { useToast } from './toastContext';
 import { useAgendaPositions, type TimelineBlock } from '../hooks/useAgendaPositions';
-import { buildActualMinutesFromStartedAt, buildReopenUpdates } from '../lib/timeTracking';
+import { buildReopenUpdates } from '../lib/timeTracking';
+import { buildCompleteUpdates, buildResolutionUpdates } from '../lib/taskLifecycle';
 
 
 interface TimelineViewProps {
@@ -37,15 +38,6 @@ function blockerTypeLabel(type: BlockerType): string {
   if (type === 'priority_changed') return 'Prioridade mudou';
   if (type === 'needs_split') return 'Precisa dividir';
   return 'Dependência';
-}
-
-function buildResolutionUpdates(resolutionType: Exclude<ResolutionType, 'completed'>): Partial<Task> {
-  return {
-    resolution_type: resolutionType,
-    resolved_at: new Date().toISOString(),
-    completed_at: null,
-    completed_at_confidence: null,
-  };
 }
 
 // ─── Recurrence helpers (importados de src/lib/recurrence.ts) ───
@@ -498,17 +490,7 @@ export function TimelineView({ tasks }: TimelineViewProps) {
 
   const handleComplete = (taskId: string) => {
     const task = tasks.find(t => t.id === taskId);
-    const updates: Partial<Task> = { status: 'done' };
-    if (task && task.status !== 'done') {
-      const completedAt = new Date().toISOString();
-      updates.completed_at = completedAt;
-      updates.completed_at_confidence = 'confirmed';
-      updates.resolution_type = 'completed';
-      updates.resolved_at = completedAt;
-    }
-    if (task && task.status !== 'done' && task.started_at) {
-      Object.assign(updates, buildActualMinutesFromStartedAt(task.started_at));
-    }
+    const updates: Partial<Task> = task ? buildCompleteUpdates(task) : { status: 'done' };
     updateTask(taskId, updates);
     recordTaskEvent(taskId, 'completed', {
       completed_at: task && task.status !== 'done' ? updates.completed_at ?? null : task?.completed_at ?? null,

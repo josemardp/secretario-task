@@ -42,6 +42,34 @@ Contexto: sprint atual ou situação que motivou.
 
 ---
 
+# Decisões — Remoção do Kanban, Fase 1 (2026-06-27)
+
+## 2026-06-27 — Ciclo de vida de tarefa em `src/lib/taskLifecycle.ts`
+Decisão: extrair `buildCompleteUpdates` e `buildResolutionUpdates` para `src/lib/taskLifecycle.ts`, preservando o comportamento existente do Kanban e da Agenda.
+Motivo: a Agenda precisa continuar funcional quando o Kanban for removido; regra de conclusão/encerramento não deve morar em componente visual.
+Alternativas descartadas: manter helpers duplicados em `TaskBoard.tsx`/`TimelineView.tsx` — descartada por risco de divergência; criar `buildStartUpdates` — descartada porque o timer foi aposentado como entrada nova.
+Contexto: preparação para remoção futura do Kanban, sem executar a remoção nesta fase.
+
+## 2026-06-27 — Captura rápida disponível na Agenda antes da remoção do Kanban
+Decisão: tornar a barra de captura visível tanto no Kanban quanto na Agenda durante a Fase 1.
+Motivo: Josemar usa a Agenda; antes de remover o Kanban, a Agenda precisa cobrir a captura diária sem perder parser determinístico, IA opcional e origem da estimativa.
+Alternativas descartadas: mover a captura exclusivamente para a Agenda já na Fase 1 — descartada para manter o Kanban como rede de segurança até a revisão; duplicar lógica na Agenda — descartada por criar duas fontes de verdade.
+Contexto: preparação para Fase 2.
+
+## 2026-06-27 — Timer aposentado como entrada nova no FocoSheet
+Decisão: remover do FocoSheet a ação de iniciar a Top 1 e qualquer escrita de `started_at`/evento `started` por esse caminho.
+Motivo: o cronômetro deixa de ser entrada nova, mas campos e leitura histórica permanecem para compatibilidade e qualidade de dados.
+Alternativas descartadas: remover campos `started_at`/`actual_minutes` — descartada por quebrar histórico e schema; manter o botão de iniciar — descartada por manter fricção e semântica de timer ativo.
+Contexto: decisão de Josemar para remoção gradual do Kanban.
+
+## 2026-06-27 — Dashboard passa de comparação estimado-real para qualidade de registro
+Decisão: trocar o card "Estimado vs. real" por "Qualidade dos registros de tempo", com contadores agregados e sem score/veredito comparativo.
+Motivo: sem cronômetro como entrada ativa, a comparação estimado-versus-real poderia sugerir uma métrica de cobrança indevida; o Dashboard deve apenas qualificar a completude/origem dos dados históricos.
+Alternativas descartadas: manter o gráfico de linha — descartada por reforçar comparação operacional que não representa mais o fluxo principal; remover dados de tempo — descartada porque o histórico real deve continuar preservado.
+Contexto: preparação para remover Kanban sem quebrar métricas do Dashboard.
+
+---
+
 # Decisões consolidadas durante a preparação (2026-05-11 e 2026-05-12)
 
 As decisões abaixo foram tomadas durante a auditoria e consolidação dos documentos preparatórios. Estão registradas aqui para rastreabilidade futura.

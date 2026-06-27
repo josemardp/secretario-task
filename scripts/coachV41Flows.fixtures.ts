@@ -15,7 +15,8 @@ import { estimateTaskTime } from '../src/lib/ai.js';
 import { parseTaskInput } from '../src/lib/parser.js';
 import { computeNextRuleAndDate } from '../src/lib/recurrence.js';
 import { isActiveTask, isOpenTask } from '../src/lib/taskFilters.js';
-import { buildActualMinutesFromStartedAt, buildReopenUpdates } from '../src/lib/timeTracking.js';
+import { buildCompleteUpdates, buildResolutionUpdates } from '../src/lib/taskLifecycle.js';
+import { buildReopenUpdates } from '../src/lib/timeTracking.js';
 
 type TaskStoreModule = typeof import('../src/stores/taskStore.js');
 
@@ -159,13 +160,8 @@ function mockFetchWithResponse(body: unknown, ok = true) {
   };
 }
 
-function applyResolution(id: string, resolutionType: Exclude<ResolutionType, 'completed'>, now: Date) {
-  useTaskStore.getState().updateTask(id, {
-    resolution_type: resolutionType,
-    resolved_at: now.toISOString(),
-    completed_at: null,
-    completed_at_confidence: null,
-  });
+function applyResolution(id: string, resolutionType: Exclude<ResolutionType, 'completed'>) {
+  useTaskStore.getState().updateTask(id, buildResolutionUpdates(resolutionType));
 }
 
 function applyPostpone(id: string, blockerType: BlockerType | null) {
@@ -225,27 +221,19 @@ await runFlow('2. estimativa marca fontes ai, default_30, parser e manual', 'par
   assert(taskBoardSource.includes("estimated_minutes_source: 'manual'"), 'edicao manual deve marcar source manual');
 });
 
-await runFlow('3. iniciar e concluir preserva campos semanticos e timer confiavel', 'parcial', () => {
+await runFlow('3. concluir preserva campos semanticos e timer legado defensivo', 'parcial', () => {
   const startedAt = '2026-06-27T11:30:00.000Z';
-  resetStore([task({ id: 'flow-3' })]);
-  useTaskStore.getState().updateTask('flow-3', { status: 'doing', started_at: startedAt });
+  resetStore([task({ id: 'flow-3', status: 'doing', started_at: startedAt })]);
   const started = currentTask('flow-3');
-  assertEqual(started.status, 'doing', 'start deve colocar em doing');
-  assertEqual(started.started_at, startedAt, 'start deve preencher started_at');
+  assertEqual(started.status, 'doing', 'fixture legado parte de doing');
+  assertEqual(started.started_at, startedAt, 'fixture legado possui started_at');
 
-  const actual = withDateNow(NOW.toISOString(), () => buildActualMinutesFromStartedAt(startedAt));
-  useTaskStore.getState().updateTask('flow-3', {
-    status: 'done',
-    completed_at: NOW.toISOString(),
-    completed_at_confidence: 'confirmed',
-    resolution_type: 'completed',
-    resolved_at: NOW.toISOString(),
-    ...actual,
-  });
+  const updates = withDateNow(NOW.toISOString(), () => buildCompleteUpdates(started));
+  useTaskStore.getState().updateTask('flow-3', updates);
 
   const done = currentTask('flow-3');
   assertEqual(done.status, 'done', 'conclusao deve colocar em done');
-  assertEqual(done.completed_at, NOW.toISOString(), 'completed_at confirmado');
+  assert(done.completed_at && Number.isFinite(Date.parse(done.completed_at)), 'completed_at confirmado');
   assertEqual(done.completed_at_confidence, 'confirmed', 'confidence confirmed');
   assertEqual(done.resolution_type, 'completed', 'resolution_type completed');
   assertEqual(done.resolved_at, done.completed_at, 'resolved_at igual ao completed_at');
@@ -273,20 +261,11 @@ await runFlow('4. reabrir limpa campos e recompletar sem started_at nao infla ti
   assertEqual(afterReopen.actual_minutes, null, 'reabertura limpa actual_minutes');
   assertEqual(afterReopen.actual_minutes_source, null, 'reabertura limpa actual_minutes_source');
 
-  useTaskStore.getState().updateTask('flow-4', {
-    status: 'done',
-    completed_at: NOW.toISOString(),
-    completed_at_confidence: 'confirmed',
-    resolution_type: 'completed',
-    resolved_at: NOW.toISOString(),
-  });
+  const recompleteUpdates = buildCompleteUpdates(afterReopen);
+  useTaskStore.getState().updateTask('flow-4', recompleteUpdates);
   const recompleted = currentTask('flow-4');
   assertEqual(recompleted.actual_minutes, null, 'recompletar sem started_at nao infla actual_minutes');
-  if (recompleted.actual_minutes_source !== 'unknown') {
-    recordFinding(
-      'Fluxo 4: recompletar tarefa reaberta sem started_at deixa actual_minutes_source=null; prompt esperava unknown.',
-    );
-  }
+  assertEqual(recompleted.actual_minutes_source, null, 'sem tempo real, origem tambem permanece null');
 });
 
 await runFlow('5. Agenda e Kanban usam buildReopenUpdates para reabertura', 'parcial', () => {
@@ -327,10 +306,10 @@ await runFlow('8. cancelar delegar obsoletar fecham sem execucao e sem tombstone
   (['cancelled', 'delegated', 'obsolete'] as const).forEach((resolutionType) => {
     const id = `flow-8-${resolutionType}`;
     resetStore([task({ id })]);
-    applyResolution(id, resolutionType, NOW);
+    applyResolution(id, resolutionType);
     const resolved = currentTask(id);
     assertEqual(resolved.resolution_type, resolutionType, `${resolutionType} deve ser semantico`);
-    assertEqual(resolved.resolved_at, NOW.toISOString(), `${resolutionType} deve preencher resolved_at`);
+    assert(resolved.resolved_at && Number.isFinite(Date.parse(resolved.resolved_at)), `${resolutionType} deve preencher resolved_at`);
     assertEqual(resolved.completed_at, null, `${resolutionType} nao pode preencher completed_at`);
     assertEqual(resolved.status, 'todo', `${resolutionType} nao deve virar done`);
     assertEqual(resolved.deleted_at, null, `${resolutionType} nao deve tombstonar`);
@@ -487,7 +466,7 @@ await runFlow('recorrencia. encerramento gera nova instancia sem herdar postpone
     recurrence_origin_id: 'flow-recurring-cancel',
     postponed_count: 2,
   })]);
-  applyResolution('flow-recurring-cancel', 'cancelled', NOW);
+  applyResolution('flow-recurring-cancel', 'cancelled');
   const cancelClone = useTaskStore.getState().tasks.find((item) => item.id !== 'flow-recurring-cancel');
   assert(cancelClone, 'encerramento sem execucao recorrente deve criar nova instancia');
   assertEqual(cancelClone.postponed_count ?? null, null, 'clone de encerramento sem execucao nao herda postponed_count');

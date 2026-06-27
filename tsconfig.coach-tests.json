@@ -24,6 +24,7 @@
     "src/lib/coachSignals.ts",
     "src/lib/stableHash.ts",
     "src/lib/taskFilters.ts",
+    "src/lib/taskLifecycle.ts",
     "src/types/index.ts"
   ]
 }

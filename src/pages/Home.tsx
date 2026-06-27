@@ -60,8 +60,6 @@ export default function Home() {
 
   const tasks = useTaskStore((s) => s.tasks);
   const addTask = useTaskStore((s) => s.addTask);
-  const updateTask = useTaskStore((s) => s.updateTask);
-  const recordTaskEvent = useTaskStore((s) => s.recordTaskEvent);
   const { activeContext, currentEnergy, setCurrentEnergy, aiApiKey } = useContextStore();
 
   const isTaskForToday = (dueAt: string | null) => {
@@ -270,6 +268,7 @@ export default function Home() {
     () => baseVisibleTasks.filter((t) => isTaskForToday(t.due_at)),
     [baseVisibleTasks]
   );
+  const captureBarVisible = viewMode === 'kanban' || viewMode === 'timeline';
   const energySliderStyle: CSSProperties & { '--energy-percent': string } = {
     '--energy-percent': `${currentEnergy * 10}%`,
   };
@@ -297,11 +296,6 @@ export default function Home() {
         briefingText={briefingText}
         isGeneratingBriefing={isGeneratingBriefing}
         onGenerateBriefing={handleGenerateBriefing}
-        onStartTop1={(t) => {
-          updateTask(t.id, { status: 'doing', started_at: new Date().toISOString() });
-          recordTaskEvent(t.id, 'started', { source: 'focus_sheet' });
-          setFocoOpen(false);
-        }}
       />
 
       {/* ── Header ──────────────────────────────────────────────── */}
@@ -408,7 +402,7 @@ export default function Home() {
           maxWidth: '100%',
           overflowX: 'hidden',
           boxSizing: 'border-box',
-          paddingBottom: viewMode === 'kanban'
+          paddingBottom: captureBarVisible
             ? `calc(64px + ${captureBarHeight}px + env(safe-area-inset-bottom))`
             : 'calc(72px + env(safe-area-inset-bottom))',
         }}
@@ -423,7 +417,7 @@ export default function Home() {
       </main>
 
       {/* ── Capture bar ──────────────────────────────────────────── */}
-      {viewMode === 'kanban' && (
+      {captureBarVisible && (
         <form
           ref={captureBarRef}
           onSubmit={handleTaskSubmit}

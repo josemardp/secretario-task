@@ -5,6 +5,19 @@ Status: MVP enxuto alinhado ao PRD, com correções da auditoria de 2026-05-12
 
 ---
 
+# Nota arquitetural — Preparação para remoção do Kanban (2026-06-27)
+
+- A lógica compartilhada de ciclo de vida de tarefa vive em `src/lib/taskLifecycle.ts`.
+- `buildCompleteUpdates` centraliza conclusão confirmada, `resolution_type='completed'`, `resolved_at` e compatibilidade defensiva com `started_at` legado.
+- `buildResolutionUpdates` centraliza encerramentos sem execução (`cancelled`, `delegated`, `obsolete`) sem usar `deleted_at` e sem preencher `completed_at`.
+- Reabertura continua em `src/lib/timeTracking.ts` via `buildReopenUpdates`.
+- A captura rápida fica no `Home.tsx` e aparece na Agenda e no Kanban durante a Fase 1, preservando parser, IA opcional e `estimated_minutes_source`.
+- FocoSheet e Kanban não oferecem mais ação nova de iniciar timer, não escrevem `started_at` nem emitem evento `started`.
+- O Dashboard preserva histórico de tempo real, mas apresenta "Qualidade dos registros de tempo" em contadores agregados, sem comparar estimado vs. real como métrica ativa.
+- Os campos `started_at`, `actual_minutes` e `actual_minutes_source` permanecem no schema para histórico e compatibilidade; timer não deve voltar como entrada nova sem decisão explícita.
+
+---
+
 # Objetivo
 
 Definir a arquitetura oficial do MVP do SecretárioTask.
