@@ -282,6 +282,8 @@ Reabrir tarefa concluída ou encerrada sem execução limpa a resolução corren
 
 Eventos antigos em `task_events` permanecem preservados; a reabertura adiciona um novo evento `reopened` best-effort.
 
+A regra única de reabertura vive em `src/lib/timeTracking.ts` como `buildReopenUpdates`. Kanban e Agenda reutilizam essa função para evitar divergência entre fluxos. Na Agenda, o modal de edição de tarefas `done` reabre para `todo` e emite `reopened` como evento best-effort com origem `timeline`.
+
 ## Regimes de dado no Dashboard
 
 O Dashboard separa leitura operacional de qualidade do dado:
@@ -380,7 +382,7 @@ Guardrails:
 
 ## Cache e versionamento da narrativa IA
 
-O briefing governado usa cache local em memória, sem migration, Supabase ou `localStorage`.
+O briefing governado usa cache local em memória, implementado como `Map`, sem migration, Supabase ou `localStorage`. O cache vale apenas para a sessão atual do navegador; recarregar a página limpa as entradas.
 
 Constantes de versão:
 

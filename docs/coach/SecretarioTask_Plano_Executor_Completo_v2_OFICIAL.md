@@ -33,7 +33,7 @@
 | 5 | Fase 1D | `actual_minutes_source` + `estimated_minutes_source` | `0017` | sim | sim | sim (marcação) |
 | 6 | Fase 2 | Reabertura limpa + teto de timer + adiar com motivo | `0018` | sim | sim | não |
 | 7 | Fase 3 | Dashboard honesto + separação histórico/saneamento | não | não | não | não |
-| 8 | Fase 4 | `diagnostics.ts` puro + fixtures + decisão de runner | não | não | não | não |
+| 8 | Fase 4 | `coachSignals.ts` puro + fixtures + decisão de runner | não | não | não | não |
 | 9 | Fase 5A | Governança da IA existente (origem, fallback, sem diagnóstico) | não | não | não | sim |
 | 10 | Fase 5B | Briefing cacheado por `input_hash` + prompt versionado | não | não | não | sim |
 | 11 | — | Auditoria final, hardening e fechamento | não | não | não | não |
@@ -73,7 +73,7 @@ Ritual base do `AGENTS.md` (Modo 3 ao fim de cada sprint). O agente **prepara** 
 - Decisão arquitetural; mudança de schema; decisão de **não** fazer algo; decisão sobre IA; decisão sobre sync/offline; decisão sobre teste/runner; decisão sobre dado legado.
 
 ### `ARCHITECTURE.md` — quando houver
-- Novo modelo semântico; mudança em sync; mudança em eventos; criação de `diagnostics.ts`; governança de IA.
+- Novo modelo semântico; mudança em sync; mudança em eventos; criação de `coachSignals.ts`; governança de IA.
 
 ### `PRD.md` — apenas quando
 - Houver mudança perceptível de comportamento de produto (ex.: surgimento de ações cancelar/delegar; dashboard separando histórico de saneamento).
@@ -210,7 +210,7 @@ Ritual base do `AGENTS.md` (Modo 3 ao fim de cada sprint). O agente **prepara** 
 **Objetivo.** Dashboard honesto, separando produtividade de qualidade do dado.
 **Justificativa.** Os rótulos de contenção do Sprint 1 viram correção definitiva agora que `completed_at` e origem existem.
 **Escopo incluído.** Migrar todas as métricas de horário de `updated_at` → `completed_at` (`confidence='confirmed'`); separar "pós-saneamento" de "histórico frágil" (`legacy_approx` só em contagem agregada rotulada); bloco textual de qualidade do dado (confiabilidade como texto, nunca nota); reativar `BehavioralSuggestion` **apenas** se houver massa de dado `confirmed` suficiente (gate de qualidade, não de tempo), rotulada como narração de regra determinística.
-**Escopo excluído.** Motor `diagnostics.ts` (Sprint 8); IA narrativa (Sprint 10).
+**Escopo excluído.** Motor `coachSignals.ts` (Sprint 8); IA narrativa (Sprint 10).
 **Arquivos prováveis.** `src/components/DashboardView.tsx`, `src/components/BehavioralSuggestion.tsx`, `src/lib/behaviorEngine.ts`; docs.
 **Migrations.** Nenhuma.
 **Riscos.** Reativar sugestão cedo demais; criar "score" disfarçado; misturar histórico com saneamento na mesma métrica de horário.
@@ -222,18 +222,18 @@ Ritual base do `AGENTS.md` (Modo 3 ao fim de cada sprint). O agente **prepara** 
 
 ### Sprint 8 — Fase 4: Motor determinístico testável
 
-**Objetivo.** Centralizar diagnóstico em `src/lib/diagnostics.ts` puro, determinístico, com `now` injetável, e cobrir as 10 fixtures obrigatórias.
+**Objetivo.** Centralizar diagnóstico em `src/lib/coachSignals.ts` puro, determinístico, com `now` injetável, e cobrir as 10 fixtures obrigatórias.
 **Justificativa.** Diagnóstico espalhado é silenciosamente quebrável; um motor puro com fixtures dá regressão.
-**Escopo incluído.** `diagnostics.ts` (função pura recebendo tarefas + eventos, devolvendo diagnósticos rotulados com confiança; sem IA, sem aleatoriedade); decisão registrada sobre runner de teste; fixtures cobrindo §11.
+**Escopo incluído.** `coachSignals.ts` (função pura recebendo tarefas + eventos, devolvendo diagnósticos rotulados com confiança; sem IA, sem aleatoriedade); decisão registrada sobre runner de teste; fixtures cobrindo §11.
 **Escopo excluído.** Consumo do motor pela IA (Sprint 10); novas métricas de produto.
-**Arquivos prováveis.** `src/lib/diagnostics.ts` (novo), possivelmente `src/lib/behaviorEngine.ts` (migrar lógica para o motor), fixtures (`src/lib/__fixtures__/` ou equivalente), `package.json`/config de teste **se** a decisão for introduzir Vitest restrito; docs.
+**Arquivos prováveis.** `src/lib/coachSignals.ts` (novo), possivelmente `src/lib/behaviorEngine.ts` (migrar lógica para o motor), fixtures (`src/lib/__fixtures__/` ou equivalente), `package.json`/config de teste **se** a decisão for introduzir Vitest restrito; docs.
 **Migrations.** Nenhuma.
 **Riscos.** Introduzir runner de teste contra a regra "sem teste no MVP"; motor depender da amostra parcial de 100 tasks do `partialize`; impureza (relógio escondido, aleatoriedade).
 **Mitigação.** Decisão de runner é **ponto de parada para revisão humana** (§9) — não decidir sozinho; motor recebe dados por parâmetro (séries longas vêm do Supabase, não do store); `now` sempre injetado.
-**Critérios de aceite.** `diagnostics.ts` puro e determinístico; as 10 fixtures verdadeiras; decisão de runner registrada em `DECISIONS.md`; `lint`/`build` verdes.
+**Critérios de aceite.** `coachSignals.ts` puro e determinístico; as 10 fixtures verdadeiras; decisão de runner registrada em `DECISIONS.md`; `lint`/`build` verdes.
 **Comandos obrigatórios.** `npm run lint`, `npm run build`, e (se aprovado) o comando do runner escolhido.
 **Docs.** `ARCHITECTURE.md` (motor de diagnóstico), `DECISIONS.md` (runner; amostra parcial; pureza), `STATUS.md`, `SPRINT_LOG.md`, `ROADMAP.md` (Fase 4 done).
-**Commit sugerido.** `feat: diagnostics.ts determinístico + fixtures — Fase 4 (Sprint 8)`
+**Commit sugerido.** `feat: coachSignals.ts determinístico + fixtures — Fase 4 (Sprint 8)`
 
 ### Sprint 9 — Fase 5A: Governança da IA existente
 
@@ -524,7 +524,7 @@ ESCOPO INCLUÍDO:
 3. Bloco textual de qualidade do dado (ex.: % de conclusões confirmed vs legacy; presença de actual_minutes_source='unknown'). Texto, nunca nota/score.
 4. Reativar BehavioralSuggestion SOMENTE se houver massa suficiente de dado confirmed por faixa horária (defina e registre o limiar, ex.: mínimo de N conclusões confirmed na faixa). Ao reativar, o texto deve declarar que narra uma regra determinística.
 
-ESCOPO EXCLUÍDO: diagnostics.ts (Sprint 8); IA narrativa (Sprint 10).
+ESCOPO EXCLUÍDO: coachSignals.ts (Sprint 8); IA narrativa (Sprint 10).
 
 VALIDAÇÃO: npm run lint ; npm run build.
 
@@ -546,15 +546,15 @@ ATENÇÃO: este sprint tem um PONTO DE PARADA OBRIGATÓRIO. A decisão de introd
 
 LEIA PRIMEIRO: v4 (Fase 4, seção 8 fixtures); plano executor (Sprint 8 e seção 10 fixtures); STATUS.md, ROADMAP.md, SPRINT_LOG.md, DECISIONS.md, ARCHITECTURE.md, PRD.md; e: src/lib/behaviorEngine.ts, src/lib/datetime.ts (padrão de now injetável), src/types/index.ts, package.json.
 
-INVARIANTES: diagnostics.ts é função PURA, determinística, sem IA, sem aleatoriedade, com now injetável. Não pode depender da amostra parcial de 100 tasks do partialize — recebe dados por parâmetro.
+INVARIANTES: coachSignals.ts é função PURA, determinística, sem IA, sem aleatoriedade, com now injetável. Não pode depender da amostra parcial de 100 tasks do partialize — recebe dados por parâmetro.
 
-OBJETIVO: centralizar diagnóstico em src/lib/diagnostics.ts e cobrir as 10 fixtures.
+OBJETIVO: centralizar diagnóstico em src/lib/coachSignals.ts e cobrir as 10 fixtures.
 
 ESCOPO INCLUÍDO:
-1. Criar src/lib/diagnostics.ts: entrada (tarefas + eventos), saída (diagnósticos rotulados com nível de confiança). Sem IA. now injetado.
+1. Criar src/lib/coachSignals.ts: entrada (tarefas + eventos), saída (diagnósticos rotulados com nível de confiança). Sem IA. now injetado.
 2. Migrar para o motor a lógica de horário/energia hoje em behaviorEngine.ts (que vira fino consumidor do motor ou é absorvido).
 3. Fixtures cobrindo os 10 cenários da seção 10 do plano executor.
-4. PARAR e pedir decisão humana sobre runner de teste. Se aprovado: instalar Vitest restrito a diagnostics, adicionar script de teste, sem tocar o resto da config. Se reprovado: implementar fixtures como dataset .ts validável por um script ad-hoc ou checagem manual documentada.
+4. PARAR e pedir decisão humana sobre runner de teste. Se aprovado: instalar Vitest restrito a coachSignals.ts, adicionar script de teste, sem tocar o resto da config. Se reprovado: implementar fixtures como dataset .ts validável por um script ad-hoc ou checagem manual documentada.
 
 ESCOPO EXCLUÍDO: consumo do motor pela IA (Sprint 10); novas métricas de produto.
 
@@ -564,7 +564,7 @@ DOCS: ARCHITECTURE.md (motor de diagnóstico); DECISIONS.md (decisão de runner;
 
 MIGRATION REMOTA: se este sprint criou migration, antes do commit rode `supabase migration list --linked`, `supabase db push --dry-run`, confira o escopo, aplique com `supabase db push --linked` e confirme com `supabase migration list --linked`. Se falhar ou listar algo inesperado, pare e reporte.
 
-COMMIT/PUSH OBRIGATÓRIO: após validações verdes e, quando aplicável, migration remota confirmada, rode `git status`. Se houver apenas alterações deste sprint, execute `git add -A`, `git commit -m "feat: diagnostics.ts determinístico + fixtures — Fase 4 (Sprint 8)"` e `git push origin main`. Se houver alteração fora do escopo, falha de validação ou dúvida sobre migration/schema, NÃO commite nem dê push; pare e reporte.
+COMMIT/PUSH OBRIGATÓRIO: após validações verdes e, quando aplicável, migration remota confirmada, rode `git status`. Se houver apenas alterações deste sprint, execute `git add -A`, `git commit -m "feat: coachSignals.ts determinístico + fixtures — Fase 4 (Sprint 8)"` e `git push origin main`. Se houver alteração fora do escopo, falha de validação ou dúvida sobre migration/schema, NÃO commite nem dê push; pare e reporte.
 
 RELATÓRIO FINAL: arquivos alterados; recomendação de runner e status da decisão humana; lista das 10 fixtures e resultado; validações; riscos; próximo sprint (Sprint 9).
 ```
@@ -643,7 +643,7 @@ VARREDURAS OBRIGATÓRIAS (relate cada resultado):
 2. deleted_at como semântica: grep por "deleted_at"; confirmar que só representa soft delete, nunca cancelada/delegada/obsoleta.
 3. IA originando diagnóstico: revisar ai.ts/smartParser.ts; confirmar que IA só narra, nunca escreve resolution_type/blocker_type nem gera diagnóstico.
 4. Contratos de sync: confirmar que TODOS os campos novos (completed_at, completed_at_confidence, resolution_type, resolved_at, actual_minutes_source, estimated_minutes_source, e blocker_type) estão em TASK_COLUMNS e NÃO no stripReadonlyTaskFields.
-5. Determinismo: confirmar que diagnostics.ts é puro e que parser/ranking não dependem de IA no caminho crítico.
+5. Determinismo: confirmar que coachSignals.ts é puro e que parser/ranking não dependem de IA no caminho crítico.
 
 SE ACHAR VIOLAÇÃO de invariante: não corrija "de passagem". Documente e proponha um sprint de correção dedicado.
 
@@ -671,7 +671,7 @@ LEIA: SecretarioTask_Plano_Coach_Produtividade_v4.md; SecretarioTask_Plano_Execu
 
 AUDITE OS SEGUINTES PONTOS, com evidência (arquivo:linha) para cada veredito:
 
-A. updated_at nunca é tratado como conclusão (behaviorEngine, DashboardView, diagnostics, briefing).
+A. updated_at nunca é tratado como conclusão (behaviorEngine, DashboardView, coachSignals, briefing).
 B. completed_at é a fonte de conclusão; não é reescrito por edição; legacy_approx fica fora de métrica de horário.
 C. resolution_type/resolved_at existem e cancelada/delegada/obsoleta NÃO usam deleted_at; resolvidas permanecem buscáveis/contáveis.
 D. task_events: CHECK ampliado, trigger BEFORE INSERT carimbando created_at server-side, cliente não envia created_at, eventos best-effort.
@@ -679,7 +679,7 @@ E. actual_minutes_source/estimated_minutes_source preenchidos em todos os pontos
 F. Reabertura limpa completed_at/resolved_at/resolution_type/started_at e emite 'reopened', preservando histórico de evento.
 G. Teto de timer marca actual_minutes_source='unknown' acima do limite.
 H. Dashboard separa "pós-saneamento" de "histórico frágil"; confiabilidade só como texto; sem score.
-I. diagnostics.ts é puro, determinístico, now injetável; as 10 fixtures existem e passam; não depende da amostra de 100 tasks.
+I. coachSignals.ts é puro, determinístico, now injetável; as 10 fixtures existem e passam; não depende da amostra de 100 tasks.
 J. IA: fallback determinístico em todas as rotas; IA não origina diagnóstico nem escreve campos semânticos; briefing cacheado por input_hash com prompt versionado.
 K. Contratos de sync: todos os campos novos em TASK_COLUMNS; nenhum no stripReadonlyTaskFields (exceto created_at/updated_at).
 L. Invariantes preservadas: captura rápida, sync, offline-first, RLS, soft delete, TaskStatus inalterado, tap targets 44x44.
@@ -698,7 +698,7 @@ ENTREGUE: para cada ponto A–N, veredito (Conforme / Não conforme / Parcial) +
 Marcar tudo no Sprint 11. Cada item é verificável por inspeção de código ou execução.
 
 - [ ] `npm run lint` e `npm run build` verdes na árvore final.
-- [ ] Nenhuma métrica de conclusão/horário lê `updated_at` (behaviorEngine, DashboardView, diagnostics, briefing).
+- [ ] Nenhuma métrica de conclusão/horário lê `updated_at` (behaviorEngine, DashboardView, coachSignals, briefing).
 - [ ] `completed_at` gravado só na 1ª transição para `done`; não reescrito por edição.
 - [ ] `completed_at_confidence` distingue `confirmed` de `legacy_approx`; legado fora de métrica de horário.
 - [ ] `resolution_type`/`resolved_at` implementados; `completed_at` NULL para não-concluídas.
@@ -709,7 +709,7 @@ Marcar tudo no Sprint 11. Cada item é verificável por inspeção de código ou
 - [ ] Teto de timer marca suspeita (`actual_minutes_source='unknown'`) acima do limite.
 - [ ] Dashboard separa "pós-saneamento" de "histórico frágil"; confiabilidade só textual; sem score.
 - [ ] `BehavioralSuggestion` só reativada sob gate de qualidade de dado, narrando regra determinística.
-- [ ] `diagnostics.ts` puro, determinístico, `now` injetável; 10 fixtures presentes e verdadeiras; decisão de runner registrada.
+- [ ] `coachSignals.ts` puro, determinístico, `now` injetável; 10 fixtures presentes e verdadeiras; decisão de runner registrada.
 - [ ] Recorrência intacta: conclusão gera nova instância; métrica por instância; `postponed_count` por instância; unique index respeitado.
 - [ ] IA opcional e não-bloqueante em todas as rotas; fallback determinístico garantido; IA não origina diagnóstico.
 - [ ] Briefing cacheado por `input_hash`; prompt versionado; fallback determinístico intacto.
@@ -752,7 +752,7 @@ O agente deve **parar e pedir confirmação de Josemar** (não decidir sozinho) 
 
 ## 10. Fixtures obrigatórias do motor determinístico (Sprint 8)
 
-Cada fixture é determinística, com `now` fixo, e alimenta `diagnostics.ts` por parâmetro (nunca pelo store). São o critério de aceite do Sprint 8.
+Cada fixture é determinística, com `now` fixo, e alimenta `coachSignals.ts` por parâmetro (nunca pelo store). São o critério de aceite do Sprint 8.
 
 1. **Conclusão estável:** tarefa concluída e editada depois — `completed_at` não muda; diagnóstico de horário usa `completed_at`, não `updated_at`.
 2. **Cancelada fora da produtividade:** `resolution_type='cancelled'`, `completed_at=NULL` — não entra em "concluídas".

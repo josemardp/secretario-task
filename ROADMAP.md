@@ -164,8 +164,19 @@ Entregas:
 - Log de PWA em produção trocado de `console.log` para `console.debug`.
 - Nenhuma migration e nenhum comando Supabase.
 
+## Sprint 12-B — Housekeeping pós-auditoria
+Status: concluído em 2026-06-27.
+
+Entregas:
+- `behaviorEngine.ts` removido após cumprir o papel de rede de segurança.
+- Home sem import/renderização de `BehavioralSuggestion`.
+- Agenda reabre tarefas `done` pelo mesmo helper `buildReopenUpdates` usado pelo Kanban.
+- Migration `0019_idempotent_source_constraints.sql` aplicada no Supabase remoto, tornando idempotentes as constraints de origem de tempo/estimativa.
+- Docs alinhados para `coachSignals.ts` como motor real.
+- Limitação do cache de IA em memória documentada.
+
 ## Próximo passo
-Sprint 12-B — Housekeeping pós-auditoria, sem adiantar novas features.
+Evolução Coach v4.1 fechada após correções pós-auditoria. Próximas mudanças devem entrar como manutenção leve ou novo ciclo planejado.
 
 ---
 

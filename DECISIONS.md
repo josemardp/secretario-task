@@ -236,6 +236,34 @@ Contexto: pré-Sprint 1.
 
 # Decisões durante o desenvolvimento
 
+## 2026-06-27 — Sprint 12-B: encerramento do congelamento do behaviorEngine
+
+Decisão: remover `src/lib/behaviorEngine.ts` e retirar a renderização de `BehavioralSuggestion` em `Home.tsx`.
+Motivo: o módulo cumpriu o papel de rede de segurança durante a migração; o motor real agora é `src/lib/coachSignals.ts`, puro e coberto por fixtures no `npm run test`.
+Alternativas descartadas: manter o arquivo congelado indefinidamente — descartada por confundir manutenção futura; reativar `BehavioralSuggestion` — descartada porque exigiria novo gate de produto e qualidade de dado.
+Contexto: Coach de Produtividade, Sprint 12-B — BUG-03.
+
+## 2026-06-27 — Sprint 12-B: idempotência por migration aditiva 0019
+
+Decisão: criar `0019_idempotent_source_constraints.sql` para adicionar as constraints de `estimated_minutes_source` e `actual_minutes_source` somente quando não existirem em `pg_constraint`.
+Motivo: a migration `0017` já foi aplicada e não deve ser editada; uma migration aditiva preserva o histórico e melhora a robustez em ambientes reconstruídos.
+Alternativas descartadas: editar a `0017` já aplicada — descartada por quebrar rastreabilidade; remover e recriar constraints — descartada por ser desnecessário e mais arriscado.
+Contexto: Coach de Produtividade, Sprint 12-B — BUG-04.
+
+## 2026-06-27 — Sprint 12-B: dívida conhecida da migration 0016
+
+Decisão: documentar que a `0016_task_events_expand_stamp.sql` descobre a constraint de `task_events.type` por substring da definição, o que é frágil.
+Motivo: a `0016` já está aplicada e não deve ser reaberta; a correção futura desejada é localizar a constraint por nome/padrão mais robusto, como `conname LIKE 'task_events_%check%'`, ou por uma convenção explícita em nova migration.
+Alternativas descartadas: editar a `0016` já aplicada — descartada por preservar histórico; criar correção agora sem necessidade operacional — descartada para manter o sprint focado.
+Contexto: Coach de Produtividade, Sprint 12-B — BUG-07.
+
+## 2026-06-27 — Sprint 12-B: cache de IA apenas por sessão
+
+Decisão: manter o cache de IA governada como `Map` em memória, apenas por sessão do navegador, sem persistência em `localStorage` ou Supabase.
+Motivo: o cache evita rechamada idêntica durante a sessão sem criar novo dado persistido, sem privacidade adicional a governar e sem migration.
+Alternativas descartadas: persistir cache no browser — descartada por ser feature nova de privacidade/dados; persistir no Supabase — descartada por exigir schema e política de retenção.
+Contexto: Coach de Produtividade, Sprint 12-B — P-03.
+
 ## 2026-06-27 — Sprint 12-A: legado rotulado em conclusões por área
 
 Decisão: manter conclusões `legacy_approx` no agregado "Conclusões por área" e adicionar rótulo curto informando que a seção inclui histórico aproximado anterior ao saneamento.
