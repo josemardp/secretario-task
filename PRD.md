@@ -114,7 +114,7 @@ CREATE TYPE context_type AS ENUM (
 - autenticação (e-mail e senha)
 - CRUD de tarefas
 - soft delete (via `deleted_at`)
-- board simples
+- Agenda/Timeline como view operacional principal
 - parser local determinístico
 - ranking determinístico (com `due_at` e energia compatível com usuário)
 - briefing determinístico
@@ -155,6 +155,12 @@ O Dashboard separa:
 - Qualidade do dado.
 
 Métricas de semana, hoje e horário de pico usam somente conclusões confirmadas. Histórico aproximado permanece visível como contagem rotulada, mas não vira padrão de horário. Tempo real com origem desconhecida é mostrado como baixa confiança. A qualidade do dado é textual e não vira score de produtividade.
+
+## Coach v4.2 — Agenda/Timeline only
+
+A experiência operacional principal é a Agenda/Timeline. A captura rápida fica disponível na Agenda e preserva parser determinístico, IA opcional e origem da estimativa. O Dashboard permanece como Painel analítico. O FocoSheet permanece para orientação, briefing e top tarefas, sem iniciar timer, sem escrever `started_at` e sem emitir evento `started`.
+
+Campos históricos de tempo (`started_at`, `actual_minutes`, `actual_minutes_source`) continuam preservados para compatibilidade e qualidade de dado, mas timer manual não volta como entrada nova sem decisão explícita.
 
 ---
 
@@ -548,7 +554,7 @@ A fila `PendingMutation[]` é criada no Sprint 1 mas só passa a ser totalmente 
 ## Sprint 2 — CRUD + Parser
 - CRUD completo (soft delete via `deleted_at`)
 - parser local (interpreta `priority`, `context`, `due_at`)
-- board simples
+- Agenda/Timeline operacional
 - troca de contexto
 
 ---

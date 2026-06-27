@@ -22,7 +22,6 @@ type TaskStoreModule = typeof import('../src/stores/taskStore.js');
 
 const NOW = new Date('2026-06-27T12:00:00.000Z');
 const USER_ID = 'user-flow';
-const findings: string[] = [];
 const memoryStorage = new Map<string, string>();
 
 Object.defineProperty(globalThis, 'localStorage', {
@@ -65,10 +64,6 @@ function assertDeepEqual(actual: unknown, expected: unknown, message: string) {
   if (actualJson !== expectedJson) {
     throw new Error(`${message}. Esperado: ${expectedJson}; obtido: ${actualJson}`);
   }
-}
-
-function recordFinding(message: string) {
-  findings.push(message);
 }
 
 function runFlow(flow: string, coverage: FlowResult['coverage'], fixture: () => void | Promise<void>) {
@@ -196,7 +191,7 @@ await runFlow('1. captura rapida usa parser deterministico sem IA', 'sim', () =>
 await runFlow('2. estimativa marca fontes ai, default_30, parser e manual', 'parcial', async () => {
   const aiSource = source('src/lib/ai.ts');
   const homeSource = source('src/pages/Home.tsx');
-  const taskBoardSource = source('src/components/TaskBoard.tsx');
+  const timelineSource = source('src/components/TimelineView.tsx');
   assert(aiSource.includes("source: 'ai'"), 'estimateTaskTime deve retornar source ai no caminho bem-sucedido');
   assert(aiSource.includes("source: 'default_30'"), 'estimateTaskTime deve retornar default_30 nos fallbacks');
 
@@ -218,7 +213,7 @@ await runFlow('2. estimativa marca fontes ai, default_30, parser e manual', 'par
 
   assert(homeSource.includes("t.estimated_minutes_source ?? 'parser'"), 'Home deve preservar parser source');
   assert(homeSource.includes(": 'default_30'"), 'Home deve aplicar default_30 sem estimativa');
-  assert(taskBoardSource.includes("estimated_minutes_source: 'manual'"), 'edicao manual deve marcar source manual');
+  assert(timelineSource.includes("updates.estimated_minutes_source = 'manual'"), 'edicao manual na Agenda deve marcar source manual');
 });
 
 await runFlow('3. concluir preserva campos semanticos e timer legado defensivo', 'parcial', () => {
@@ -268,22 +263,21 @@ await runFlow('4. reabrir limpa campos e recompletar sem started_at nao infla ti
   assertEqual(recompleted.actual_minutes_source, null, 'sem tempo real, origem tambem permanece null');
 });
 
-await runFlow('5. Agenda e Kanban usam buildReopenUpdates para reabertura', 'parcial', () => {
-  const taskBoardSource = source('src/components/TaskBoard.tsx');
+await runFlow('5. Agenda usa buildReopenUpdates para reabertura', 'sim', () => {
   const timelineSource = source('src/components/TimelineView.tsx');
-  assert(taskBoardSource.includes('buildReopenUpdates(status)'), 'Kanban deve chamar buildReopenUpdates(status)');
   assert(timelineSource.includes("buildReopenUpdates('todo')"), 'Agenda deve chamar buildReopenUpdates(todo)');
 
-  const kanbanDoneReopen = buildReopenUpdates('doing');
   const agendaDoneReopen = buildReopenUpdates('todo');
-  const { status: kanbanStatus, ...kanbanRest } = kanbanDoneReopen;
-  const { status: agendaStatus, ...agendaRest } = agendaDoneReopen;
-  assertDeepEqual(kanbanRest, agendaRest, 'Kanban e Agenda limpam os mesmos campos');
-  if (kanbanStatus !== agendaStatus) {
-    recordFinding(
-      `Fluxo 5: Kanban reabre done para ${String(kanbanStatus)} e Agenda reabre done para ${String(agendaStatus)}; prompt esperava paridade exata campo a campo.`,
-    );
-  }
+  assertDeepEqual(agendaDoneReopen, {
+    status: 'todo',
+    completed_at: null,
+    completed_at_confidence: null,
+    resolution_type: null,
+    resolved_at: null,
+    started_at: null,
+    actual_minutes: null,
+    actual_minutes_source: null,
+  }, 'Agenda deve reabrir para todo e limpar os campos criticos');
 });
 
 await runFlow('6. adiar com motivo incrementa contador e grava blocker_type', 'sim', () => {
@@ -475,9 +469,4 @@ await runFlow('recorrencia. encerramento gera nova instancia sem herdar postpone
 console.log('[coachV41Flows] cobertura');
 for (const result of results) {
   console.log(`${result.flow} | ${result.coverage} | ${result.result} | ${result.evidence}`);
-}
-
-if (findings.length > 0) {
-  console.log('[coachV41Flows] achados nao-bloqueantes');
-  findings.forEach((finding) => console.log(`- ${finding}`));
 }

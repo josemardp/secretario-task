@@ -23,7 +23,38 @@
 
 # Sprint atual
 
-Remoção do Kanban — Fase 1 concluída
+Remoção do Kanban — Fase 2 concluída
+
+---
+
+# Remoção do Kanban — Fase 2 — Agenda/Timeline como view principal
+
+Data: 2026-06-27
+
+## Objetivo
+Remover o Kanban como view operacional e deixar Agenda/Timeline como experiência principal, mantendo Dashboard, captura rápida, FocoSheet sem timer e testes/documentação atualizados.
+
+## Resultado
+- `Home.tsx` passou a alternar apenas entre Agenda e Painel.
+- A Agenda/Timeline é a view padrão.
+- A captura rápida permanece fixa na Agenda.
+- `src/components/TaskBoard.tsx` foi removido.
+- `src/components/TaskActions.tsx` foi removido por estar órfão após a remoção do Kanban.
+- `@dnd-kit/core` e `@dnd-kit/utilities` foram removidos porque não havia uso em `src`.
+- Testes agênticos deixaram de ler/validar Kanban e passaram a validar Agenda-only + helpers compartilhados.
+- FocoSheet permanece sem timer, sem escrita de `started_at` e sem evento `started`.
+- Dashboard permanece com "Qualidade dos registros de tempo" e rótulo de histórico aproximado.
+- Nenhuma migration foi criada.
+- Nenhum comando Supabase foi executado.
+
+## Validações
+- `npm run lint`: passou.
+- `npm run build`: passou, com aviso conhecido de chunk maior que 500 kB.
+- `npm run test`: passou.
+- `npm audit`: passou, 0 vulnerabilidades.
+
+## Próximo passo recomendado
+Após validações verdes e smoke manual da Agenda/Dashboard/FocoSheet, criar tag v4.2.
 
 ---
 
