@@ -7,11 +7,10 @@ import { parseMultipleTasks } from '../lib/smartParser';
 import { generateEmbedding, estimateTaskTime, transcribeAudio } from '../lib/ai';
 import { useAudioRecorder } from '../hooks/useAudioRecorder';
 import {
-  CheckCircle, CalendarDays, BarChart2, Target, Plus, Mic, Search,
+  CalendarDays, BarChart2, Target, Plus, Mic, Search,
   Settings as SettingsIcon, ArrowRight, X, Zap,
 } from 'lucide-react';
 import { BuildBadge } from '../components/BuildBadge';
-import { TaskBoard } from '../components/TaskBoard';
 import { TimelineView } from '../components/TimelineView';
 import { DashboardView } from '../components/DashboardView';
 import { MultiTaskConfirmModal } from '../components/MultiTaskConfirmModal';
@@ -46,7 +45,7 @@ export default function Home() {
   const [isSearching, setIsSearching] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [isAddingTask, setIsAddingTask] = useState(false);
-  const [viewMode, setViewMode] = useState<'kanban' | 'timeline' | 'dashboard'>('kanban');
+  const [viewMode, setViewMode] = useState<'timeline' | 'dashboard'>('timeline');
   const [semanticResults, setSemanticResults] = useState<{ id: string; similarity: number }[] | null>(null);
   const [pendingSmartTasks, setPendingSmartTasks] = useState<Partial<Task>[] | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -264,11 +263,7 @@ export default function Home() {
     return activeTasks.filter((t) => t.title.toLowerCase().includes(searchText.toLowerCase()));
   }, [tasks, semanticResults, searchText]);
 
-  const tasksForTodayView = useMemo(
-    () => baseVisibleTasks.filter((t) => isTaskForToday(t.due_at)),
-    [baseVisibleTasks]
-  );
-  const captureBarVisible = viewMode === 'kanban' || viewMode === 'timeline';
+  const captureBarVisible = viewMode === 'timeline';
   const energySliderStyle: CSSProperties & { '--energy-percent': string } = {
     '--energy-percent': `${currentEnergy * 10}%`,
   };
@@ -407,9 +402,7 @@ export default function Home() {
             : 'calc(72px + env(safe-area-inset-bottom))',
         }}
       >
-        {viewMode === 'kanban' ? (
-          <TaskBoard tasks={tasksForTodayView} topTasks={briefingTasks} />
-        ) : viewMode === 'timeline' ? (
+        {viewMode === 'timeline' ? (
           <TimelineView tasks={baseVisibleTasks} />
         ) : (
           <DashboardView tasks={tasks} />
@@ -477,7 +470,6 @@ export default function Home() {
         style={{ height: 'calc(56px + env(safe-area-inset-bottom))' }}
       >
         {([
-          { id: 'kanban',    label: 'Hoje',   icon: CheckCircle },
           { id: 'timeline',  label: 'Agenda', icon: CalendarDays },
           { id: 'dashboard', label: 'Painel',  icon: BarChart2 },
         ] as const).map((it) => {

@@ -22,6 +22,23 @@ O roadmap prioriza:
 
 ---
 
+# Marco Coach v4.2 — Agenda/Timeline only
+
+Status: concluído em 2026-06-27.
+
+Entregas:
+- Kanban removido como view operacional.
+- Agenda/Timeline definida como experiência principal.
+- Captura rápida preservada na Agenda.
+- Dashboard/Painel preservado com métricas honestas e card "Qualidade dos registros de tempo".
+- FocoSheet preservado como orientação/briefing/top tarefas, sem timer.
+- Campos históricos de tempo preservados para compatibilidade e qualidade de dado.
+- Dependências `@dnd-kit` removidas por não haver uso em `src`.
+
+Próximo marco recomendado: smoke manual da Agenda/Dashboard/FocoSheet e tag v4.2.
+
+---
+
 # Evolução Coach de Produtividade
 
 ## Sprint 0 — Baseline e congelamento de referência

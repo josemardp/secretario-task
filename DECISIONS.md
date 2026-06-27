@@ -42,6 +42,22 @@ Contexto: sprint atual ou situação que motivou.
 
 ---
 
+# Decisões — Remoção do Kanban, Fase 2 (2026-06-27)
+
+## 2026-06-27 — Agenda/Timeline como única view operacional
+Decisão: remover o Kanban como view e manter Agenda/Timeline como experiência operacional principal, com Painel/Dashboard preservado como view analítica.
+Motivo: Josemar usa a Agenda e a linha do tempo; manter o Kanban adicionava manutenção, dependências e testes sem valor operacional atual.
+Alternativas descartadas: manter o Kanban escondido — descartada por preservar dívida técnica; manter Kanban como fallback — descartada após a Fase 1 tornar captura e ciclo de vida independentes dele.
+Contexto: Remoção do Kanban — Fase 2.
+
+## 2026-06-27 — `@dnd-kit` removido após retirada do Kanban
+Decisão: remover `@dnd-kit/core` e `@dnd-kit/utilities` do projeto.
+Motivo: após a remoção do Kanban, não havia import de `@dnd-kit` em `src`; a Agenda atual usa gestos/pointer events próprios e não depende da biblioteca.
+Alternativas descartadas: manter as dependências por histórico — descartada por aumentar superfície de manutenção; reintroduzir drag-and-drop na Agenda — fora do escopo e contrário à priorização de rolagem natural mobile já decidida.
+Contexto: limpeza de dependências da Fase 2.
+
+---
+
 # Decisões — Remoção do Kanban, Fase 1 (2026-06-27)
 
 ## 2026-06-27 — Ciclo de vida de tarefa em `src/lib/taskLifecycle.ts`

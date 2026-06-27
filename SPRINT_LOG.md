@@ -19,6 +19,66 @@ Este documento define:
 
 ---
 
+# Remoção do Kanban — Fase 2 — Agenda/Timeline como view principal
+
+Data: 2026-06-27
+
+## Objetivo
+Remover o Kanban e deixar Agenda/Timeline como única view operacional, preservando Painel, captura rápida, FocoSheet sem timer e os contratos de conclusão/resolução/reabertura.
+
+## Resumo do que foi feito
+- `Home.tsx` removeu import/render de `TaskBoard`.
+- `viewMode` passou a ser somente `timeline | dashboard`, com default `timeline`.
+- A tab "Hoje" foi removida; a navegação inferior mantém Agenda e Painel.
+- A captura rápida permanece disponível na Agenda.
+- `src/components/TaskBoard.tsx` foi removido.
+- `src/components/TaskActions.tsx` foi removido por estar órfão.
+- `@dnd-kit/core` e `@dnd-kit/utilities` foram removidos do `package.json`/lock após confirmação de ausência de uso em `src`.
+- `scripts/coachV41Flows.fixtures.ts` deixou de ler `TaskBoard.tsx` e removeu o teste de paridade Kanban vs Agenda.
+- Criado `docs/coach/QA_Coach_v4_2_Agenda_Only.md`.
+
+## Arquivos alterados
+- `src/pages/Home.tsx`
+- `scripts/coachV41Flows.fixtures.ts`
+- `package.json`
+- `package-lock.json`
+- `docs/coach/QA_Coach_v4_2_Agenda_Only.md`
+- `STATUS.md`
+- `SPRINT_LOG.md`
+- `ROADMAP.md`
+- `DECISIONS.md`
+- `ARCHITECTURE.md`
+- `PRD.md`
+
+## Arquivos removidos
+- `src/components/TaskBoard.tsx`
+- `src/components/TaskActions.tsx`
+
+## Migration remota
+- Nenhuma migration criada.
+- Nenhum comando Supabase executado.
+
+## Validações executadas
+- `npm run lint`: passou.
+- `npm run build`: passou, com aviso conhecido de chunk maior que 500 kB.
+- `npm run test`: passou.
+- `npm audit`: passou, 0 vulnerabilidades.
+
+## Decisões tomadas
+- Agenda/Timeline passa a ser a única view operacional.
+- Dashboard/Painel permanece como view analítica separada.
+- FocoSheet permanece como orientação/briefing/top tarefas, sem timer.
+- Campos históricos de tempo permanecem protegidos e lidos como qualidade de dados.
+- `@dnd-kit` sai por estar órfão após a remoção do Kanban.
+
+## Pendências
+- Smoke manual da Agenda, Dashboard e FocoSheet.
+
+## Resultado
+Fase 2 implementada em código e documentação, com validações verdes.
+
+---
+
 # Remoção do Kanban — Fase 1 — Preparação sem remover Kanban
 
 Data: 2026-06-27
