@@ -12,6 +12,10 @@ Status: MVP enxuto alinhado ao PRD, com correções da auditoria de 2026-05-12
 - `buildResolutionUpdates` centraliza encerramentos sem execução (`cancelled`, `delegated`, `obsolete`) sem usar `deleted_at` e sem preencher `completed_at`.
 - Reabertura continua em `src/lib/timeTracking.ts` via `buildReopenUpdates`.
 - A Agenda/Timeline é a única view operacional; o Painel/Dashboard permanece como view analítica.
+- A timeline principal da Agenda mostra somente tarefas abertas/executáveis.
+- Tarefas concluídas, canceladas, delegadas e obsoletas aparecem na seção secundária "Resolvidas neste dia", calculada por `getResolvedTasksForDate` em `src/lib/taskFilters.ts`.
+- Resolvidas do dia usam `completed_at` para concluídas e `resolved_at` para encerradas sem execução; `updated_at` não é usado para conclusão.
+- A seção de resolvidas abre o mesmo modal da Agenda e mantém a ação "Reabrir" acessível via `buildReopenUpdates`.
 - A captura rápida fica no `Home.tsx` e aparece na Agenda, preservando parser, IA opcional e `estimated_minutes_source`.
 - O FocoSheet permanece como orientação/briefing/top tarefas, mas não oferece ação nova de iniciar timer, não escreve `started_at` nem emite evento `started`.
 - O Dashboard preserva histórico de tempo real, mas apresenta "Qualidade dos registros de tempo" em contadores agregados, sem comparar estimado vs. real como métrica ativa.

@@ -42,6 +42,22 @@ Contexto: sprint atual ou situação que motivou.
 
 ---
 
+# Decisões — Hotfix v4.2 (2026-06-27)
+
+## 2026-06-27 — Resolvidas do dia em seção separada na Agenda
+Decisão: criar uma seção secundária "Resolvidas neste dia" na Agenda para concluídas, canceladas, delegadas e obsoletas relacionadas ao dia selecionado.
+Motivo: o smoke da v4.2 mostrou que, sem Kanban, tarefas concluídas saíam da timeline ativa e não havia caminho visual para acionar "Reabrir".
+Alternativas descartadas: recolocar tarefas resolvidas dentro da timeline ativa — descartada porque misturaria histórico com tarefas executáveis; mudar `isOpenTask` para incluir `done` — descartada por quebrar semântica de listas ativas, ranking e briefing.
+Contexto: hotfix bloqueante antes da tag `coach-v4.2-agenda-only`.
+
+## 2026-06-27 — `isOpenTask` preservado como tarefa aberta/executável
+Decisão: manter `isOpenTask` excluindo `status='done'` e resoluções sem execução; a recuperação visual de resolvidas fica em `getResolvedTasksForDate`.
+Motivo: a correção precisava tornar a reabertura acessível sem tratar resolvida como ativa e sem contaminar Dashboard ou métricas operacionais.
+Alternativas descartadas: usar `updated_at` para localizar resolvidas — descartada por violar o cerne v4; usar `deleted_at` para encerramentos — descartada por violar semântica de resolução.
+Contexto: hotfix v4.2 Agenda-only.
+
+---
+
 # Decisões — Remoção do Kanban, Fase 2 (2026-06-27)
 
 ## 2026-06-27 — Agenda/Timeline como única view operacional

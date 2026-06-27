@@ -23,7 +23,37 @@
 
 # Sprint atual
 
-Remoção do Kanban — Fase 2 concluída
+Hotfix v4.2 — Reabertura acessível na Agenda
+
+---
+
+# Hotfix v4.2 — Reabertura acessível na Agenda
+
+Data: 2026-06-27
+
+## Objetivo
+Corrigir o bloqueio de smoke da v4.2 Agenda-only: depois de concluir uma tarefa, ela saía da timeline ativa e não havia caminho visual normal para abrir o modal e clicar em "Reabrir".
+
+## Resultado
+- Criado helper puro `getResolvedTasksForDate` em `src/lib/taskFilters.ts`.
+- `isOpenTask` permaneceu semântico: tarefas `done` e encerradas sem execução continuam fora da timeline ativa.
+- A Agenda ganhou a seção secundária "Resolvidas neste dia".
+- A seção lista concluídas, canceladas, delegadas e obsoletas pelo dia selecionado usando `completed_at`/`resolved_at`, sem usar `updated_at`.
+- Tocar em uma resolvida abre o modal existente da Agenda.
+- O modal exibe "Reabrir" para qualquer tarefa com resolução terminal ou `status='done'`.
+- A reabertura continua usando `buildReopenUpdates('todo')` e evento best-effort `reopened`.
+- Dashboard não foi alterado.
+- Nenhuma migration foi criada.
+- Nenhum comando Supabase foi executado.
+
+## Validações
+- `npm run lint`: passou.
+- `npm run build`: passou, com aviso conhecido de chunk maior que 500 kB.
+- `npm run test`: passou.
+- `npm audit`: passou, 0 vulnerabilidades.
+
+## Próximo passo recomendado
+Repetir smoke manual completo da v4.2 e criar a tag somente se o caminho de reabertura pela seção "Resolvidas neste dia" estiver aprovado.
 
 ---
 
