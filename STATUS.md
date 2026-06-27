@@ -1,6 +1,6 @@
 # STATUS.md — SecretárioTask
 
-Última atualização: 2026-06-26
+Última atualização: 2026-06-27
 
 ---
 
@@ -23,7 +23,48 @@
 
 # Sprint atual
 
-Coach de Produtividade — Sprint 11 concluído
+Coach de Produtividade — Sprint 12-A concluído
+
+---
+
+# Coach de Produtividade — Passo Zero P-01 — Verificação remota do Supabase
+
+Data: 2026-06-27
+
+Resultado: OK.
+
+- Supabase local/remoto alinhado até `0018`.
+- Migrations `0014`, `0015`, `0016`, `0017` e `0018` aplicadas no remoto.
+- As 8 colunas obrigatórias existem em `tasks`: `completed_at`, `completed_at_confidence`, `resolution_type`, `resolved_at`, `estimated_minutes_source`, `actual_minutes_source`, `blocker_type` e `version`.
+- Trigger `task_events_set_created_at` existe em `task_events`.
+- RLS ativo em `profiles`, `sync_log`, `task_events` e `tasks`.
+- Worktree estava limpo antes do Sprint 12-A.
+
+---
+
+# Coach de Produtividade — Sprint 12-A — Hotfix pós-auditoria
+
+Data: 2026-06-27
+
+## Objetivo
+Corrigir o achado de integridade visual do Dashboard e a higiene mínima de segurança/produção, sem migration e sem mudança de comportamento além do rótulo de legado.
+
+## Resultado
+- "Conclusões por área" mantém o agregado com histórico `legacy_approx`.
+- Adicionado aviso curto abaixo do título: "Inclui histórico aproximado (anterior ao saneamento)."
+- `console.log` do PWA em `src/main.tsx` foi trocado por `console.debug`.
+- `npm audit fix` atualizou o lockfile e zerou vulnerabilidades reportadas.
+- Nenhuma migration foi criada.
+- Nenhum comando Supabase foi executado neste sprint.
+
+## Validações
+- `npm run lint`: passou.
+- `npm run build`: passou.
+- `npm run test`: passou.
+- `npm audit`: passou, 0 vulnerabilidades.
+
+## Próximo passo recomendado
+Sprint 12-B — Housekeeping pós-auditoria, mantendo escopo fechado.
 
 ---
 

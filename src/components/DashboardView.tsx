@@ -461,6 +461,9 @@ export function DashboardView({ tasks }: DashboardViewProps) {
       {/* Contexts */}
       {contextData.length > 0 && (
         <SectionCard eyebrow="Por contexto" title="Conclusões por área">
+          <div className="text-[12px] text-ink-secondary -mt-1 mb-3">
+            Inclui histórico aproximado (anterior ao saneamento).
+          </div>
           <div className="flex flex-wrap gap-2">
             {contextData
               .slice()
