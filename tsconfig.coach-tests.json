@@ -8,6 +8,7 @@
     "outDir": "dist-coach-tests",
     "rootDir": ".",
     "noEmit": false,
+    "types": ["node"],
     "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
@@ -17,6 +18,7 @@
   "include": [
     "scripts/coachSignals.fixtures.ts",
     "scripts/coachAIGuardrails.fixtures.ts",
+    "scripts/coachV41Flows.fixtures.ts",
     "src/lib/coachAICache.ts",
     "src/lib/coachAIGuardrails.ts",
     "src/lib/coachSignals.ts",
