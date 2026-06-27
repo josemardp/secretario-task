@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { formatDateTime, rescheduleToDate, postponeToTomorrow, wasEdited } from '../lib/datetime';
 import { describeRecurrenceRule, getNextOccurrenceFromNow } from '../lib/recurrence';
-import { Archive, Calendar as CalIcon, Repeat, X, Edit3, Send, Trash2, XCircle } from 'lucide-react';
+import { Archive, Calendar as CalIcon, Repeat, X, Edit3, Send, Trash2, XCircle, RotateCcw } from 'lucide-react';
 import { BLOCKER_TYPES, CONTEXTS_LIST } from '../types';
 import type { Task, ContextType, ResolutionType, BlockerType } from '../types';
 import { useContextStore } from '../stores/contextStore';
@@ -11,7 +11,7 @@ import { CalendarWidget } from './CalendarWidget';
 import { RecurrenceModal } from './RecurrenceModal';
 import { useToast } from './toastContext';
 import { useAgendaPositions, type TimelineBlock } from '../hooks/useAgendaPositions';
-import { buildActualMinutesFromStartedAt } from '../lib/timeTracking';
+import { buildActualMinutesFromStartedAt, buildReopenUpdates } from '../lib/timeTracking';
 
 
 interface TimelineViewProps {
@@ -526,6 +526,18 @@ export function TimelineView({ tasks }: TimelineViewProps) {
     toast('Tarefa encerrada.', 'success');
   };
 
+  const handleReopen = (taskId: string) => {
+    const task = tasks.find(t => t.id === taskId);
+    updateTask(taskId, buildReopenUpdates('todo'));
+    recordTaskEvent(taskId, 'reopened', {
+      from_status: task?.status ?? null,
+      to_status: 'todo',
+      from_resolution_type: task?.resolution_type ?? null,
+      source: 'timeline',
+    });
+    toast('Tarefa reaberta.', 'success');
+  };
+
   const handlePostponeTomorrow = (taskId: string, blockerType?: BlockerType | null) => {
     const task = tasks.find(t => t.id === taskId);
     updateTask(taskId, {
@@ -761,16 +773,30 @@ export function TimelineView({ tasks }: TimelineViewProps) {
             </div>
 
             <div className="px-5 pt-3 grid grid-cols-3 gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  handleComplete(editingTask.id);
-                  setEditingTask(null);
-                }}
-                className="h-10 rounded-xl bg-accent text-white text-[12px] font-bold"
-              >
-                Concluir
-              </button>
+              {editingTask.status === 'done' ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleReopen(editingTask.id);
+                    setEditingTask(null);
+                  }}
+                  className="h-10 rounded-xl bg-accent text-white text-[12px] font-bold inline-flex items-center justify-center gap-1"
+                  title="Reabrir tarefa"
+                >
+                  <RotateCcw size={13} /> Reabrir
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    handleComplete(editingTask.id);
+                    setEditingTask(null);
+                  }}
+                  className="h-10 rounded-xl bg-accent text-white text-[12px] font-bold"
+                >
+                  Concluir
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => {

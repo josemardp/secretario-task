@@ -33,7 +33,7 @@ Validado contra `secretario-task-main` (estado de 2026-06-26).
 
 Scripts confirmados: `dev`, `build` (`tsc -b && vite build`), `lint` (`eslint .`), `preview`. Sem framework de teste instalado (sem Vitest/Jest). PWA via `vite-plugin-pwa`. Há `pg` e `dotenv` em dependências (scripts de migration locais).
 
-Implicação para o plano: qualquer fixture de `diagnostics.ts` que dependa de um runner de teste **introduz uma dependência nova** (ver Fase 4). Isso precisa de decisão explícita, não pode ser assumido.
+Implicação para o plano: qualquer fixture de `coachSignals.ts` que dependa de um runner de teste **introduz uma dependência nova** (ver Fase 4). Isso precisa de decisão explícita, não pode ser assumido.
 
 ### 1.2 O coach já existe (confirmado)
 
@@ -100,7 +100,7 @@ Incrementado em `handlePostponeTomorrow`/`handlePostponeDate` (TaskBoard e Timel
 2. **`updated_at` mapeado de forma incompleta.** A v3 cita dashboard e behaviorEngine genericamente; a v4 nomeia as cinco derivações exatas (1.3).
 3. **Reabertura tratada como detalhe.** A v3 lista "tarefas reabertas" como risco; a v4 mostra o mecanismo concreto (`handleStatusRevert` + `buildCompleteUpdates`) e o efeito (tempo inflado, resolução fantasma).
 4. **`estimated_minutes` por IA não-determinística.** A v3 fala em governar IA; não aponta que o `estimated_minutes` em produção já é IA `temperature 0.3` sem origem. Isso é dívida de dado **existente**, não futura.
-5. **Amostra parcial no cliente.** A v3 propõe `diagnostics.ts` "no cliente" sem notar o limite de 100 tasks do `partialize`. Diagnóstico de série/histórico precisa decidir entre rodar sobre amostra local ou puxar do Supabase.
+5. **Amostra parcial no cliente.** A v3 propõe `coachSignals.ts` "no cliente" sem notar o limite de 100 tasks do `partialize`. Diagnóstico de série/histórico precisa decidir entre rodar sobre amostra local ou puxar do Supabase.
 6. **Carimbo de tempo dos eventos.** A v3 propõe eventos confiáveis, mas não trata que `task_events` aceita `created_at` do cliente sem trigger. Evento "confiável" exige carimbo server-side.
 7. **`completed_at` client-side reintroduz clock skew.** A v3 sugere `completed_at` sem dizer quem carimba. Se for o cliente, herda o bug que 0009/0013 corrigiram. A v4 resolve com modelo de duas camadas (3.2).
 8. **Conflito de conclusão sob LWW-por-descarte.** A v3 menciona "concluída num device, editada em outro" sem casar com o comportamento real do `sync.ts` (descarte total da mutation perdedora). A v4 trata isso explicitamente (5.4).
@@ -333,10 +333,10 @@ Gate: §9.
 
 ### FASE 4 — Motor determinístico testável
 
-Objetivo: `src/lib/diagnostics.ts` puro, determinístico, com `now` injetável (padrão já usado em `datetime.ts`).
+Objetivo: `src/lib/coachSignals.ts` puro, determinístico, com `now` injetável (padrão já usado em `datetime.ts`).
 
 - Entrada: lista de tarefas + eventos; saída: diagnósticos rotulados com confiança. Sem IA, sem aleatoriedade (P2/P13).
-- Decisão de teste a registrar em DECISIONS.md: a stack **não tem** runner de teste. Opções: (a) introduzir Vitest só para `diagnostics` (viola "sem teste no MVP" das regras críticas — exige justificativa forte); (b) fixtures como módulo `.ts` executável via `npm run` script ad-hoc; (c) validação manual com dataset fixo. A v4 recomenda (a) **restrito a `diagnostics.ts`**, porque é o único módulo cujo erro é silencioso e cuja correção depende de regressão — mas isso é decisão de Josemar, marcada como **A validar/decidir**.
+- Decisão de teste a registrar em DECISIONS.md: a stack **não tem** runner de teste. Opções: (a) introduzir Vitest só para `coachSignals.ts` (viola "sem teste no MVP" das regras críticas — exige justificativa forte); (b) fixtures como módulo `.ts` executável via `npm run` script ad-hoc; (c) validação manual com dataset fixo. A v4 recomenda (a) **restrito a `coachSignals.ts`**, porque é o único módulo cujo erro é silencioso e cuja correção depende de regressão — mas isso é decisão de Josemar, marcada como **A validar/decidir**.
 
 Gate: §9.
 
@@ -345,7 +345,7 @@ Gate: §9.
 Objetivo: a IA narra regra determinística; nunca origina diagnóstico.
 
 - `generateSmartBriefing`: adicionar `input_hash` (hash do conjunto de top tasks + energia + janela temporal) para cachear e evitar rechamada idêntica; versionar o prompt; manter fallback determinístico (briefing já tem ordenação determinística em `getDailyBriefing`).
-- A IA **não** ganha acesso a gerar `resolution_type`, `blocker_type` ou qualquer diagnóstico. Ela só verbaliza o que `ranking.ts`/`diagnostics.ts` já decidiram.
+- A IA **não** ganha acesso a gerar `resolution_type`, `blocker_type` ou qualquer diagnóstico. Ela só verbaliza o que `ranking.ts`/`coachSignals.ts` já decidiram.
 - `estimated_minutes` por IA permanece com `source='ai'` e confiança rebaixada; nunca vira verdade.
 - Texto da IA deve declarar que está narrando a regra ("pelo ranking determinístico, ...").
 
@@ -361,7 +361,7 @@ Regras v4:
 
 - **Conclusão gera nova instância:** ao concluir uma recorrente (`status='done'`), o `taskStore` já cria um clone `todo` com `due_at` seguinte e `recurrence_origin_id` = raiz. A instância concluída vira uma **linha `done` própria**, com seu próprio `completed_at`. A série não é "concluída"; instâncias são.
 - **Métrica por instância, não por série:** contagens de conclusão e horário de pico contam **cada instância** `done` individualmente. Nunca somar a série como uma unidade. Isso é natural no schema (cada instância é uma linha).
-- **`postponed_count` por instância:** o adiamento é da instância corrente. **Não** carregar histórico da série para a nova instância — o clone nasce com `postponed_count` zerado (o clone em `updateTask` não copia `postponed_count`, confirmado). Diagnóstico de "tarefa cronicamente adiada" deve, se quiser visão de série, agregar via `recurrence_origin_id` no `diagnostics.ts`, marcando como métrica de série.
+- **`postponed_count` por instância:** o adiamento é da instância corrente. **Não** carregar histórico da série para a nova instância — o clone nasce com `postponed_count` zerado (o clone em `updateTask` não copia `postponed_count`, confirmado). Diagnóstico de "tarefa cronicamente adiada" deve, se quiser visão de série, agregar via `recurrence_origin_id` no `coachSignals.ts`, marcando como métrica de série.
 - **`resolution_type` da instância não afeta a série:** cancelar/delegar **uma instância** marca só aquela linha. Encerrar a série inteira é operação separada (não escopo de 1B; tratar como decisão futura sobre "parar recorrência").
 - **Backfill de recorrentes antigas:** cada instância `done` legada recebe `completed_at=updated_at`/`legacy_approx` como qualquer tarefa (§4.4). Risco a evitar: não consolidar instâncias numa só; isso destruiria a contagem por ocorrência. O unique index só vale para vivas (`status <> 'done'`), então múltiplas `done` na mesma série coexistem corretamente.
 
@@ -369,7 +369,7 @@ Regras v4:
 
 ## 8. Testes e fixtures obrigatórias
 
-Cenários mínimos que `diagnostics.ts` deve cobrir (independente do mecanismo de execução decidido na Fase 4). Cada fixture é determinística com `now` fixo.
+Cenários mínimos que `coachSignals.ts` deve cobrir (independente do mecanismo de execução decidido na Fase 4). Cada fixture é determinística com `now` fixo.
 
 1. **Conclusão estável:** tarefa concluída e depois editada não muda `completed_at` (só `updated_at`/`version` mudam). Diagnóstico de horário usa `completed_at`.
 2. **Cancelada fora da produtividade:** `resolution_type='cancelled'`, `completed_at=NULL` → não entra em "concluídas".
@@ -382,7 +382,7 @@ Cenários mínimos que `diagnostics.ts` deve cobrir (independente do mecanismo d
 9. **Legado é histórico frágil:** `completed_at_confidence='legacy_approx'` → fora das métricas de horário; só em contagem agregada rotulada.
 10. **Baixa qualidade reduz confiança:** dataset com maioria `source='ai'`/`unknown`/`legacy_approx` → diagnóstico retorna confiança baixa, com aviso textual, sem produzir afirmação forte.
 
-Nota operacional: como o cliente só persiste 100 tasks (`partialize`), fixtures que simulam "histórico longo" devem ser construídas como dados de entrada do próprio `diagnostics.ts` (função pura recebendo array), não dependendo do store. Diagnóstico de série/histórico que precise de todo o passado deve buscar do Supabase, não do localStorage — decisão a registrar.
+Nota operacional: como o cliente só persiste 100 tasks (`partialize`), fixtures que simulam "histórico longo" devem ser construídas como dados de entrada do próprio `coachSignals.ts` (função pura recebendo array), não dependendo do store. Diagnóstico de série/histórico que precise de todo o passado deve buscar do Supabase, não do localStorage — decisão a registrar.
 
 ---
 
@@ -395,7 +395,7 @@ Nota operacional: como o cliente só persiste 100 tasks (`partialize`), fixtures
 - **Fase 1D:** todo `estimated_minutes`/`actual_minutes` novo carrega `*_source`; nenhuma escrita sem origem.
 - **Fase 2:** reabertura limpa `completed_at`/`resolved_at`/`resolution_type`/`started_at`; timer acima do teto é marcado; adiar com motivo é opcional e não bloqueia captura.
 - **Fase 3:** zero métrica de horário lê `updated_at`; "histórico frágil" separado de "pós-saneamento"; sugestão comportamental só reativa com massa de dado `confirmed` suficiente (definir limiar — ex. mínimo de conclusões `confirmed` por faixa horária), rotulada como narração de regra.
-- **Fase 4:** `diagnostics.ts` puro, `now` injetável, sem IA; as 10 fixtures de §8 verdadeiras; decisão de runner registrada.
+- **Fase 4:** `coachSignals.ts` puro, `now` injetável, sem IA; as 10 fixtures de §8 verdadeiras; decisão de runner registrada.
 - **Fase 5:** briefing cacheado por `input_hash` e versionado; IA sem poder de originar diagnóstico/resolução; texto declara que narra regra determinística.
 
 Gate transversal (vale para todas): nenhuma fase pode bloquear captura, edição, ranking, dashboard ou sync (P2). IA permanece opcional e não-crítica.
@@ -424,7 +424,7 @@ Gate transversal (vale para todas): nenhuma fase pode bloquear captura, edição
 1. **Amostra parcial no cliente.** `partialize` guarda 100 tasks. Diagnóstico de histórico longo/série depende de leitura do Supabase, não do store. Documentar para não produzir métrica enganosa "no cliente".
 2. **LWW por descarte.** Conflito de conclusão entre devices descarta a mutation perdedora inteira; não há merge campo a campo. Aceitável para uso pessoal, mas é perda silenciosa — registrar em DECISIONS.md.
 3. **`completed_at` client-written.** Mesmo com evento server-stamped como âncora, o cache `completed_at` nasce do relógio do device. Em offline com clock skew, há janela de aproximação até a reconciliação. O evento `completed` é o desempate.
-4. **Sem runner de teste na stack.** Fixtures de `diagnostics.ts` exigem decisão sobre introduzir Vitest (contra "sem teste no MVP") ou validar por outro meio. Limitação real, não resolvível sem decisão de processo.
+4. **Sem runner de teste na stack.** Fixtures de `coachSignals.ts` exigem decisão sobre introduzir Vitest (contra "sem teste no MVP") ou validar por outro meio. Limitação real, não resolvível sem decisão de processo.
 5. **IA não-determinística já em produção.** `estimateTaskTime` (`temp 0.3`) e `smartParser` (`temp 0.1`) produzem saída variável. A v4 contém o dano com `*_source` e confiança rebaixada, mas não torna a IA determinística — apenas a marca como tal.
 6. **Eventos históricos inexistentes.** Como o app nunca emitiu `completed`, não há série temporal de conclusões antes da Fase 1C. Toda análise comportamental honesta começa do zero a partir do saneamento.
 7. **Confiabilidade depende de adoção.** `resolution_type`/`blocker_type` são opcionais para não criar fricção. Se Josemar não usá-los, o diagnóstico permanece limitado a "feito/não feito/adiado" — por design, não por falha.

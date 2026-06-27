@@ -19,6 +19,64 @@ Este documento define:
 
 ---
 
+# Coach de Produtividade — Sprint 12-B — Housekeeping pós-auditoria
+
+Data: 2026-06-27
+
+## Objetivo
+Remover dívida pós-auditoria que confundia manutenção futura, tornar a migration de origem de dados mais robusta e dar paridade de reabertura à Agenda.
+
+## Resumo do que foi feito
+- Removido `src/lib/behaviorEngine.ts`, que estava congelado desde a contenção inicial.
+- Removidos import e renderização de `BehavioralSuggestion` em `Home.tsx`.
+- Adicionada ação "Reabrir" no modal de edição da Agenda para tarefas `done`.
+- A reabertura da Agenda reutiliza `buildReopenUpdates('todo')`, a mesma função de regra única já usada pelo Kanban.
+- A reabertura da Agenda emite evento `reopened` best-effort com `source='timeline'`.
+- Criada migration `0019_idempotent_source_constraints.sql` com blocos `DO $$` e verificação em `pg_constraint`.
+- A migration `0019` não remove dados, não altera valores permitidos e não edita a `0017` já aplicada.
+- Corrigidas referências vivas ao nome antigo do motor para `coachSignals.ts` nos planos/documentos aplicáveis.
+- Documentadas as decisões sobre encerramento do congelamento, idempotência das constraints, fragilidade conhecida da `0016` e cache de IA em memória.
+
+## Arquivos alterados
+- `src/pages/Home.tsx`
+- `src/components/TimelineView.tsx`
+- `supabase/migrations/0019_idempotent_source_constraints.sql`
+- `STATUS.md`
+- `SPRINT_LOG.md`
+- `ROADMAP.md`
+- `DECISIONS.md`
+- `ARCHITECTURE.md`
+- `docs/coach/SecretarioTask_Plano_Coach_Produtividade_v4.md`
+- `docs/coach/SecretarioTask_Plano_Executor_Completo_v2_OFICIAL.md`
+
+## Arquivos removidos
+- `src/lib/behaviorEngine.ts`
+
+## Migration remota
+- `supabase migration list --linked`: antes da aplicação, `0019` aparecia apenas local.
+- `supabase db push --dry-run`: passou; listou somente `0019_idempotent_source_constraints.sql`.
+- `supabase db push --linked`: passou.
+- `supabase migration list --linked`: confirmou local/remoto alinhados até `0019`.
+
+## Validações executadas
+- `npm run lint`: passou.
+- `npm run build`: passou.
+- `npm run test`: passou.
+
+## Decisões tomadas
+- Encerrar o congelamento do `behaviorEngine` e removê-lo porque `coachSignals.ts` é o motor real coberto por fixtures.
+- Preservar o histórico de migrations: corrigir a idempotência por migration aditiva `0019`, sem editar `0017`.
+- Documentar a fragilidade da descoberta de constraint na `0016` como dívida conhecida para futura migration robusta.
+- Manter o cache de IA como `Map` em memória, apenas por sessão, sem persistência por ora.
+
+## Pendências
+- Nenhuma pendência do Sprint 12-B.
+
+## Resultado
+Sprint 12-B implementado, migration `0019` aplicada remotamente e evolução Coach v4.1 fechada após correções pós-auditoria.
+
+---
+
 # Coach de Produtividade — Sprint 12-A — Hotfix pós-auditoria
 
 Data: 2026-06-27
@@ -356,7 +414,7 @@ Refatorar o Dashboard para exibir métricas confiáveis, separando execução re
 - Tratar adiamento sem motivo como dívida de dado, não como diagnóstico comportamental.
 
 ## Pendências
-- Sprint 8 deve criar o motor determinístico testável (`diagnostics.ts`) e decidir o mecanismo de fixtures/teste.
+- Sprint 8 deve criar o motor determinístico testável (`coachSignals.ts`) e decidir o mecanismo de fixtures/teste.
 - Reativação de sugestão comportamental permanece pendente de gate futuro e massa suficiente de dados confirmados.
 
 ## Resultado

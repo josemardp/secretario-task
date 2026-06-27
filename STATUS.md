@@ -23,7 +23,40 @@
 
 # Sprint atual
 
-Coach de Produtividade — Sprint 12-A concluído
+Coach de Produtividade — Sprint 12-B concluído
+
+---
+
+# Coach de Produtividade — Sprint 12-B — Housekeeping pós-auditoria
+
+Data: 2026-06-27
+
+## Objetivo
+Encerrar as correções pós-auditoria removendo dead code, tornando as constraints de origem idempotentes, igualando a reabertura da Agenda ao Kanban e alinhando a documentação ao artefato real `coachSignals.ts`.
+
+## Resultado
+- `src/lib/behaviorEngine.ts` foi removido.
+- `Home.tsx` deixou de importar e renderizar `BehavioralSuggestion`.
+- A Agenda passou a reabrir tarefa `done` no modal de edição usando `buildReopenUpdates`.
+- A reabertura da Agenda emite evento `reopened` best-effort com `source='timeline'`.
+- Criada migration `0019_idempotent_source_constraints.sql` para tornar idempotentes as constraints de `estimated_minutes_source` e `actual_minutes_source`.
+- Aplicada migration `0019` no Supabase remoto.
+- Documentada a dívida da migration `0016`, a limitação do cache de IA em memória e o encerramento do congelamento do `behaviorEngine`.
+- Referências vivas ao nome antigo do motor foram alinhadas para `coachSignals.ts`.
+
+## Migration remota
+- `supabase migration list --linked`: antes da aplicação, remoto alinhado até `0018` e `0019` pendente apenas localmente.
+- `supabase db push --dry-run`: passou; listou somente `0019_idempotent_source_constraints.sql`.
+- `supabase db push --linked`: passou; `0019` aplicada no Supabase remoto.
+- `supabase migration list --linked`: confirmado após aplicação; remoto alinhado até `0019`.
+
+## Validações
+- `npm run lint`: passou.
+- `npm run build`: passou.
+- `npm run test`: passou.
+
+## Próximo passo recomendado
+Evolução Coach v4.1 fechada após correções pós-auditoria. Próximas mudanças devem entrar como manutenção leve ou novo ciclo planejado.
 
 ---
 

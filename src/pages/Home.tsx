@@ -14,7 +14,6 @@ import { BuildBadge } from '../components/BuildBadge';
 import { TaskBoard } from '../components/TaskBoard';
 import { TimelineView } from '../components/TimelineView';
 import { DashboardView } from '../components/DashboardView';
-import { BehavioralSuggestion } from '../components/BehavioralSuggestion';
 import { MultiTaskConfirmModal } from '../components/MultiTaskConfirmModal';
 import { SettingsModal } from '../components/SettingsModal';
 import { InstallPWA } from '../components/InstallPWA';
@@ -414,8 +413,6 @@ export default function Home() {
             : 'calc(72px + env(safe-area-inset-bottom))',
         }}
       >
-        <BehavioralSuggestion tasks={tasks} />
-
         {viewMode === 'kanban' ? (
           <TaskBoard tasks={tasksForTodayView} topTasks={briefingTasks} />
         ) : viewMode === 'timeline' ? (
