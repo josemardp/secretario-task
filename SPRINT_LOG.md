@@ -6,6 +6,36 @@ Duração sugerida por sprint: 1–2 semanas
 
 ---
 
+# v4.3-fix-03 — Buscar não respondia (sem painel de resultados)
+
+Data: 2026-06-27
+
+## Causa raiz (3 bugs combinados)
+1. **Sem painel de resultados**: `baseVisibleTasks` ia para `TimelineView`, que renderiza por slot de hora do dia. Tarefas de outros dias ou sem `due_at` eram invisíveis no grid — parecia que a busca "não fazia nada".
+2. **Botão "Buscar" desabilitado sem API key**: `disabled={|| !aiApiKey}` bloqueava o botão mesmo com busca local funcionando; tooltip dizia "Configure API Key" de forma confusa.
+3. **`handleSemanticSearch` retornava silenciosamente**: sem API key chamava `setSemanticResults(null); return` — pressionar Enter não dava feedback algum.
+
+## Correção
+- `src/lib/taskFilters.ts`: nova função pura `filterTasksByText(tasks, query)` — filtra por título e description, case-insensitive.
+- `src/pages/Home.tsx`:
+  - Import de `filterTasksByText`; `baseVisibleTasks` usa a função (inclui description no filtro)
+  - Painel de resultados flat renderizado em `<main>` quando `searchOpen && searchText.trim()`: loading / empty state / lista de cards com título, description, contexto, data/hora, status
+  - Botão "Buscar" desabilitado somente se `isSearching || !searchText.trim()` (não mais `!aiApiKey`)
+  - `handleSemanticSearch`: separação `!searchText` → reset; `!aiApiKey` → return silencioso (busca local já ativa)
+- `scripts/coachV41Flows.fixtures.ts`: 6 testes para `filterTasksByText`
+
+## Critérios de conclusão
+- [x] `npm run lint` — zero erros
+- [x] `npm run build` — zero erros TypeScript
+- [x] `npm run test` — 20/20 passando (incluindo 6 novos)
+- [x] `npm audit` — 0 vulnerabilidades
+- [x] Nenhum Kanban/TaskBoard voltou
+- [x] Nenhuma chave hardcoded
+- [x] Busca tem caminho visual funcional (local + semântica)
+- [x] Agenda/Timeline e briefing inalterados
+
+---
+
 # v4.3-fix-02 — Contraste do card TOP 1 no FocoSheet (dark mode)
 
 Data: 2026-06-27

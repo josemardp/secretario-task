@@ -14,7 +14,7 @@ import { analyzeCoachSignals } from '../src/lib/coachSignals.js';
 import { estimateTaskTime } from '../src/lib/ai.js';
 import { parseTaskInput } from '../src/lib/parser.js';
 import { computeNextRuleAndDate } from '../src/lib/recurrence.js';
-import { getResolvedTasksForDate, isActiveTask, isOpenTask } from '../src/lib/taskFilters.js';
+import { filterTasksByText, getResolvedTasksForDate, isActiveTask, isOpenTask } from '../src/lib/taskFilters.js';
 import { buildCompleteUpdates, buildResolutionUpdates } from '../src/lib/taskLifecycle.js';
 import { buildReopenUpdates } from '../src/lib/timeTracking.js';
 
@@ -547,6 +547,68 @@ await runFlow('partialize. slice(-100) preserva tarefa mais recente com 101+ tas
   assertEqual(persistedIds.length, 100, 'deve persistir exatamente 100 tarefas');
   assert(persistedIds.includes('task-101'), 'tarefa mais recente (task-101) deve estar no estado persistido');
   assert(!persistedIds.includes('task-001'), 'tarefa mais antiga (task-001) deve ser descartada');
+});
+
+// ── busca local ─────────────────────────────────────────────────────────────
+
+await runFlow('busca. filtra por titulo parcial case-insensitive', 'sim', () => {
+  const pool = [
+    task({ id: 'b1', title: 'Relatório mensal' }),
+    task({ id: 'b2', title: 'Consulta médica' }),
+    task({ id: 'b3', title: 'relatório trimestral' }),
+  ];
+  const result = filterTasksByText(pool, 'relatório');
+  assertEqual(result.length, 2, 'deve retornar 2 tarefas com "relatório" no titulo');
+  assert(result.every((t) => ['b1', 'b3'].includes(t.id)), 'ids corretos');
+});
+
+await runFlow('busca. filtra por descricao parcial', 'sim', () => {
+  const pool = [
+    task({ id: 'b4', title: 'Tarefa A', description: 'agendar reunião com Thiago' }),
+    task({ id: 'b5', title: 'Tarefa B', description: null }),
+  ];
+  const result = filterTasksByText(pool, 'reunião');
+  assertEqual(result.length, 1, 'deve retornar 1 tarefa com "reunião" na descricao');
+  assertEqual(result[0].id, 'b4', 'id correto');
+});
+
+await runFlow('busca. query vazia retorna todas as tarefas sem erro', 'sim', () => {
+  const pool = [
+    task({ id: 'b6', title: 'Alpha' }),
+    task({ id: 'b7', title: 'Beta' }),
+  ];
+  const result = filterTasksByText(pool, '');
+  assertEqual(result.length, 2, 'query vazia deve retornar todas');
+});
+
+await runFlow('busca. sem resultado retorna lista vazia e nao erro', 'sim', () => {
+  const pool = [task({ id: 'b8', title: 'Visita técnica' })];
+  const result = filterTasksByText(pool, 'xyzzy-inexistente');
+  assertEqual(result.length, 0, 'sem resultado deve retornar array vazio');
+});
+
+await runFlow('busca. nao depende de kanban nem viewMode', 'sim', () => {
+  const pool = [
+    task({ id: 'b9', title: 'Deploy produção', description: 'via CI/CD' }),
+    task({ id: 'b10', title: 'Outra tarefa', description: null }),
+  ];
+  const byTitle = filterTasksByText(pool, 'deploy');
+  const byDesc = filterTasksByText(pool, 'ci/cd');
+  assertEqual(byTitle.length, 1, 'busca por titulo funciona independente de viewMode');
+  assertEqual(byDesc.length, 1, 'busca por descricao funciona independente de viewMode');
+  assertEqual(byTitle[0].id, 'b9', 'id correto por titulo');
+  assertEqual(byDesc[0].id, 'b9', 'id correto por descricao');
+});
+
+await runFlow('busca. tarefa deletada pode ser excluida antes de filtrar', 'sim', () => {
+  const pool = [
+    task({ id: 'b11', title: 'Reunião ativa' }),
+    task({ id: 'b12', title: 'Reunião deletada', deleted_at: '2026-06-01T00:00:00.000Z' }),
+  ];
+  const active = pool.filter((t) => !t.deleted_at);
+  const result = filterTasksByText(active, 'reunião');
+  assertEqual(result.length, 1, 'apos filtrar deletadas, busca retorna somente a ativa');
+  assertEqual(result[0].id, 'b11', 'id correto');
 });
 
 console.log('[coachV41Flows] cobertura');
