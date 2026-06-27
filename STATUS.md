@@ -1,6 +1,6 @@
 # STATUS.md — SecretárioTask
 
-Última atualização: 2026-06-27
+Última atualização: 2026-06-27 (v4.3-fix-01)
 
 ---
 
@@ -23,7 +23,7 @@
 
 # Sprint atual
 
-Hotfix v4.2 — Reabertura acessível na Agenda
+v4.3-fix-01 — Hardening pós-auditoria v4.2 (concluída)
 
 ---
 

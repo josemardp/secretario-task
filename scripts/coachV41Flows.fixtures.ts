@@ -530,6 +530,25 @@ await runFlow('recorrencia. encerramento gera nova instancia sem herdar postpone
   assertEqual(cancelClone.postponed_count ?? null, null, 'clone de encerramento sem execucao nao herda postponed_count');
 });
 
+await runFlow('partialize. slice(-100) preserva tarefa mais recente com 101+ tasks', 'sim', () => {
+  // 101 tarefas; addTask insere no fim — task-101 fica no índice 100.
+  // Com slice(-100) o partialize deve descartar task-001 e manter task-101.
+  const tasks101: Task[] = Array.from({ length: 101 }, (_, i) => task({
+    id: `task-${String(i + 1).padStart(3, '0')}`,
+    title: `Task ${i + 1}`,
+  }));
+  resetStore(tasks101);
+
+  const raw = memoryStorage.get('secretario-task:task-store');
+  assert(raw, 'localStorage deve ter estado persistido');
+  const persisted = JSON.parse(raw) as { state: { tasks: Task[] } };
+  const persistedIds = persisted.state.tasks.map((t: Task) => t.id);
+
+  assertEqual(persistedIds.length, 100, 'deve persistir exatamente 100 tarefas');
+  assert(persistedIds.includes('task-101'), 'tarefa mais recente (task-101) deve estar no estado persistido');
+  assert(!persistedIds.includes('task-001'), 'tarefa mais antiga (task-001) deve ser descartada');
+});
+
 console.log('[coachV41Flows] cobertura');
 for (const result of results) {
   console.log(`${result.flow} | ${result.coverage} | ${result.result} | ${result.evidence}`);

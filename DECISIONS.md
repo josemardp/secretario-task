@@ -1,6 +1,6 @@
 # DECISIONS.md — SecretárioTask
 
-Última atualização: 2026-06-27
+Última atualização: 2026-06-27 (v4.3-fix-01)
 Status: registro vivo de decisões técnicas e operacionais
 
 ---
@@ -39,6 +39,22 @@ Motivo: por que essa escolha foi feita.
 Alternativas descartadas: o que foi considerado e por que não foi escolhido.
 Contexto: sprint atual ou situação que motivou.
 ```
+
+---
+
+# Decisões — v4.3-fix-01 (2026-06-27)
+
+## 2026-06-27 — partialize usa slice(-100) em vez de slice(0, 100)
+Decisão: trocar `slice(0, 100)` por `slice(-100)` no `partialize` do `taskStore`.
+Motivo: `addTask` insere no fim do array (`[...state.tasks, newTask]`). Com `slice(0, 100)` e 101+ tarefas, a mais recente (índice 100) era descartada do localStorage, contradizendo o comentário "100 tasks recentes". `slice(-100)` preserva os últimos 100 elementos, alinhando comportamento e documentação.
+Alternativas descartadas: ordenar por `created_at` antes de persistir — evitado para não mutar a ordem canônica do store e não introduzir complexidade desnecessária.
+Contexto: achado BUG-1 da auditoria pós-v4.2.
+
+## 2026-06-27 — Migration 0020 para idempotência de tasks_blocker_type_check
+Decisão: criar `0020_idempotent_blocker_constraint.sql` com bloco `DO $$ IF NOT EXISTS` em vez de corrigir retroativamente a 0018.
+Motivo: migrations já aplicadas em produção não devem ser alteradas. A nova migration é aditiva, não destrói dados e é segura para re-apply (ex.: `supabase db reset` em desenvolvimento).
+Alternativas descartadas: editar 0018 diretamente — alteração retroativa de migration já aplicada é prática proibida no projeto.
+Contexto: achado MIGRATION-1 da auditoria pós-v4.2.
 
 ---
 

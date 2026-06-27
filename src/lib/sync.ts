@@ -152,7 +152,7 @@ export async function saveApiKeyToCloud(apiKey: string | null): Promise<void> {
     id: sessionData.session.user.id,
     openai_api_key: apiKey,
     updated_at: new Date().toISOString(),
-  });
+  }, { onConflict: 'id' });
 
   if (error) throw error;
 }
