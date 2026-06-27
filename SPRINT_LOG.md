@@ -19,6 +19,56 @@ Este documento define:
 
 ---
 
+# Hotfix v4.2 — Reabertura acessível na Agenda
+
+Data: 2026-06-27
+
+## Objetivo
+Resolver o bloqueio encontrado no smoke da v4.2: tarefa concluída saía da timeline ativa e não havia caminho visual para acessar o botão "Reabrir" no modal da Agenda.
+
+## Resumo do que foi feito
+- Criado `getResolvedTasksForDate` em `src/lib/taskFilters.ts`.
+- A timeline principal continua usando tarefas abertas/executáveis.
+- A Agenda ganhou a seção secundária "Resolvidas neste dia" abaixo da timeline.
+- A seção usa `completed_at` para concluídas e `resolved_at` para canceladas/delegadas/obsoletas.
+- Itens resolvidos abrem o mesmo modal de edição/detalhe da Agenda.
+- O modal agora mostra "Reabrir" para tarefas `done` e para tarefas com `resolution_type` terminal.
+- Reabertura continua por `buildReopenUpdates('todo')` e evento best-effort.
+- Testes agênticos cobrem a lista de resolvidas, `isOpenTask` semântico e retorno à lista ativa após reabertura.
+
+## Arquivos alterados
+- `src/lib/taskFilters.ts`
+- `src/components/TimelineView.tsx`
+- `scripts/coachV41Flows.fixtures.ts`
+- `STATUS.md`
+- `SPRINT_LOG.md`
+- `DECISIONS.md`
+- `ARCHITECTURE.md`
+- `docs/coach/QA_Coach_v4_2_Agenda_Only.md`
+
+## Migration remota
+- Nenhuma migration criada.
+- Nenhum comando Supabase executado.
+
+## Validações executadas
+- `npm run lint`: passou.
+- `npm run build`: passou, com aviso conhecido de chunk maior que 500 kB.
+- `npm run test`: passou.
+- `npm audit`: passou, 0 vulnerabilidades.
+
+## Decisões tomadas
+- Não recolocar tarefas resolvidas na timeline ativa.
+- Expor resolvidas em seção secundária para manter reabertura acessível.
+- Manter `isOpenTask` como definição de tarefa aberta/executável.
+
+## Pendências
+- Repetir smoke manual antes da tag v4.2.
+
+## Resultado
+Hotfix implementado em código e documentação, com validações verdes.
+
+---
+
 # Remoção do Kanban — Fase 2 — Agenda/Timeline como view principal
 
 Data: 2026-06-27

@@ -14,7 +14,7 @@ import { analyzeCoachSignals } from '../src/lib/coachSignals.js';
 import { estimateTaskTime } from '../src/lib/ai.js';
 import { parseTaskInput } from '../src/lib/parser.js';
 import { computeNextRuleAndDate } from '../src/lib/recurrence.js';
-import { isActiveTask, isOpenTask } from '../src/lib/taskFilters.js';
+import { getResolvedTasksForDate, isActiveTask, isOpenTask } from '../src/lib/taskFilters.js';
 import { buildCompleteUpdates, buildResolutionUpdates } from '../src/lib/taskLifecycle.js';
 import { buildReopenUpdates } from '../src/lib/timeTracking.js';
 
@@ -266,6 +266,7 @@ await runFlow('4. reabrir limpa campos e recompletar sem started_at nao infla ti
 await runFlow('5. Agenda usa buildReopenUpdates para reabertura', 'sim', () => {
   const timelineSource = source('src/components/TimelineView.tsx');
   assert(timelineSource.includes("buildReopenUpdates('todo')"), 'Agenda deve chamar buildReopenUpdates(todo)');
+  assert(timelineSource.includes('getResolvedTasksForDate'), 'Agenda deve expor resolvidas do dia fora da timeline ativa');
 
   const agendaDoneReopen = buildReopenUpdates('todo');
   assertDeepEqual(agendaDoneReopen, {
@@ -278,6 +279,69 @@ await runFlow('5. Agenda usa buildReopenUpdates para reabertura', 'sim', () => {
     actual_minutes: null,
     actual_minutes_source: null,
   }, 'Agenda deve reabrir para todo e limpar os campos criticos');
+});
+
+await runFlow('5b. resolvidas do dia ficam fora da timeline ativa mas acessiveis para reabrir', 'sim', () => {
+  const selectedDate = new Date('2026-06-27T12:00:00.000Z');
+  const completedToday = completed('flow-5b-completed', {
+    completed_at: '2026-06-27T10:00:00.000Z',
+    resolved_at: '2026-06-27T10:00:00.000Z',
+  });
+  const cancelledToday = task({
+    id: 'flow-5b-cancelled',
+    resolution_type: 'cancelled',
+    resolved_at: '2026-06-27T11:00:00.000Z',
+  });
+  const delegatedToday = task({
+    id: 'flow-5b-delegated',
+    resolution_type: 'delegated',
+    resolved_at: '2026-06-27T11:30:00.000Z',
+  });
+  const obsoleteToday = task({
+    id: 'flow-5b-obsolete',
+    resolution_type: 'obsolete',
+    resolved_at: '2026-06-27T11:45:00.000Z',
+  });
+  const completedOtherDay = completed('flow-5b-other-day', {
+    completed_at: '2026-06-26T10:00:00.000Z',
+    resolved_at: '2026-06-26T10:00:00.000Z',
+  });
+  const deletedCompleted = completed('flow-5b-deleted', {
+    completed_at: '2026-06-27T09:00:00.000Z',
+    resolved_at: '2026-06-27T09:00:00.000Z',
+    deleted_at: '2026-06-27T09:05:00.000Z',
+  });
+  const open = task({ id: 'flow-5b-open', due_at: '2026-06-27T13:00:00.000Z' });
+  const allTasks = [
+    completedToday,
+    cancelledToday,
+    delegatedToday,
+    obsoleteToday,
+    completedOtherDay,
+    deletedCompleted,
+    open,
+  ];
+
+  assertEqual(isOpenTask(completedToday), false, 'concluida nao deve entrar em isOpenTask');
+  assertEqual(isOpenTask(cancelledToday), false, 'cancelada nao deve entrar em isOpenTask');
+  assertEqual(isOpenTask(open), true, 'aberta continua em isOpenTask');
+
+  const resolvedIds = getResolvedTasksForDate(allTasks, selectedDate).map((item) => item.id);
+  assertDeepEqual(
+    resolvedIds,
+    ['flow-5b-obsolete', 'flow-5b-delegated', 'flow-5b-cancelled', 'flow-5b-completed'],
+    'helper deve recuperar resolvidas do dia, fora da timeline ativa, ordenadas por horario',
+  );
+
+  resetStore([completedToday]);
+  useTaskStore.getState().updateTask('flow-5b-completed', buildReopenUpdates('todo'));
+  const reopened = currentTask('flow-5b-completed');
+  assertEqual(isOpenTask(reopened), true, 'apos reabrir, tarefa volta a ser aberta/executavel');
+  assertEqual(
+    getResolvedTasksForDate([reopened], selectedDate).length,
+    0,
+    'apos reabrir, tarefa sai da lista visual de resolvidas',
+  );
 });
 
 await runFlow('6. adiar com motivo incrementa contador e grava blocker_type', 'sim', () => {

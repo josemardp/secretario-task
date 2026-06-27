@@ -20,3 +20,32 @@ export function isActionableBriefingTask(task: Task, now: Date): boolean {
 
   return new Date(task.due_at).getTime() >= now.getTime();
 }
+
+export function getTaskResolvedAt(task: Task): string | null {
+  if (task.deleted_at) return null;
+  if (task.resolution_type === 'completed' || task.status === 'done') return task.completed_at ?? null;
+  if (isClosedWithoutExecution(task)) return task.resolved_at ?? null;
+  return null;
+}
+
+function isSameLocalDay(iso: string, date: Date): boolean {
+  const value = new Date(iso);
+  if (!Number.isFinite(value.getTime())) return false;
+
+  return value.getFullYear() === date.getFullYear() &&
+    value.getMonth() === date.getMonth() &&
+    value.getDate() === date.getDate();
+}
+
+export function getResolvedTasksForDate(tasks: Task[], date: Date): Task[] {
+  return tasks
+    .filter((task) => {
+      const resolvedAt = getTaskResolvedAt(task);
+      return !!resolvedAt && isSameLocalDay(resolvedAt, date);
+    })
+    .sort((a, b) => {
+      const aTime = new Date(getTaskResolvedAt(a) ?? 0).getTime();
+      const bTime = new Date(getTaskResolvedAt(b) ?? 0).getTime();
+      return bTime - aTime;
+    });
+}

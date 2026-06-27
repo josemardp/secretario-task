@@ -13,6 +13,7 @@ import { useToast } from './toastContext';
 import { useAgendaPositions, type TimelineBlock } from '../hooks/useAgendaPositions';
 import { buildReopenUpdates } from '../lib/timeTracking';
 import { buildCompleteUpdates, buildResolutionUpdates } from '../lib/taskLifecycle';
+import { getResolvedTasksForDate, getTaskResolvedAt } from '../lib/taskFilters';
 
 
 interface TimelineViewProps {
@@ -38,6 +39,13 @@ function blockerTypeLabel(type: BlockerType): string {
   if (type === 'priority_changed') return 'Prioridade mudou';
   if (type === 'needs_split') return 'Precisa dividir';
   return 'Dependência';
+}
+
+function resolvedTaskLabel(task: Task): string {
+  if (task.resolution_type === 'cancelled') return 'Cancelada';
+  if (task.resolution_type === 'delegated') return 'Delegada';
+  if (task.resolution_type === 'obsolete') return 'Obsoleta';
+  return 'Concluída';
 }
 
 // ─── Recurrence helpers (importados de src/lib/recurrence.ts) ───
@@ -563,6 +571,7 @@ export function TimelineView({ tasks }: TimelineViewProps) {
   };
 
   const { blocks, now } = useAgendaPositions(tasks, selectedDate, currentEnergy, activeContext);
+  const resolvedTasks = getResolvedTasksForDate(tasks, selectedDate);
 
   // Régua dinâmica: 08:30–21:30 por padrão, estendida para incluir
   // qualquer tarefa do dia que caia fora dessa janela (ex.: noturnas).
@@ -611,6 +620,7 @@ export function TimelineView({ tasks }: TimelineViewProps) {
   const longDate = selectedDate.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
   const totalBlocks = blocks.length;
   const totalMins = blocks.reduce((acc, b) => acc + (b.task?.estimated_minutes || 30), 0);
+  const editingTaskIsResolved = editingTask ? editingTask.status === 'done' || !!editingTask.resolution_type : false;
 
   return (
     <div className="flex flex-col gap-3">
@@ -719,6 +729,55 @@ export function TimelineView({ tasks }: TimelineViewProps) {
         })}
       </div>
 
+      {resolvedTasks.length > 0 && (
+        <section className="bg-paper border border-line rounded-2xl p-4">
+          <div className="flex items-baseline justify-between gap-3 mb-3">
+            <div>
+              <h2 className="text-[15px] font-bold text-ink">Resolvidas neste dia</h2>
+              <p className="mt-0.5 text-[11px] text-ink-2">
+                Concluídas e encerradas ficam fora da timeline ativa.
+              </p>
+            </div>
+            <span className="text-[12px] font-bold text-ink-2 tnum">{resolvedTasks.length}</span>
+          </div>
+          <div className="flex flex-col gap-2">
+            {resolvedTasks.map((task) => {
+              const resolvedAt = getTaskResolvedAt(task);
+              const resolvedDate = resolvedAt ? new Date(resolvedAt) : null;
+              return (
+                <button
+                  key={task.id}
+                  type="button"
+                  onClick={() => openEdit(task)}
+                  className="w-full text-left rounded-xl border border-border bg-surface px-3 py-2.5 hover:bg-surface-sunken transition-colors"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[11px] font-bold uppercase tracking-[0.06em] text-ink-2">
+                          {resolvedTaskLabel(task)}
+                        </span>
+                        {resolvedDate && (
+                          <span className="text-[11px] font-semibold text-ink-2 tnum">
+                            {formatTime(resolvedDate)}
+                          </span>
+                        )}
+                      </div>
+                      <div className="mt-0.5 text-[13px] font-bold text-ink truncate">
+                        {task.title}
+                      </div>
+                    </div>
+                    <span className="shrink-0 text-[11px] font-bold text-accent">
+                      Reabrir
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
       {/* Edit modal */}
       {editingTask && createPortal(
         <div
@@ -755,7 +814,7 @@ export function TimelineView({ tasks }: TimelineViewProps) {
             </div>
 
             <div className="px-5 pt-3 grid grid-cols-3 gap-2">
-              {editingTask.status === 'done' ? (
+              {editingTaskIsResolved ? (
                 <button
                   type="button"
                   onClick={() => {
