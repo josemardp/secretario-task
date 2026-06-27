@@ -37,6 +37,16 @@ function isSameLocalDay(iso: string, date: Date): boolean {
     value.getDate() === date.getDate();
 }
 
+export function filterTasksByText(tasks: Task[], query: string): Task[] {
+  const q = query.toLowerCase().trim();
+  if (!q) return tasks;
+  return tasks.filter(
+    (t) =>
+      t.title.toLowerCase().includes(q) ||
+      (t.description?.toLowerCase().includes(q) ?? false),
+  );
+}
+
 export function getResolvedTasksForDate(tasks: Task[], date: Date): Task[] {
   return tasks
     .filter((task) => {

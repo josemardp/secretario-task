@@ -20,7 +20,7 @@ import { NotificationEngine } from '../components/NotificationEngine';
 import { FocoSheet } from '../components/FocoSheet';
 import { useToast } from '../components/toastContext';
 import { generateBriefingFromTopTasks, getDailyBriefing } from '../lib/briefing';
-import { isOpenTask } from '../lib/taskFilters';
+import { isOpenTask, filterTasksByText } from '../lib/taskFilters';
 import type { EstimatedMinutesSource, Task } from '../types';
 
 function getGreeting(): string {
@@ -227,10 +227,11 @@ export default function Home() {
   };
 
   const handleSemanticSearch = async () => {
-    if (!searchText.trim() || !aiApiKey) {
+    if (!searchText.trim()) {
       setSemanticResults(null);
       return;
     }
+    if (!aiApiKey) return; // busca local já ativa via useMemo
     setIsSearching(true);
     try {
       const { data: sessionData } = await supabase.auth.getSession();
@@ -259,8 +260,7 @@ export default function Home() {
     if (semanticResults) {
       return activeTasks.filter((t) => semanticResults.some((r) => r.id === t.id));
     }
-    if (!searchText) return activeTasks;
-    return activeTasks.filter((t) => t.title.toLowerCase().includes(searchText.toLowerCase()));
+    return filterTasksByText(activeTasks, searchText);
   }, [tasks, semanticResults, searchText]);
 
   const captureBarVisible = viewMode === 'timeline';
@@ -358,8 +358,8 @@ export default function Home() {
               )}
               <button
                 onClick={handleSemanticSearch}
-                disabled={isSearching || !searchText.trim() || !aiApiKey}
-                title={!aiApiKey ? 'Configure sua API Key primeiro' : 'Busca avançada'}
+                disabled={isSearching || !searchText.trim()}
+                title={!aiApiKey ? 'Busca local ativa · configure API Key para busca semântica' : 'Busca semântica'}
                 className="ml-1 px-3 py-1 rounded-lg bg-accent text-white text-[12px] font-bold disabled:opacity-50"
               >
                 {isSearching ? '...' : 'Buscar'}
@@ -402,7 +402,57 @@ export default function Home() {
             : 'calc(72px + env(safe-area-inset-bottom))',
         }}
       >
-        {viewMode === 'timeline' ? (
+        {searchOpen && searchText.trim() ? (
+          <div className="flex flex-col gap-2 pb-4">
+            {isSearching ? (
+              <p className="text-center py-8 text-ink-2 text-[14px]">Buscando…</p>
+            ) : baseVisibleTasks.length === 0 ? (
+              <p className="text-center py-8 text-ink-2 text-[14px]">
+                Nenhum resultado para{' '}
+                <span className="text-ink font-semibold">«{searchText}»</span>
+              </p>
+            ) : (
+              <>
+                <p className="text-[12px] text-ink-2 font-semibold pb-1">
+                  {baseVisibleTasks.length} resultado{baseVisibleTasks.length !== 1 ? 's' : ''}
+                  {semanticResults ? ' · busca semântica' : ' · busca local'}
+                </p>
+                {baseVisibleTasks.map((t) => (
+                  <div key={t.id} className="bg-paper rounded-xl px-4 py-3 border border-line">
+                    <div className="text-[14px] font-semibold text-ink leading-tight">{t.title}</div>
+                    {t.description && (
+                      <div className="text-[12px] text-ink-2 mt-0.5 line-clamp-2">{t.description}</div>
+                    )}
+                    <div className="flex items-center gap-1.5 flex-wrap text-[11px] text-ink-2 mt-1 tnum">
+                      <span>
+                        {t.context === 'Saude' ? 'Saúde' : t.context === 'Familia' ? 'Família' : t.context}
+                      </span>
+                      {t.due_at && (
+                        <>
+                          <span>·</span>
+                          <span>
+                            {new Date(t.due_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
+                            {' '}
+                            {new Date(t.due_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </>
+                      )}
+                      {t.status === 'done' && (
+                        <><span>·</span><span className="text-success font-medium">Concluída</span></>
+                      )}
+                      {t.resolution_type && t.resolution_type !== 'completed' && (
+                        <><span>·</span><span className="font-medium">{
+                          t.resolution_type === 'cancelled' ? 'Cancelada' :
+                          t.resolution_type === 'delegated' ? 'Delegada' : 'Obsoleta'
+                        }</span></>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
+          </div>
+        ) : viewMode === 'timeline' ? (
           <TimelineView tasks={baseVisibleTasks} />
         ) : (
           <DashboardView tasks={tasks} />
