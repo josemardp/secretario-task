@@ -107,17 +107,17 @@ export function FocoSheet({
         {/* Top 1 — dark hero */}
         {top1 ? (
           <div className="px-5 mt-3">
-            <div className="bg-ink text-white rounded-2xl px-3.5 pt-3.5 pb-3 relative overflow-hidden">
+            <div className="bg-ink text-canvas rounded-2xl px-3.5 pt-3.5 pb-3 relative overflow-hidden">
               <div className="relative flex items-center justify-between mb-1.5">
-                <span className="text-[12px] font-bold tracking-[0.06em] text-amber-soft">TOP 1</span>
+                <span className="text-[12px] font-bold tracking-[0.06em] text-canvas">TOP 1</span>
                 {top1.priority > 0 && (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/10 text-amber-soft text-[12px] font-bold">
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-white/10 text-canvas text-[12px] font-bold">
                     <Flag size={10} strokeWidth={2.4} /> P{top1.priority}
                   </span>
                 )}
               </div>
               <div className="font-display text-[26px] leading-[1.05] relative">{top1.title}</div>
-              <div className="relative flex items-center gap-2 mt-1.5 text-[11px] text-white/80 tnum">
+              <div className="relative flex items-center gap-2 mt-1.5 text-[11px] text-canvas tnum">
                 <span className="inline-flex items-center gap-1">
                   <Clock size={11} strokeWidth={1.8} /> {formatTimeRange(top1)}
                 </span>
