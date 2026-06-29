@@ -164,11 +164,7 @@ export default function Home() {
     setIsAddingTask(true);
     try {
       const parsed = await parseMultipleTasks(taskText, activeContext, aiApiKey);
-      if (parsed.length === 1) {
-        await handleConfirmMultiTasks(parsed, { closeModal: false });
-      } else {
-        setPendingSmartTasks(parsed);
-      }
+      setPendingSmartTasks(parsed);
     } catch (err) {
       console.error(err);
       toast('Erro ao processar a tarefa. Tente novamente.', 'error');
