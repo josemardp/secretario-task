@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { BuildBadge } from '../components/BuildBadge';
 import { TimelineView } from '../components/TimelineView';
+import { TaskEditModal } from '../components/TaskEditModal';
 import { DashboardView } from '../components/DashboardView';
 import { MultiTaskConfirmModal } from '../components/MultiTaskConfirmModal';
 import { SettingsModal } from '../components/SettingsModal';
@@ -48,6 +49,7 @@ export default function Home() {
   const [viewMode, setViewMode] = useState<'timeline' | 'dashboard'>('timeline');
   const [semanticResults, setSemanticResults] = useState<{ id: string; similarity: number }[] | null>(null);
   const [pendingSmartTasks, setPendingSmartTasks] = useState<Partial<Task>[] | null>(null);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [focoOpen, setFocoOpen] = useState(false);
   const [briefingText, setBriefingText] = useState<string | null>(null);
@@ -414,7 +416,19 @@ export default function Home() {
                   {semanticResults ? ' · busca semântica' : ' · busca local'}
                 </p>
                 {baseVisibleTasks.map((t) => (
-                  <div key={t.id} className="bg-paper rounded-xl px-4 py-3 border border-line">
+                  <div
+                    key={t.id}
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => setEditingTask(t)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        setEditingTask(t);
+                      }
+                    }}
+                    className="bg-paper rounded-xl px-4 py-3 border border-line cursor-pointer hover:bg-paper2 transition-colors"
+                  >
                     <div className="text-[14px] font-semibold text-ink leading-tight">{t.title}</div>
                     {t.description && (
                       <div className="text-[12px] text-ink-2 mt-0.5 line-clamp-2">{t.description}</div>
@@ -454,6 +468,9 @@ export default function Home() {
           <DashboardView tasks={tasks} />
         )}
       </main>
+      {editingTask && (
+        <TaskEditModal task={editingTask} onClose={() => setEditingTask(null)} />
+      )}
 
       {/* ── Capture bar ──────────────────────────────────────────── */}
       {captureBarVisible && (
