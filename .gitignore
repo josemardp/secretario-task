@@ -31,3 +31,5 @@ supabase/.temp/
 # Migration runner scripts with hardcoded credentials
 run_migration.cjs
 .vercel
+dev-dist/
+.claude/settings.local.json
