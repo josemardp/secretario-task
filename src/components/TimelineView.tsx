@@ -1,17 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import { formatDateTime, rescheduleToDate, postponeToTomorrow, wasEdited } from '../lib/datetime';
-import { describeRecurrenceRule, getNextOccurrenceFromNow } from '../lib/recurrence';
-import { Archive, Calendar as CalIcon, Repeat, X, Edit3, Send, Trash2, XCircle, RotateCcw } from 'lucide-react';
-import { BLOCKER_TYPES, CONTEXTS_LIST } from '../types';
-import type { Task, ContextType, ResolutionType, BlockerType } from '../types';
+import { rescheduleToDate, postponeToTomorrow } from '../lib/datetime';
+import { Calendar as CalIcon, Repeat, X, Edit3, Trash2, XCircle } from 'lucide-react';
+import type { Task, ResolutionType, BlockerType } from '../types';
 import { useContextStore } from '../stores/contextStore';
 import { useTaskStore } from '../stores/taskStore';
 import { CalendarWidget } from './CalendarWidget';
-import { RecurrenceModal } from './RecurrenceModal';
+import { TaskEditModal } from './TaskEditModal';
 import { useToast } from './toastContext';
 import { useAgendaPositions, type TimelineBlock } from '../hooks/useAgendaPositions';
-import { buildReopenUpdates } from '../lib/timeTracking';
 import { buildCompleteUpdates, buildResolutionUpdates } from '../lib/taskLifecycle';
 import { getResolvedTasksForDate, getTaskResolvedAt } from '../lib/taskFilters';
 
@@ -20,25 +17,10 @@ interface TimelineViewProps {
   tasks: Task[];
 }
 
-function toLocalDatetimeInput(iso: string | null | undefined): string {
-  if (!iso) return '';
-  const d = new Date(iso);
-  const pad = (n: number) => n.toString().padStart(2, '0');
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
-}
-
 function priorityTone(priority: number): string {
   if (priority >= 8) return 'text-danger';
   if (priority >= 6) return 'text-warning';
   return 'text-ink-tertiary';
-}
-
-function blockerTypeLabel(type: BlockerType): string {
-  if (type === 'waiting_third_party') return 'Aguardando terceiro';
-  if (type === 'no_time') return 'Sem tempo';
-  if (type === 'priority_changed') return 'Prioridade mudou';
-  if (type === 'needs_split') return 'Precisa dividir';
-  return 'Dependência';
 }
 
 function resolvedTaskLabel(task: Task): string {
@@ -404,22 +386,6 @@ export function TimelineView({ tasks }: TimelineViewProps) {
   const [dismissedBreaks, setDismissedBreaks] = useState<string[]>([]);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [pendingDeleteTask, setPendingDeleteTask] = useState<Task | null>(null);
-  const [showRecurrenceModal, setShowRecurrenceModal] = useState(false);
-  const [editForm, setEditForm] = useState<{
-    title: string;
-    due_at: string;
-    estimated_minutes: number;
-    context: ContextType;
-    priority: number;
-    energy: number;
-    recurrence_rule: string | null;
-    blocker_type: BlockerType | '';
-  }>({
-    title: '', due_at: '', estimated_minutes: 30,
-    context: 'Pessoal' as ContextType, priority: 0, energy: 0,
-    recurrence_rule: null,
-    blocker_type: '',
-  });
 
   const anchorRef = useRef<HTMLDivElement>(null);
   const timelineScrollRef = useRef<HTMLDivElement>(null);
@@ -448,52 +414,6 @@ export function TimelineView({ tasks }: TimelineViewProps) {
 
   const openEdit = (task: Task) => {
     setEditingTask(task);
-    setEditForm({
-      title: task.title,
-      due_at: toLocalDatetimeInput(task.due_at),
-      estimated_minutes: task.estimated_minutes || 30,
-      context: task.context,
-      priority: task.priority,
-      energy: task.energy,
-      recurrence_rule: typeof task.recurrence_rule === 'string' ? task.recurrence_rule : null,
-      blocker_type: task.blocker_type ?? '',
-    });
-  };
-
-  const saveEdit = () => {
-    if (!editingTask) return;
-
-    // Reagendamento automático: se a regra mudou e a tarefa ainda não foi
-    // concluída, recalcula due_at para a próxima ocorrência válida a partir
-    // de agora, evitando que ela fique presa em um dia inválido (ex: sábado
-    // com regra de dias úteis).
-    const ruleChanged = editForm.recurrence_rule !== (editingTask.recurrence_rule ?? null);
-    let newDueAt = editForm.due_at ? new Date(editForm.due_at).toISOString() : null;
-    if (ruleChanged && editForm.recurrence_rule && editingTask.status !== 'done') {
-      const candidate = getNextOccurrenceFromNow(
-        newDueAt ?? editingTask.due_at,
-        editForm.recurrence_rule,
-      );
-      if (candidate) newDueAt = candidate;
-    }
-
-    const updates: Partial<Task> = {
-      title: editForm.title,
-      due_at: newDueAt,
-      context: editForm.context,
-      priority: editForm.priority,
-      energy: editForm.energy,
-      recurrence_rule: editForm.recurrence_rule,
-      blocker_type: editForm.blocker_type || null,
-    };
-
-    if (editForm.estimated_minutes !== (editingTask.estimated_minutes ?? 30)) {
-      updates.estimated_minutes = editForm.estimated_minutes;
-      updates.estimated_minutes_source = 'manual';
-    }
-
-    updateTask(editingTask.id, updates);
-    setEditingTask(null);
   };
 
   const handleComplete = (taskId: string) => {
@@ -514,18 +434,6 @@ export function TimelineView({ tasks }: TimelineViewProps) {
       source: 'timeline',
     });
     toast('Tarefa encerrada.', 'success');
-  };
-
-  const handleReopen = (taskId: string) => {
-    const task = tasks.find(t => t.id === taskId);
-    updateTask(taskId, buildReopenUpdates('todo'));
-    recordTaskEvent(taskId, 'reopened', {
-      from_status: task?.status ?? null,
-      to_status: 'todo',
-      from_resolution_type: task?.resolution_type ?? null,
-      source: 'timeline',
-    });
-    toast('Tarefa reaberta.', 'success');
   };
 
   const handlePostponeTomorrow = (taskId: string, blockerType?: BlockerType | null) => {
@@ -620,7 +528,6 @@ export function TimelineView({ tasks }: TimelineViewProps) {
   const longDate = selectedDate.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
   const totalBlocks = blocks.length;
   const totalMins = blocks.reduce((acc, b) => acc + (b.task?.estimated_minutes || 30), 0);
-  const editingTaskIsResolved = editingTask ? editingTask.status === 'done' || !!editingTask.resolution_type : false;
 
   return (
     <div className="flex flex-col gap-3">
@@ -778,277 +685,9 @@ export function TimelineView({ tasks }: TimelineViewProps) {
         </section>
       )}
 
-      {/* Edit modal */}
-      {editingTask && createPortal(
-        <div
-          className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-[rgba(26,24,20,0.45)] animate-fade-in"
-          onClick={() => setEditingTask(null)}
-        >
-          <div
-            className="bg-paper w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl shadow-soft flex flex-col animate-sheet-up max-h-[90dvh]"
-            style={{
-              paddingTop: 'calc(12px + env(safe-area-inset-top))',
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex justify-center sm:hidden px-5">
-              <div className="w-10 h-1 rounded-full bg-paper3 mb-2" />
-            </div>
-
-            <div className="flex items-start justify-between px-5">
-              <div>
-                <div className="text-[12px] font-bold uppercase tracking-[0.06em] text-ink-2">
-                  Editar tarefa
-                </div>
-                <div className="font-display text-[22px] tracking-[-0.02em] text-ink mt-0.5">
-                  {editingTask.title}
-                </div>
-              </div>
-              <button
-                onClick={() => setEditingTask(null)}
-                className="w-11 h-11 rounded-xl bg-paper2 flex items-center justify-center text-ink-2"
-                aria-label="Fechar"
-              >
-                <X size={16} />
-              </button>
-            </div>
-
-            <div className="px-5 pt-3 grid grid-cols-3 gap-2">
-              {editingTaskIsResolved ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    handleReopen(editingTask.id);
-                    setEditingTask(null);
-                  }}
-                  className="h-10 rounded-xl bg-accent text-white text-[12px] font-bold inline-flex items-center justify-center gap-1"
-                  title="Reabrir tarefa"
-                >
-                  <RotateCcw size={13} /> Reabrir
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => {
-                    handleComplete(editingTask.id);
-                    setEditingTask(null);
-                  }}
-                  className="h-10 rounded-xl bg-accent text-white text-[12px] font-bold"
-                >
-                  Concluir
-                </button>
-              )}
-              <button
-                type="button"
-                onClick={() => {
-                  handlePostponeTomorrow(editingTask.id, editForm.blocker_type || null);
-                  setEditingTask(null);
-                }}
-                className="h-10 rounded-xl border border-border-strong bg-surface text-ink text-[12px] font-bold"
-              >
-                Amanhã
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  requestDelete(editingTask);
-                  setEditingTask(null);
-                }}
-                className="h-10 rounded-xl border border-border-strong bg-surface text-danger text-[12px] font-bold"
-              >
-                Excluir
-              </button>
-            </div>
-
-            <div className="px-5 pt-2 grid grid-cols-3 gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  handleResolve(editingTask.id, 'cancelled');
-                  setEditingTask(null);
-                }}
-                className="h-11 rounded-xl border border-border-strong bg-surface text-ink text-[12px] font-bold inline-flex items-center justify-center gap-1"
-                title="Cancelar sem concluir"
-              >
-                <XCircle size={13} /> Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  handleResolve(editingTask.id, 'delegated');
-                  setEditingTask(null);
-                }}
-                className="h-11 rounded-xl border border-border-strong bg-surface text-ink text-[12px] font-bold inline-flex items-center justify-center gap-1"
-                title="Delegar sem concluir"
-              >
-                <Send size={13} /> Delegar
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  handleResolve(editingTask.id, 'obsolete');
-                  setEditingTask(null);
-                }}
-                className="h-11 rounded-xl border border-border-strong bg-surface text-ink text-[12px] font-bold inline-flex items-center justify-center gap-1"
-                title="Marcar como obsoleta"
-              >
-                <Archive size={13} /> Obsoleta
-              </button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto px-5 flex flex-col gap-3 pb-3">
-
-            <label className="flex flex-col gap-1">
-              <span className="text-[12px] font-semibold uppercase tracking-wide text-ink-2">Título</span>
-              <input
-                type="text"
-                value={editForm.title}
-                onChange={(e) => setEditForm((f) => ({ ...f, title: e.target.value }))}
-                className="bg-paper2 rounded-xl px-3 py-2.5 text-[14px] text-ink outline-none border-0"
-                autoFocus
-              />
-            </label>
-
-            <div className="grid grid-cols-2 gap-2">
-              <label className="flex flex-col gap-1">
-                <span className="text-[12px] font-semibold uppercase tracking-wide text-ink-2">Data e hora</span>
-                <input
-                  type="datetime-local"
-                  value={editForm.due_at}
-                  onChange={(e) => setEditForm((f) => ({ ...f, due_at: e.target.value }))}
-                  className="bg-paper2 rounded-xl px-3 py-2.5 text-[13px] text-ink outline-none border-0 tnum"
-                />
-              </label>
-              <label className="flex flex-col gap-1">
-                <span className="text-[12px] font-semibold uppercase tracking-wide text-ink-2">Duração (min)</span>
-                <input
-                  type="number"
-                  value={editForm.estimated_minutes}
-                  min={5}
-                  step={5}
-                  onChange={(e) => setEditForm((f) => ({ ...f, estimated_minutes: Number(e.target.value) }))}
-                  className="bg-paper2 rounded-xl px-3 py-2.5 text-[13px] text-ink outline-none border-0 tnum"
-                />
-              </label>
-            </div>
-
-            <label className="flex flex-col gap-1">
-              <span className="text-[12px] font-semibold uppercase tracking-wide text-ink-2">Contexto</span>
-              <select
-                value={editForm.context}
-                onChange={(e) => setEditForm((f) => ({ ...f, context: e.target.value as ContextType }))}
-                className="bg-paper2 rounded-xl px-3 py-2.5 text-[13px] font-semibold text-ink outline-none border-0"
-              >
-                {CONTEXTS_LIST.map((ctx) => (<option key={ctx} value={ctx}>{ctx}</option>))}
-              </select>
-            </label>
-
-            <label className="flex flex-col gap-1">
-              <span className="text-[12px] font-semibold uppercase tracking-wide text-ink-2">Motivo do adiamento</span>
-              <select
-                value={editForm.blocker_type}
-                onChange={(e) => setEditForm((f) => ({ ...f, blocker_type: e.target.value as BlockerType | '' }))}
-                className="bg-paper2 rounded-xl px-3 py-2.5 text-[13px] font-semibold text-ink outline-none border-0"
-              >
-                <option value="">Sem motivo</option>
-                {BLOCKER_TYPES.map((type) => (
-                  <option key={type} value={type}>{blockerTypeLabel(type)}</option>
-                ))}
-              </select>
-            </label>
-
-            <div className="flex flex-col gap-1.5">
-              <span className="text-[12px] font-semibold uppercase tracking-wide text-ink-2">Recorrência</span>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowRecurrenceModal(true)}
-                  className="flex-1 h-11 bg-paper2 rounded-xl px-3 text-left text-[12px] font-semibold text-ink truncate"
-                >
-                  {describeRecurrenceRule(editForm.recurrence_rule)}
-                </button>
-                {editForm.recurrence_rule && (
-                  <button
-                    type="button"
-                    onClick={() => setEditForm((f) => ({ ...f, recurrence_rule: null }))}
-                    className="w-11 h-11 shrink-0 flex items-center justify-center bg-paper2 rounded-xl text-ink-2 text-[14px] font-bold hover:text-danger"
-                    aria-label="Remover recorrência"
-                  >
-                    ×
-                  </button>
-                )}
-              </div>
-              {showRecurrenceModal && (
-                <RecurrenceModal
-                  dueAt={editForm.due_at ? new Date(editForm.due_at).toISOString() : null}
-                  currentRule={editForm.recurrence_rule}
-                  onSave={(rule, newDueAt) => {
-                    setEditForm((f) => ({
-                      ...f,
-                      recurrence_rule: rule,
-                      ...(newDueAt ? { due_at: new Date(newDueAt).toLocaleString('sv').replace(' ', 'T').slice(0, 16) } : {}),
-                    }));
-                    setShowRecurrenceModal(false);
-                  }}
-                  onClose={() => setShowRecurrenceModal(false)}
-                />
-              )}
-            </div>
-
-            <div className="grid grid-cols-2 gap-2">
-              <label className="flex flex-col gap-1">
-                <span className="text-[12px] font-semibold uppercase tracking-wide text-ink-2">Prioridade · 0-10</span>
-                <input
-                  type="number"
-                  value={editForm.priority}
-                  min={0} max={10}
-                  onChange={(e) => setEditForm((f) => ({ ...f, priority: Number(e.target.value) }))}
-                  className="bg-paper2 rounded-xl px-3 py-2.5 text-[13px] text-ink outline-none border-0 tnum"
-                />
-              </label>
-              <label className="flex flex-col gap-1">
-                <span className="text-[12px] font-semibold uppercase tracking-wide text-ink-2">Energia · 0-10</span>
-                <input
-                  type="number"
-                  value={editForm.energy}
-                  min={0} max={10}
-                  onChange={(e) => setEditForm((f) => ({ ...f, energy: Number(e.target.value) }))}
-                  className="bg-paper2 rounded-xl px-3 py-2.5 text-[13px] text-ink outline-none border-0 tnum"
-                />
-              </label>
-            </div>
-
-            {editingTask.created_at && (
-              <div className="mt-3 space-y-0.5 text-xs text-gray-400">
-                <p>Criada em {formatDateTime(editingTask.created_at)}</p>
-                {editingTask.updated_at && wasEdited(editingTask.created_at, editingTask.updated_at) && (
-                  <p>Editada em {formatDateTime(editingTask.updated_at)}</p>
-                )}
-              </div>
-            )}
-
-            </div>{/* end scrollable body */}
-
-            <div
-              className="px-5 pt-3 flex gap-2 border-t border-line2"
-              style={{ paddingBottom: 'calc(16px + env(safe-area-inset-bottom))' }}
-            >
-              <button
-                onClick={() => setEditingTask(null)}
-                className="flex-1 py-2.5 rounded-xl border border-border-strong bg-surface text-[13px] font-bold text-ink"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={saveEdit}
-                className="flex-1 py-2.5 rounded-xl bg-accent text-[13px] font-bold text-white"
-              >
-                Salvar
-              </button>
-            </div>
-          </div>
-        </div>
-      , document.body)}
+      {editingTask && (
+        <TaskEditModal task={editingTask} onClose={() => setEditingTask(null)} />
+      )}
 
       {pendingDeleteTask && createPortal(
         <div
