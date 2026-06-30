@@ -7,6 +7,10 @@ Status: MVP enxuto alinhado ao PRD, com correções da auditoria de 2026-05-12
 
 # Nota arquitetural — Agenda/Timeline only (2026-06-27)
 
+- `getReviewEligibleTasks` em `src/lib/taskFilters.ts` é um seletor puro para a Revisão Semanal: inclui apenas tarefas abertas sem `blocker_type`, ordenadas por `postponed_count` decrescente e `created_at` crescente.
+- `src/components/WeeklyReview.tsx` implementa a revisão opcional; grava `blocker_type` via `updateTask` e reutiliza `buildCompleteUpdates`/`buildResolutionUpdates` de `src/lib/taskLifecycle.ts` para resolver tarefas sem duplicar regra de ciclo de vida.
+- A entrada da Revisão Semanal fica em `src/pages/Home.tsx` como ação discreta no Painel, sem poluir a Agenda e sem tocar na captura rápida.
+- Nenhuma migration nova foi criada na Fase A: `blocker_type` já existe desde `0018_postpone_blocker_type.sql` e foi reforçado por `0020_idempotent_blocker_constraint.sql`.
 - A lógica compartilhada de ciclo de vida de tarefa vive em `src/lib/taskLifecycle.ts`.
 - `buildCompleteUpdates` centraliza conclusão confirmada, `resolution_type='completed'`, `resolved_at` e compatibilidade defensiva com `started_at` legado.
 - `buildResolutionUpdates` centraliza encerramentos sem execução (`cancelled`, `delegated`, `obsolete`) sem usar `deleted_at` e sem preencher `completed_at`.

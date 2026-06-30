@@ -39,6 +39,20 @@ Próximo marco recomendado: smoke manual da Agenda/Dashboard/FocoSheet e tag v4.
 
 ---
 
+# Plano de Inteligência v5 — Fase A: Revisão Semanal
+Status: concluído (2026-06-30)
+
+Objetivo: ritual opcional de 2-3 min que preenche `blocker_type` das tarefas paradas.
+Combustível gerado: massa de `blocker_type` preenchido + conclusões confirmadas reais → gate para Fase B.
+Gate para Fase B: usar por ~2-4 semanas antes de exportar.
+
+Próximas fases (aguardam combustível de A):
+- Fase B — Retrato Exportável (CSV + relatório markdown determinístico)
+- Fase C — Espelho Determinístico (`coachSignals` com padrões descritivos)
+- Fase D — Narração opcional (IA verbaliza sinais de C; pode nunca acontecer)
+
+---
+
 # Evolução Coach de Produtividade
 
 ## Sprint 0 — Baseline e congelamento de referência

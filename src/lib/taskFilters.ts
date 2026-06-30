@@ -47,6 +47,23 @@ export function filterTasksByText(tasks: Task[], query: string): Task[] {
   );
 }
 
+export function getReviewEligibleTasks(tasks: Task[], topN?: number): Task[] {
+  const eligible = tasks
+    .filter((task) => isOpenTask(task) && !task.blocker_type)
+    .sort((a, b) => {
+      const postponedDelta = (b.postponed_count ?? 0) - (a.postponed_count ?? 0);
+      if (postponedDelta !== 0) return postponedDelta;
+
+      const aCreated = new Date(a.created_at).getTime();
+      const bCreated = new Date(b.created_at).getTime();
+      const safeACreated = Number.isFinite(aCreated) ? aCreated : 0;
+      const safeBCreated = Number.isFinite(bCreated) ? bCreated : 0;
+      return safeACreated - safeBCreated;
+    });
+
+  return typeof topN === 'number' ? eligible.slice(0, Math.max(0, topN)) : eligible;
+}
+
 export function getResolvedTasksForDate(tasks: Task[], date: Date): Task[] {
   return tasks
     .filter((task) => {
