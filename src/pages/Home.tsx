@@ -8,12 +8,13 @@ import { generateEmbedding, estimateTaskTime, transcribeAudio } from '../lib/ai'
 import { useAudioRecorder } from '../hooks/useAudioRecorder';
 import {
   CalendarDays, BarChart2, Target, Plus, Mic, Search,
-  Settings as SettingsIcon, ArrowRight, X, Zap,
+  Settings as SettingsIcon, ArrowRight, X, Zap, ClipboardCheck,
 } from 'lucide-react';
 import { BuildBadge } from '../components/BuildBadge';
 import { TimelineView } from '../components/TimelineView';
 import { TaskEditModal } from '../components/TaskEditModal';
 import { DashboardView } from '../components/DashboardView';
+import { WeeklyReview } from '../components/WeeklyReview';
 import { MultiTaskConfirmModal } from '../components/MultiTaskConfirmModal';
 import { SettingsModal } from '../components/SettingsModal';
 import { InstallPWA } from '../components/InstallPWA';
@@ -21,7 +22,7 @@ import { NotificationEngine } from '../components/NotificationEngine';
 import { FocoSheet } from '../components/FocoSheet';
 import { useToast } from '../components/toastContext';
 import { generateBriefingFromTopTasks, getDailyBriefing } from '../lib/briefing';
-import { isOpenTask, filterTasksByText } from '../lib/taskFilters';
+import { isOpenTask, filterTasksByText, getReviewEligibleTasks } from '../lib/taskFilters';
 import type { EstimatedMinutesSource, Task } from '../types';
 
 function getGreeting(): string {
@@ -51,6 +52,7 @@ export default function Home() {
   const [pendingSmartTasks, setPendingSmartTasks] = useState<Partial<Task>[] | null>(null);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isWeeklyReviewOpen, setIsWeeklyReviewOpen] = useState(false);
   const [focoOpen, setFocoOpen] = useState(false);
   const [briefingText, setBriefingText] = useState<string | null>(null);
   const [isGeneratingBriefing, setIsGeneratingBriefing] = useState(false);
@@ -61,6 +63,8 @@ export default function Home() {
 
   const tasks = useTaskStore((s) => s.tasks);
   const addTask = useTaskStore((s) => s.addTask);
+  const updateTask = useTaskStore((s) => s.updateTask);
+  const recordTaskEvent = useTaskStore((s) => s.recordTaskEvent);
   const { activeContext, currentEnergy, setCurrentEnergy, aiApiKey } = useContextStore();
 
   const isTaskForToday = (dueAt: string | null) => {
@@ -140,6 +144,10 @@ export default function Home() {
 
   const todayCount = useMemo(() => {
     return tasks.filter((t) => isOpenTask(t) && isTaskForToday(t.due_at)).length;
+  }, [tasks]);
+
+  const reviewEligibleTasks = useMemo(() => {
+    return getReviewEligibleTasks(tasks);
   }, [tasks]);
 
   const handleGenerateBriefing = async () => {
@@ -253,6 +261,22 @@ export default function Home() {
 
   const clearSearch = () => { setSearchText(''); setSemanticResults(null); };
 
+  const handleReviewUpdateTask = (id: string, updates: Partial<Task>) => {
+    updateTask(id, updates);
+
+    if (updates.status === 'done') {
+      recordTaskEvent(id, 'completed', {
+        completed_at: updates.completed_at ?? null,
+        source: 'weekly_review',
+      });
+    } else if (updates.resolution_type && updates.resolution_type !== 'completed') {
+      recordTaskEvent(id, 'resolved', {
+        resolution_type: updates.resolution_type,
+        source: 'weekly_review',
+      });
+    }
+  };
+
   const baseVisibleTasks = useMemo(() => {
     const activeTasks = tasks.filter((t) => !t.deleted_at);
     if (semanticResults) {
@@ -282,6 +306,13 @@ export default function Home() {
 
       <NotificationEngine />
       <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+      {isWeeklyReviewOpen && (
+        <WeeklyReview
+          tasks={reviewEligibleTasks}
+          onUpdateTask={handleReviewUpdateTask}
+          onClose={() => setIsWeeklyReviewOpen(false)}
+        />
+      )}
       <FocoSheet
         isOpen={focoOpen}
         onClose={() => setFocoOpen(false)}
@@ -465,7 +496,29 @@ export default function Home() {
         ) : viewMode === 'timeline' ? (
           <TimelineView tasks={baseVisibleTasks} />
         ) : (
-          <DashboardView tasks={tasks} />
+          <div className="flex flex-col gap-3">
+            {reviewEligibleTasks.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setIsWeeklyReviewOpen(true)}
+                className="min-h-11 rounded-xl border border-line bg-paper px-4 py-2.5 flex items-center justify-between gap-3 text-left active:bg-paper2"
+              >
+                <span className="flex items-center gap-3 min-w-0">
+                  <span className="w-9 h-9 rounded-xl bg-paper2 flex items-center justify-center text-accent shrink-0">
+                    <ClipboardCheck size={16} strokeWidth={2.2} />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-[13px] font-bold text-ink">Revisão semanal</span>
+                    <span className="block text-[12px] text-ink-2 truncate">
+                      {reviewEligibleTasks.length} tarefas sem motivo
+                    </span>
+                  </span>
+                </span>
+                <ArrowRight size={15} className="text-ink-2 shrink-0" />
+              </button>
+            )}
+            <DashboardView tasks={tasks} />
+          </div>
         )}
       </main>
       {editingTask && (

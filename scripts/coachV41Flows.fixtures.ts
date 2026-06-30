@@ -14,7 +14,13 @@ import { analyzeCoachSignals } from '../src/lib/coachSignals.js';
 import { estimateTaskTime } from '../src/lib/ai.js';
 import { parseTaskInput } from '../src/lib/parser.js';
 import { computeNextRuleAndDate } from '../src/lib/recurrence.js';
-import { filterTasksByText, getResolvedTasksForDate, isActiveTask, isOpenTask } from '../src/lib/taskFilters.js';
+import {
+  filterTasksByText,
+  getResolvedTasksForDate,
+  getReviewEligibleTasks,
+  isActiveTask,
+  isOpenTask,
+} from '../src/lib/taskFilters.js';
 import { buildCompleteUpdates, buildResolutionUpdates } from '../src/lib/taskLifecycle.js';
 import { buildReopenUpdates } from '../src/lib/timeTracking.js';
 
@@ -191,7 +197,7 @@ await runFlow('1. captura rapida usa parser deterministico sem IA', 'sim', () =>
 await runFlow('2. estimativa marca fontes ai, default_30, parser e manual', 'parcial', async () => {
   const aiSource = source('src/lib/ai.ts');
   const homeSource = source('src/pages/Home.tsx');
-  const timelineSource = source('src/components/TimelineView.tsx');
+  const taskEditModalSource = source('src/components/TaskEditModal.tsx');
   assert(aiSource.includes("source: 'ai'"), 'estimateTaskTime deve retornar source ai no caminho bem-sucedido');
   assert(aiSource.includes("source: 'default_30'"), 'estimateTaskTime deve retornar default_30 nos fallbacks');
 
@@ -213,7 +219,7 @@ await runFlow('2. estimativa marca fontes ai, default_30, parser e manual', 'par
 
   assert(homeSource.includes("t.estimated_minutes_source ?? 'parser'"), 'Home deve preservar parser source');
   assert(homeSource.includes(": 'default_30'"), 'Home deve aplicar default_30 sem estimativa');
-  assert(timelineSource.includes("updates.estimated_minutes_source = 'manual'"), 'edicao manual na Agenda deve marcar source manual');
+  assert(taskEditModalSource.includes("updates.estimated_minutes_source = 'manual'"), 'edicao manual na Agenda deve marcar source manual');
 });
 
 await runFlow('3. concluir preserva campos semanticos e timer legado defensivo', 'parcial', () => {
@@ -264,8 +270,9 @@ await runFlow('4. reabrir limpa campos e recompletar sem started_at nao infla ti
 });
 
 await runFlow('5. Agenda usa buildReopenUpdates para reabertura', 'sim', () => {
+  const taskEditModalSource = source('src/components/TaskEditModal.tsx');
   const timelineSource = source('src/components/TimelineView.tsx');
-  assert(timelineSource.includes("buildReopenUpdates('todo')"), 'Agenda deve chamar buildReopenUpdates(todo)');
+  assert(taskEditModalSource.includes("buildReopenUpdates('todo')"), 'Agenda deve chamar buildReopenUpdates(todo)');
   assert(timelineSource.includes('getResolvedTasksForDate'), 'Agenda deve expor resolvidas do dia fora da timeline ativa');
 
   const agendaDoneReopen = buildReopenUpdates('todo');
@@ -547,6 +554,74 @@ await runFlow('partialize. slice(-100) preserva tarefa mais recente com 101+ tas
   assertEqual(persistedIds.length, 100, 'deve persistir exatamente 100 tarefas');
   assert(persistedIds.includes('task-101'), 'tarefa mais recente (task-101) deve estar no estado persistido');
   assert(!persistedIds.includes('task-001'), 'tarefa mais antiga (task-001) deve ser descartada');
+});
+
+// ── revisão semanal ────────────────────────────────────────────────────────
+
+await runFlow('revisao semanal. ordena por adiamentos desc e criacao asc', 'sim', () => {
+  const pool = [
+    task({
+      id: 'review-older-two',
+      postponed_count: 2,
+      created_at: '2026-06-20T08:00:00.000Z',
+    }),
+    task({
+      id: 'review-three',
+      postponed_count: 3,
+      created_at: '2026-06-25T08:00:00.000Z',
+    }),
+    task({
+      id: 'review-newer-two',
+      postponed_count: 2,
+      created_at: '2026-06-22T08:00:00.000Z',
+    }),
+    task({
+      id: 'review-zero',
+      postponed_count: 0,
+      created_at: '2026-06-19T08:00:00.000Z',
+    }),
+  ];
+
+  const result = getReviewEligibleTasks(pool).map((item) => item.id);
+  assertDeepEqual(
+    result,
+    ['review-three', 'review-older-two', 'review-newer-two', 'review-zero'],
+    'fila deve priorizar mais adiadas e, em empate, as mais antigas',
+  );
+});
+
+await runFlow('revisao semanal. exclui tarefas com blocker_type preenchido', 'sim', () => {
+  const pool = [
+    task({ id: 'review-with-blocker', postponed_count: 5, blocker_type: 'waiting_third_party' }),
+    task({ id: 'review-without-blocker', postponed_count: 1, blocker_type: null }),
+  ];
+
+  const result = getReviewEligibleTasks(pool).map((item) => item.id);
+  assertDeepEqual(result, ['review-without-blocker'], 'tarefas com blocker_type preenchido saem da fila');
+});
+
+await runFlow('revisao semanal. exclui tarefas fechadas e respeita topN', 'sim', () => {
+  const pool = [
+    completed('review-done', { postponed_count: 9 }),
+    task({ id: 'review-cancelled', postponed_count: 8, resolution_type: 'cancelled', resolved_at: NOW.toISOString() }),
+    task({ id: 'review-deleted', postponed_count: 7, deleted_at: NOW.toISOString() }),
+    task({ id: 'review-open-a', postponed_count: 3 }),
+    task({ id: 'review-open-b', postponed_count: 2 }),
+  ];
+
+  const result = getReviewEligibleTasks(pool, 1).map((item) => item.id);
+  assertDeepEqual(result, ['review-open-a'], 'fila deve incluir apenas abertas e limitar pelo topN');
+});
+
+await runFlow('revisao semanal. marcar motivo remove tarefa da fila sem motivo', 'sim', () => {
+  resetStore([task({ id: 'review-mark', postponed_count: 3 })]);
+  assertEqual(getReviewEligibleTasks(useTaskStore.getState().tasks).length, 1, 'fixture comeca elegivel');
+
+  useTaskStore.getState().updateTask('review-mark', { blocker_type: 'needs_split' });
+
+  const updated = currentTask('review-mark');
+  assertEqual(updated.blocker_type, 'needs_split', 'updateTask deve gravar blocker_type');
+  assertEqual(getReviewEligibleTasks(useTaskStore.getState().tasks).length, 0, 'tarefa sai da fila apos motivo');
 });
 
 // ── busca local ─────────────────────────────────────────────────────────────

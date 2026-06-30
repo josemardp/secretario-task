@@ -1,8 +1,37 @@
 # SPRINT_LOG.md — SecretárioTask
 
-Última revisão: 2026-06-27
+Última revisão: 2026-06-30
 Status: alinhado ao ROADMAP oficial
 Duração sugerida por sprint: 1–2 semanas
+
+---
+
+# Fase A — Revisão Semanal (Plano de Inteligência v5)
+Data: 2026-06-30
+
+## Entregáveis
+- `src/lib/taskFilters.ts`: função `getReviewEligibleTasks` (pura, testável)
+- `src/components/WeeklyReview.tsx`: componente de revisão com marcação de `blocker_type`, resolução e "manter aberta"
+- `src/pages/Home.tsx`: ponto de entrada discreto no Painel, sem poluir Agenda
+- `scripts/coachV41Flows.fixtures.ts`: fixtures para `getReviewEligibleTasks`
+- `docs/coach/SecretarioTask_Plano_Inteligencia_v5.md`: plano v5 salvo no projeto
+
+## Critérios de conclusão
+- [x] `npm run lint` — zero erros
+- [x] `npm run build` — zero erros TypeScript; aviso conhecido de chunk maior que 500 kB
+- [x] `npm run test` — todos passando
+- [x] Marcar motivo remove tarefa da fila "sem motivo"
+- [x] Zero fricção adicionada à captura/Agenda
+- [x] Docs atualizados (PRD, ARCHITECTURE, DECISIONS, STATUS, ROADMAP, SPRINT_LOG)
+
+## Escopo excluído
+- Nenhuma IA.
+- Nenhum score, streak, push notification ou gamificação.
+- Nenhuma migration nova.
+- Nenhuma alteração de `TaskStatus`.
+
+## Resultado
+Fase A implementada sem migration e sem Supabase remoto. O próximo passo recomendado é usar a Revisão Semanal por 2-4 semanas antes de iniciar a Fase B.
 
 ---
 

@@ -162,6 +162,14 @@ A experiência operacional principal é a Agenda/Timeline. A captura rápida fic
 
 Campos históricos de tempo (`started_at`, `actual_minutes`, `actual_minutes_source`) continuam preservados para compatibilidade e qualidade de dado, mas timer manual não volta como entrada nova sem decisão explícita.
 
+## Revisão Semanal
+
+A Revisão Semanal é uma visão opcional acessível por ação discreta no Painel. Ela lista tarefas abertas sem `blocker_type` preenchido, ordenadas primeiro por maior `postponed_count` e depois por criação mais antiga.
+
+Na revisão, cada tarefa pode receber um `blocker_type`, ser concluída, ser encerrada sem execução ou ser mantida aberta para sair apenas da sessão atual. A captura rápida e a Agenda permanecem sem nova fricção.
+
+A revisão é determinística e não usa IA, score, push, streak ou gamificação.
+
 ---
 
 ## Fora do MVP (v1.1+)

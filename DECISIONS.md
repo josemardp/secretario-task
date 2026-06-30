@@ -42,6 +42,20 @@ Contexto: sprint atual ou situação que motivou.
 
 ---
 
+# Decisões — Plano de Inteligência v5 / Fase A (2026-06-30)
+
+## 2026-06-30 — Revisão Semanal: evento 'reviewed' adiado do MVP
+Decisão: não emitir evento 'reviewed' na Fase A; o MVP grava apenas `blocker_type`.
+Motivo: evitar migration nova enquanto o ritual não está validado em uso real; a gravação de `blocker_type` já é suficiente para medir o preenchimento.
+Alternativas descartadas: migration 0021 com `CHECK('reviewed')` — postergado para avaliação após 2-4 semanas de uso.
+Contexto: Fase A do Plano de Inteligência v5.
+
+## 2026-06-30 — Revisão Semanal: sem push, sem streak, sem gamificação
+Decisão: frequência é convite, não imposição; nenhum mecanismo de cobrança.
+Motivo: princípio 8 do coach v4 (sem cobrança, sem dependência); o usuário (dev solo) prefere baixo atrito.
+Alternativas descartadas: badge de contagem regressiva, push semanal — ambos violam o princípio.
+Contexto: Fase A do Plano de Inteligência v5.
+
 # Decisões — v4.3-fix-01 (2026-06-27)
 
 ## 2026-06-27 — partialize usa slice(-100) em vez de slice(0, 100)

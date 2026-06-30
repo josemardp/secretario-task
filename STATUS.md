@@ -1,6 +1,6 @@
 # STATUS.md — SecretárioTask
 
-Última atualização: 2026-06-27 (v4.3-fix-01)
+Última atualização: 2026-06-30 (Fase A — Revisão Semanal)
 
 ---
 
@@ -23,7 +23,35 @@
 
 # Sprint atual
 
-v4.3-fix-01 — Hardening pós-auditoria v4.2 (concluída)
+Fase A — Revisão Semanal (Plano de Inteligência v5) — concluída
+
+---
+
+# Fase A — Revisão Semanal (2026-06-30)
+
+## Objetivo
+Ritual curto e opcional para preencher `blocker_type` das tarefas paradas — convertendo as tarefas sem motivo em tarefas com causa registrada. Determinístico, sem IA.
+
+## Entregas
+- `getReviewEligibleTasks` em `taskFilters.ts`
+- `WeeklyReview.tsx` com marcação de `blocker_type`, resolução e "manter aberta"
+- Ponto de entrada discreto em `Home.tsx`
+- Fixtures de teste
+- Docs atualizados
+
+## Validações
+- [x] `npm run lint` — zero erros
+- [x] `npm run build` — zero erros TypeScript; aviso conhecido de chunk maior que 500 kB
+- [x] `npm run test` — todos passando
+- [x] Marcar motivo remove tarefa da fila
+- [x] Zero fricção na captura/Agenda
+
+## Resultado
+- Revisão acessível apenas por ação discreta no Painel.
+- Nenhuma migration criada.
+- Nenhum comando Supabase executado.
+- Zero IA, zero score, zero push, zero gamificação.
+- Próximo passo: usar por 2-4 semanas antes de iniciar a Fase B.
 
 ---
 
