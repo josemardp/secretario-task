@@ -15,7 +15,6 @@ export interface TimelineBlock {
 export function calculateAgendaBlocks(
   tasks: Task[],
   selectedDate: Date,
-  currentEnergy: number,
   activeContext: ContextType,
   now: Date,
   isToday: boolean
@@ -77,7 +76,7 @@ export function calculateAgendaBlocks(
     // 3. Unscheduled tasks (due_at is null)
     const unscheduled = todoTasks.filter(t => !t.due_at);
     const toQueue = unscheduled
-      .map(task => ({ ...task, score: calculateTaskScore(task, currentEnergy, activeContext) }))
+      .map(task => ({ ...task, score: calculateTaskScore(task, activeContext) }))
       .sort((a, b) => b.score - a.score);
 
     const MAX_PER_SLOT = 4;
@@ -109,7 +108,7 @@ export function calculateAgendaBlocks(
 
     const toQueue = todoTasks
       .filter(t => !t.due_at || new Date(t.due_at) <= now)
-      .map(task => ({ ...task, score: calculateTaskScore(task, currentEnergy, activeContext) }))
+      .map(task => ({ ...task, score: calculateTaskScore(task, activeContext) }))
       .sort((a, b) => b.score - a.score);
 
     const MAX_PER_SLOT = 4;
@@ -151,7 +150,6 @@ export function calculateAgendaBlocks(
 export function useAgendaPositions(
   tasks: Task[],
   selectedDate: Date,
-  currentEnergy: number,
   activeContext: ContextType
 ) {
   const isToday = useMemo(() => {
@@ -180,8 +178,8 @@ export function useAgendaPositions(
   }, [isToday]);
 
   const blocks = useMemo(() => {
-    return calculateAgendaBlocks(tasks, selectedDate, currentEnergy, activeContext, now, isToday);
-  }, [tasks, selectedDate, currentEnergy, activeContext, now, isToday]);
+    return calculateAgendaBlocks(tasks, selectedDate, activeContext, now, isToday);
+  }, [tasks, selectedDate, activeContext, now, isToday]);
 
   return { blocks, now };
 }

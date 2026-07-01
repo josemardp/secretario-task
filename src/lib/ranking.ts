@@ -1,7 +1,12 @@
 import type { Task, ContextType } from '../types';
 import { isOpenTask } from './taskFilters';
 
-export function calculateTaskScore(task: Task, currentEnergy: number, activeContext: ContextType): number {
+// Energia "atual do usuário" foi removida da UI (ver docs/energia-removida.md).
+// O motor mantém o match de energia da tarefa contra uma baseline fixa em vez
+// de um valor ajustável, preservando o efeito de priorização sem exigir input.
+const BASELINE_ENERGY = 5;
+
+export function calculateTaskScore(task: Task, activeContext: ContextType): number {
   if (!isOpenTask(task)) return 0;
 
   const now = new Date();
@@ -29,9 +34,9 @@ export function calculateTaskScore(task: Task, currentEnergy: number, activeCont
   const priority = task.priority || 0;
   const f_urgency = (priority / 10) * 0.6 + f_due * 0.4;
 
-  // 3. f_energy: Match between task energy and user current energy (0 to 1)
+  // 3. f_energy: Match between task energy and the fixed baseline (0 to 1)
   const taskEnergy = task.energy || 0;
-  const energyDiff = Math.abs((taskEnergy / 10) - (currentEnergy / 10));
+  const energyDiff = Math.abs((taskEnergy / 10) - (BASELINE_ENERGY / 10));
   const f_energy = 1.0 - energyDiff;
 
   // 4. f_age: Task age in days, capped at 30 days (0 to 1)

@@ -39,8 +39,7 @@ export async function generateEmbedding(text: string, apiKey: string): Promise<n
 }
 
 export async function generateSmartBriefing(
-  tasks: Task[], 
-  energy: number, 
+  tasks: Task[],
   apiKey: string,
   governedPayload?: GovernedCoachAIPayload,
 ): Promise<string> {
@@ -48,7 +47,6 @@ export async function generateSmartBriefing(
   const payload = governedPayload ?? buildGovernedCoachAIPayload({
     topTasks: tasks.filter((task) => isActionableBriefingTask(task, now)),
     allTasks: tasks,
-    energy,
     now,
   });
   const systemPrompt = buildGovernedCoachPrompt(payload);

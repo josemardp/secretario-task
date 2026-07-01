@@ -424,13 +424,11 @@ await runFlow('10. Briefing IA tem hash sem updated_at, cache e guardrails', 'si
   const payload = buildGovernedCoachAIPayload({
     topTasks: [baseTask],
     allTasks: [baseTask],
-    energy: 5,
     now: NOW,
   });
   const updatedAtPayload = buildGovernedCoachAIPayload({
     topTasks: [{ ...baseTask, updated_at: '2026-06-27T11:00:00.000Z' }],
     allTasks: [{ ...baseTask, updated_at: '2026-06-27T11:00:00.000Z' }],
-    energy: 5,
     now: NOW,
   });
   assertEqual(buildCoachAIInputHash(payload), buildCoachAIInputHash(updatedAtPayload), 'updated_at nao entra no input_hash');
@@ -451,7 +449,6 @@ await runFlow('10. Briefing IA tem hash sem updated_at, cache e guardrails', 'si
   const differentPayload = buildGovernedCoachAIPayload({
     topTasks: [{ ...baseTask, priority: 9 }],
     allTasks: [{ ...baseTask, priority: 9 }],
-    energy: 5,
     now: NOW,
   });
   assert(buildCoachAIInputHash(payload) !== buildCoachAIInputHash(differentPayload), 'entrada semantica diferente invalida hash');

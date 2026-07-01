@@ -381,7 +381,7 @@ export function TimelineView({
   tasks,
   selectedDate,
 }: TimelineViewProps) {
-  const { currentEnergy, activeContext } = useContextStore();
+  const { activeContext } = useContextStore();
   const { updateTask, deleteTask, recordTaskEvent } = useTaskStore();
   const toast = useToast();
   const [dismissedBreaks, setDismissedBreaks] = useState<string[]>([]);
@@ -479,7 +479,7 @@ export function TimelineView({
     toast('Tarefa excluída.', 'success');
   };
 
-  const { blocks, now } = useAgendaPositions(tasks, selectedDate, currentEnergy, activeContext);
+  const { blocks, now } = useAgendaPositions(tasks, selectedDate, activeContext);
   const resolvedTasks = getResolvedTasksForDate(tasks, selectedDate);
 
   // Régua dinâmica: 08:30–21:30 por padrão, estendida para incluir

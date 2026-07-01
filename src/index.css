@@ -110,33 +110,6 @@ input, textarea, [contenteditable] {
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { scrollbar-width: none; }
 
-.energy-slider {
-  background: linear-gradient(
-    to right,
-    var(--accent) 0 var(--energy-percent, 50%),
-    var(--surface-sunken) var(--energy-percent, 50%) 100%
-  );
-}
-
-.energy-slider::-webkit-slider-thumb {
-  appearance: none;
-  width: 22px;
-  height: 22px;
-  border-radius: 999px;
-  background: #FFFFFF;
-  border: 1px solid var(--border);
-  box-shadow: 0 1px 4px rgba(0,0,0,0.35);
-}
-
-.energy-slider::-moz-range-thumb {
-  width: 22px;
-  height: 22px;
-  border-radius: 999px;
-  background: #FFFFFF;
-  border: 1px solid var(--border);
-  box-shadow: 0 1px 4px rgba(0,0,0,0.35);
-}
-
 /* Subtle pulse used by the Foco button badge */
 @keyframes ping-soft {
   0%   { transform: scale(1);    opacity: .9; }

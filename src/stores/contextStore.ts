@@ -4,12 +4,10 @@ import type { ContextType } from '../types';
 
 interface ContextState {
   activeContext: ContextType;
-  currentEnergy: number;
-  energyUpdatedAt: string | null;
+  contextUpdatedAt: string | null;
   aiApiKey: string | null;
   setActiveContext: (context: ContextType) => void;
-  setCurrentEnergy: (energy: number) => void;
-  setEnergyFromRemote: (energy: number, context: ContextType, updatedAt: string) => void;
+  setContextFromRemote: (context: ContextType, updatedAt: string) => void;
   setAiApiKey: (key: string | null) => void;
 }
 
@@ -17,20 +15,17 @@ export const useContextStore = create<ContextState>()(
   persist(
     (set) => ({
       activeContext: 'PM',
-      currentEnergy: 5,
-      energyUpdatedAt: null,
+      contextUpdatedAt: null,
       aiApiKey: null,
-      setActiveContext: (context) => set({ activeContext: context, energyUpdatedAt: new Date().toISOString() }),
-      setCurrentEnergy: (energy) => set({ currentEnergy: energy, energyUpdatedAt: new Date().toISOString() }),
-      setEnergyFromRemote: (energy, context, updatedAt) => set({ currentEnergy: energy, activeContext: context, energyUpdatedAt: updatedAt }),
+      setActiveContext: (context) => set({ activeContext: context, contextUpdatedAt: new Date().toISOString() }),
+      setContextFromRemote: (context, updatedAt) => set({ activeContext: context, contextUpdatedAt: updatedAt }),
       setAiApiKey: (key) => set({ aiApiKey: key }),
     }),
     {
       name: 'secretario-task:context-store',
       partialize: (state) => ({
         activeContext: state.activeContext,
-        currentEnergy: state.currentEnergy,
-        energyUpdatedAt: state.energyUpdatedAt,
+        contextUpdatedAt: state.contextUpdatedAt,
       }),
     }
   )

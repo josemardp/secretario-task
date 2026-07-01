@@ -30,7 +30,6 @@ export interface GovernedCoachAISignal {
 
 export interface GovernedCoachAIPayload {
   generated_at: string;
-  current_energy: number;
   top_tasks: GovernedCoachAITask[];
   coach_signals: GovernedCoachAISignal[];
   limitations: string[];
@@ -60,7 +59,6 @@ export interface GovernedCoachAIParseResult {
 export interface BuildGovernedCoachAIPayloadInput {
   topTasks: Task[];
   allTasks: Task[];
-  energy: number;
   now: Date;
 }
 
@@ -80,7 +78,6 @@ const BLOCKED_AI_TEXT =
 export function buildGovernedCoachAIPayload({
   topTasks,
   allTasks,
-  energy,
   now,
 }: BuildGovernedCoachAIPayloadInput): GovernedCoachAIPayload {
   const report = analyzeCoachSignals({ tasks: allTasks, events: [], now });
@@ -91,7 +88,6 @@ export function buildGovernedCoachAIPayload({
 
   return {
     generated_at: now.toISOString(),
-    current_energy: energy,
     top_tasks: actionableTopTasks,
     coach_signals: report.signals.map(toGovernedSignal),
     limitations: buildLimitations(report),
