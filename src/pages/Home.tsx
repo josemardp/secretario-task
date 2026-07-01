@@ -18,6 +18,7 @@ import { WeeklyReview } from '../components/WeeklyReview';
 import { MultiTaskConfirmModal } from '../components/MultiTaskConfirmModal';
 import { SettingsModal } from '../components/SettingsModal';
 import { InstallPWA } from '../components/InstallPWA';
+import { CalendarWidget } from '../components/CalendarWidget';
 import { HeaderActionButtons } from '../components/HeaderActionButtons';
 import { NotificationEngine } from '../components/NotificationEngine';
 import { FocoSheet } from '../components/FocoSheet';
@@ -49,6 +50,8 @@ export default function Home() {
   const [searchOpen, setSearchOpen] = useState(false);
   const [isAddingTask, setIsAddingTask] = useState(false);
   const [viewMode, setViewMode] = useState<'timeline' | 'dashboard'>('timeline');
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [semanticResults, setSemanticResults] = useState<{ id: string; similarity: number }[] | null>(null);
   const [pendingSmartTasks, setPendingSmartTasks] = useState<Partial<Task>[] | null>(null);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -60,7 +63,8 @@ export default function Home() {
   const [captureBarExpanded, setCaptureBarExpanded] = useState(false);
   const taskInputRef = useRef<HTMLTextAreaElement | null>(null);
   const captureBarRef = useRef<HTMLElement | null>(null);
-  const [captureBarHeight, setCaptureBarHeight] = useState(48);
+  const monthButtonRef = useRef<HTMLButtonElement | null>(null);
+  const [captureBarHeight, setCaptureBarHeight] = useState(0);
   const toast = useToast();
 
   const tasks = useTaskStore((s) => s.tasks);
@@ -316,14 +320,9 @@ export default function Home() {
     return filterTasksByText(activeTasks, searchText);
   }, [tasks, semanticResults, searchText]);
 
-  const captureBarVisible = viewMode === 'timeline';
+  const captureBarVisible = true;
   const setCaptureElementRef = (node: HTMLElement | null) => {
     captureBarRef.current = node;
-  };
-
-  const handleCollapseCaptureBar = () => {
-    if (isRecording) return;
-    setCaptureBarExpanded(false);
   };
 
   const handleEnergyChange = (value: string) => {
@@ -368,24 +367,28 @@ export default function Home() {
 
       {/* ── Header ──────────────────────────────────────────────── */}
       <header
-        className="bg-paper border-b border-line sticky top-0 z-30 safe-top"
+        className="bg-canvas sticky top-0 z-30 safe-top"
         style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}
       >
-        <div className="flex flex-wrap items-start justify-between gap-2 px-4 pt-3 pb-3">
-          <div className="min-w-0 flex-1 basis-[130px]">
-            <h1 className="font-display text-[22px] leading-[1.1] text-ink truncate">
+        <div className="px-4 pt-3 pb-3">
+          <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <h1 className="font-display text-[29px] leading-[1.05] text-ink truncate">
               {getGreeting()}.
             </h1>
-            <p className="mt-1 text-[12px] text-ink-2 tnum leading-snug">
+            <p className="mt-1 text-[13px] text-ink-2 tnum leading-snug">
               {formatLongDate()} · {todayCount} para hoje
             </p>
           </div>
           <div className="shrink-0">
             <InstallPWA />
           </div>
-          <label className="order-3 flex w-full items-center gap-2 bg-paper border border-line rounded-xl px-2.5 py-2 sm:order-none sm:w-[280px] sm:shrink-0">
-            <Zap size={14} className="text-ink-secondary shrink-0" strokeWidth={2.2} />
-            <span className="text-[12px] font-semibold text-ink shrink-0">Energia</span>
+          </div>
+          <div className="relative mt-3">
+          <div className="overflow-hidden rounded-[20px] border border-line bg-paper">
+          <label className="flex items-center gap-2.5 px-4 py-[13px]">
+            <Zap size={16} className="text-ink shrink-0" strokeWidth={2.2} />
+            <span className="text-[14px] font-bold text-ink shrink-0">Energia</span>
             <input
               type="range"
               min="0"
@@ -393,59 +396,91 @@ export default function Home() {
               value={currentEnergy}
               onInput={(e) => handleEnergyChange(e.currentTarget.value)}
               onChange={(e) => handleEnergyChange(e.currentTarget.value)}
-              className="energy-slider flex-1 min-w-[120px] h-2 rounded-full appearance-none"
+              className="energy-slider flex-1 min-w-[96px] h-2 rounded-full appearance-none"
               style={energySliderStyle}
             />
-            <span className="text-[13px] font-bold tnum text-ink shrink-0">
-              {currentEnergy}
-              <span className="text-ink-2 font-semibold">/10</span>
+            <span className="w-9 text-right text-[14px] font-extrabold tnum text-ink shrink-0">
+              {currentEnergy}/10
             </span>
           </label>
+
+          <div className="h-px bg-line" />
+
+          <div className="flex items-center justify-between gap-3 px-3 py-2.5">
+            <HeaderActionButtons
+              onOpenFoco={() => setFocoOpen(true)}
+              onToggleSearch={() => setSearchOpen((v) => !v)}
+              onOpenSettings={() => setIsSettingsOpen(true)}
+              hasBriefingTasks={briefingTasks.length > 0}
+            />
+            <button
+              ref={monthButtonRef}
+              type="button"
+              onClick={() => setIsCalendarOpen((v) => !v)}
+              className="inline-flex h-10 items-center gap-1.5 rounded-[13px] border border-line bg-canvas px-3.5 text-[13px] font-bold text-ink active:bg-paper2"
+            >
+              <CalendarDays size={15} strokeWidth={2.2} /> M{'\u00EA'}s
+            </button>
+          </div>
+
+          {searchOpen && (
+            <div className="px-3 pb-3 animate-fade-in">
+              <div className="flex h-10 items-center gap-2 rounded-[13px] border border-line bg-canvas px-3">
+                <Search size={15} className="text-ink-2 shrink-0" />
+                <input
+                  type="text"
+                  className="min-w-0 flex-1 bg-transparent outline-none text-[13px] text-ink placeholder:text-ink-2"
+                  placeholder="Buscar tarefas..."
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSemanticSearch()}
+                  autoFocus
+                />
+                {searchText && (
+                  <button type="button" onClick={clearSearch} className="text-ink-2 p-1">
+                    <X size={14} />
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={handleSemanticSearch}
+                  disabled={isSearching || !searchText.trim()}
+                  title={!aiApiKey ? 'Busca local ativa - configure API Key para busca semantica' : 'Busca semantica'}
+                  className="h-7 rounded-[9px] bg-accent px-2.5 text-[12px] font-bold text-white disabled:opacity-50"
+                >
+                  {isSearching ? '...' : 'Buscar'}
+                </button>
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* search drawer */}
-        {searchOpen && (
-          <div className="px-4 pb-3 border-t border-line2 pt-3 animate-fade-in">
-            <div className="flex items-center gap-2 bg-paper2 rounded-xl px-3 py-2">
-              <Search size={15} className="text-ink-2" />
-              <input
-                type="text"
-                className="flex-1 bg-transparent outline-none text-[14px] text-ink placeholder:text-ink-2"
-                placeholder="Buscar tarefas…"
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSemanticSearch()}
-                autoFocus
-              />
-              {searchText && (
-                <button onClick={clearSearch} className="text-ink-2 p-1">
-                  <X size={14} />
-                </button>
-              )}
-              <button
-                onClick={handleSemanticSearch}
-                disabled={isSearching || !searchText.trim()}
-                title={!aiApiKey ? 'Busca local ativa · configure API Key para busca semântica' : 'Busca semântica'}
-                className="ml-1 px-3 py-1 rounded-lg bg-accent text-white text-[12px] font-bold disabled:opacity-50"
-              >
-                {isSearching ? '...' : 'Buscar'}
-              </button>
-            </div>
-          </div>
+        {isCalendarOpen && (
+          <CalendarWidget
+            selectedDate={selectedDate}
+            onSelectDate={setSelectedDate}
+            onClose={() => setIsCalendarOpen(false)}
+            tasks={baseVisibleTasks}
+            anchorRef={monthButtonRef}
+          />
         )}
+        </div>
+
+        </div>
+
 
       </header>
 
       <main
-        className="px-4 pt-4"
+        className="px-4 pt-3"
         style={{
           width: '100%',
           maxWidth: '100%',
           overflowX: 'hidden',
           boxSizing: 'border-box',
-          paddingBottom: captureBarVisible
-            ? `calc(64px + ${captureBarHeight}px + env(safe-area-inset-bottom))`
-            : 'calc(72px + env(safe-area-inset-bottom))',
+          paddingBottom: captureBarExpanded
+            ? `calc(70px + ${captureBarHeight}px + env(safe-area-inset-bottom))`
+            : 'calc(86px + env(safe-area-inset-bottom))',
         }}
       >
         {searchOpen && searchText.trim() ? (
@@ -513,21 +548,10 @@ export default function Home() {
         ) : viewMode === 'timeline' ? (
           <TimelineView
             tasks={baseVisibleTasks}
-            onOpenFoco={() => setFocoOpen(true)}
-            onToggleSearch={() => setSearchOpen((v) => !v)}
-            onOpenSettings={() => setIsSettingsOpen(true)}
-            hasBriefingTasks={briefingTasks.length > 0}
+            selectedDate={selectedDate}
           />
         ) : (
           <div className="flex flex-col gap-3">
-            <div className="bg-paper border border-line rounded-2xl p-3">
-              <HeaderActionButtons
-                onOpenFoco={() => setFocoOpen(true)}
-                onToggleSearch={() => setSearchOpen((v) => !v)}
-                onOpenSettings={() => setIsSettingsOpen(true)}
-                hasBriefingTasks={briefingTasks.length > 0}
-              />
-            </div>
             {reviewEligibleTasks.length > 0 && (
               <button
                 type="button"
@@ -557,32 +581,15 @@ export default function Home() {
       )}
 
       {/* ── Capture bar ──────────────────────────────────────────── */}
-      {captureBarVisible && !captureBarExpanded && (
-        <button
-          ref={setCaptureElementRef}
-          type="button"
-          onClick={() => setCaptureBarExpanded(true)}
-          className="fixed right-4 z-40 w-12 h-12 rounded-2xl bg-accent text-white flex items-center justify-center shadow-lg select-none active:scale-95 transition-transform"
-          style={{
-            bottom: 'calc(var(--kb, 0px) + 72px + env(safe-area-inset-bottom))',
-          }}
-          aria-label="Abrir captura de tarefa"
-          title="Nova tarefa"
-        >
-          <Plus size={22} strokeWidth={2.4} />
-        </button>
-      )}
       {captureBarVisible && captureBarExpanded && (
         <form
           ref={setCaptureElementRef}
           onSubmit={handleTaskSubmit}
-          className="fixed left-0 right-0 z-40 bg-paper border-t border-line px-3 flex items-end gap-2 select-none"
+          className="fixed left-0 right-0 z-40 bg-paper border-t border-line rounded-t-[22px] px-4 py-3 flex items-end gap-2.5 select-none shadow-[0_-16px_32px_-8px_rgba(0,0,0,0.28)]"
           style={{
-            bottom: 'calc(var(--kb, 0px) + 64px + env(safe-area-inset-bottom))',
-            paddingTop: 8, paddingBottom: 8,
+            bottom: 'calc(var(--kb, 0px) + 70px + env(safe-area-inset-bottom))',
           }}
         >
-          <Plus size={18} className="text-ink-2 shrink-0 ml-1 mb-3" />
           <textarea
             ref={taskInputRef}
             value={taskText}
@@ -596,19 +603,9 @@ export default function Home() {
               }
             }}
             disabled={isAddingTask || isTranscribing}
-            className="flex-1 min-w-0 bg-transparent text-[14px] leading-5 text-ink placeholder:text-ink-2 outline-none resize-none min-h-11 py-2.5"
+            className="flex-1 min-w-0 rounded-[14px] border border-line bg-canvas px-3.5 text-[14px] leading-5 text-ink placeholder:text-ink-2 outline-none resize-none min-h-11 py-2.5"
             style={{ fontSize: 16 }}
           />
-          <button
-            type="button"
-            onClick={handleCollapseCaptureBar}
-            disabled={isRecording || isAddingTask || isTranscribing}
-            className="w-11 h-11 rounded-xl bg-paper2 text-ink flex items-center justify-center transition-colors shrink-0 disabled:opacity-40"
-            aria-label="Fechar captura"
-            title="Fechar"
-          >
-            <X size={16} />
-          </button>
           <button
             type="button"
             onMouseDown={startRecording}
@@ -618,8 +615,8 @@ export default function Home() {
             onTouchEnd={stopRecording}
             disabled={isAddingTask || isTranscribing}
             className={
-              'w-11 h-11 rounded-xl flex items-center justify-center transition-colors shrink-0 ' +
-              (isRecording ? 'bg-danger text-white animate-pulse' : 'bg-paper2 text-ink')
+              'w-11 h-11 rounded-[14px] border border-line flex items-center justify-center transition-colors shrink-0 ' +
+              (isRecording ? 'bg-danger text-white animate-pulse border-danger' : 'bg-canvas text-ink')
             }
             title="Segure para falar"
           >
@@ -628,7 +625,7 @@ export default function Home() {
           <button
             type="submit"
             disabled={isAddingTask || !taskText.trim() || isTranscribing}
-            className="w-11 h-11 rounded-xl bg-accent text-white text-[12px] font-bold disabled:opacity-40 inline-flex items-center justify-center gap-1.5 shrink-0"
+            className="w-11 h-11 rounded-[14px] bg-accent text-white text-[12px] font-bold disabled:opacity-40 inline-flex items-center justify-center gap-1.5 shrink-0"
             aria-label="Adicionar tarefa"
           >
             {isAddingTask ? '...' : (<ArrowRight size={14} strokeWidth={2.4} />)}
@@ -639,29 +636,47 @@ export default function Home() {
       {/* ── Tab bar ───────────────────────────────────────────────── */}
       <nav
         className="fixed bottom-0 left-0 right-0 bg-paper border-t border-line z-50 flex select-none safe-bottom"
-        style={{ height: 'calc(56px + env(safe-area-inset-bottom))' }}
+        style={{ height: 'calc(70px + env(safe-area-inset-bottom))' }}
       >
-        {([
-          { id: 'timeline',  label: 'Agenda', icon: CalendarDays },
-          { id: 'dashboard', label: 'Painel',  icon: BarChart2 },
-        ] as const).map((it) => {
-          const on = viewMode === it.id;
-          return (
-            <button
-              key={it.id}
-              onClick={() => {
-                setViewMode(it.id);
-                if (it.id !== 'timeline') setCaptureBarExpanded(false);
-              }}
-              className="flex-1 flex flex-col items-center justify-center gap-1 relative focus:outline-none"
-            >
-              <it.icon size={20} strokeWidth={on ? 2.2 : 1.7} className={on ? 'text-accent' : 'text-ink-tertiary'} />
-              <span className={(on ? 'text-accent font-bold' : 'text-ink-tertiary font-semibold') + ' text-[12px] tracking-wide'}>
-                {it.label}
-              </span>
-            </button>
-          );
-        })}
+        <button
+          type="button"
+          onClick={() => {
+            setViewMode('timeline');
+            setCaptureBarExpanded(false);
+          }}
+          className="flex-1 flex flex-col items-center justify-center gap-1 pb-1 relative focus:outline-none"
+        >
+          <CalendarDays size={19} strokeWidth={viewMode === 'timeline' ? 2.2 : 1.8} className={viewMode === 'timeline' ? 'text-accent' : 'text-ink-tertiary'} />
+          <span className={(viewMode === 'timeline' ? 'text-accent font-extrabold' : 'text-ink-tertiary font-bold') + ' text-[11px]'}>
+            Agenda
+          </span>
+        </button>
+        <div className="w-[76px] shrink-0" />
+        <button
+          type="button"
+          onClick={() => {
+            setViewMode('dashboard');
+            setCaptureBarExpanded(false);
+          }}
+          className="flex-1 flex flex-col items-center justify-center gap-1 pb-1 relative focus:outline-none"
+        >
+          <BarChart2 size={19} strokeWidth={viewMode === 'dashboard' ? 2.2 : 1.8} className={viewMode === 'dashboard' ? 'text-accent' : 'text-ink-tertiary'} />
+          <span className={(viewMode === 'dashboard' ? 'text-accent font-extrabold' : 'text-ink-tertiary font-bold') + ' text-[11px]'}>
+            Painel
+          </span>
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            if (isRecording) return;
+            setCaptureBarExpanded((v) => !v);
+          }}
+          className="absolute left-1/2 top-[-26px] flex h-[58px] w-[58px] -translate-x-1/2 items-center justify-center rounded-full border-[5px] border-canvas bg-accent text-white shadow-[0_10px_22px_-4px_rgba(0,0,0,0.4)] active:scale-95 transition-transform"
+          aria-label={captureBarExpanded ? 'Fechar captura de tarefa' : 'Abrir captura de tarefa'}
+          title="Nova tarefa"
+        >
+          <Plus size={24} strokeWidth={2.4} />
+        </button>
       </nav>
     </div>
   );

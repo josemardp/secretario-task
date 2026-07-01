@@ -1,5 +1,4 @@
-import { useState, useMemo } from 'react';
-import { createPortal } from 'react-dom';
+import { useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { ChevronLeft, ChevronRight, X } from 'lucide-react';
 import type { Task } from '../types';
 import { isOpenTask } from '../lib/taskFilters';
@@ -9,19 +8,40 @@ interface CalendarWidgetProps {
   onSelectDate: (date: Date) => void;
   onClose: () => void;
   tasks: Task[];
+  anchorRef?: RefObject<HTMLElement | null>;
 }
 
 const MONTHS = [
-  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+  'Janeiro', 'Fevereiro', 'Mar\u00E7o', 'Abril', 'Maio', 'Junho',
   'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
 ];
 
 const WEEK = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
 
-export function CalendarWidget({ selectedDate, onSelectDate, onClose, tasks }: CalendarWidgetProps) {
+export function CalendarWidget({
+  selectedDate,
+  onSelectDate,
+  onClose,
+  tasks,
+  anchorRef,
+}: CalendarWidgetProps) {
+  const popoverRef = useRef<HTMLDivElement | null>(null);
   const [currentMonth, setCurrentMonth] = useState(
     new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1)
   );
+
+  useEffect(() => {
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target as Node | null;
+      if (!target) return;
+      if (popoverRef.current?.contains(target)) return;
+      if (anchorRef?.current?.contains(target)) return;
+      onClose();
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown);
+    return () => document.removeEventListener('pointerdown', handlePointerDown);
+  }, [anchorRef, onClose]);
 
   const daysInMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate();
   const firstDayOfMonth = currentMonth.getDay();
@@ -50,9 +70,9 @@ export function CalendarWidget({ selectedDate, onSelectDate, onClose, tasks }: C
   const today = new Date();
 
   const renderDays = () => {
-    const els: React.ReactNode[] = [];
+    const els: ReactNode[] = [];
     for (let i = 0; i < firstDayOfMonth; i++) {
-      els.push(<div key={`empty-${i}`} className="h-10 w-10" />);
+      els.push(<div key={`empty-${i}`} className="aspect-square" />);
     }
     for (let i = 1; i <= daysInMonth; i++) {
       const dateObj = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), i);
@@ -69,20 +89,21 @@ export function CalendarWidget({ selectedDate, onSelectDate, onClose, tasks }: C
       els.push(
         <button
           key={i}
+          type="button"
           onClick={() => {
             onSelectDate(dateObj);
             onClose();
           }}
           className={[
-            'h-10 w-10 rounded-xl flex items-center justify-center relative transition-colors tnum',
+            'aspect-square rounded-[9px] flex items-center justify-center relative transition-colors tnum text-[12px] font-bold',
             isSelected
-              ? 'bg-ink text-canvas font-bold'
+              ? 'bg-accent text-white'
               : isToday
-                ? 'bg-paper2 text-ink font-bold ring-1 ring-line'
-                : 'text-ink hover:bg-paper2',
+                ? 'bg-canvas text-ink ring-1 ring-line'
+                : 'text-ink hover:bg-canvas',
           ].join(' ')}
         >
-          <span className="text-[13px]">{i}</span>
+          {i}
           {hasTask && (
             <span
               className={
@@ -97,76 +118,66 @@ export function CalendarWidget({ selectedDate, onSelectDate, onClose, tasks }: C
     return els;
   };
 
-  return createPortal(
+  return (
     <div
-      className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-[rgba(26,24,20,0.45)] animate-fade-in"
-      onClick={onClose}
+      ref={popoverRef}
+      className="absolute left-0 right-0 top-full z-50 mt-2 rounded-[20px] border border-line bg-paper p-4 shadow-[0_20px_40px_-10px_rgba(0,0,0,0.35)] animate-fade-in"
     >
-      <div
-        className="bg-paper w-full sm:max-w-sm sm:rounded-3xl rounded-t-3xl shadow-soft animate-sheet-up overflow-hidden"
-        onClick={(e) => e.stopPropagation()}
-        style={{
-          paddingBottom: 'env(safe-area-inset-bottom)',
-        }}
-      >
-        <div className="flex justify-center sm:hidden">
-          <div className="w-10 h-1 rounded-full bg-paper3 mb-2 mt-2" />
-        </div>
-
-        {/* header */}
-        <div className="flex items-center justify-between px-3 py-2.5">
-          <button
-            onClick={prevMonth}
-            className="w-11 h-11 rounded-xl bg-paper2 flex items-center justify-center text-ink-2"
-          >
-            <ChevronLeft size={16} />
-          </button>
-          <div className="text-center">
-            <div className="text-[12px] font-bold uppercase tracking-[0.06em] text-ink-2">
-              Calendário
-            </div>
-            <div className="font-display text-[18px] text-ink leading-tight tracking-[-0.02em]">
-              {MONTHS[currentMonth.getMonth()]} {currentMonth.getFullYear()}
-            </div>
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <button
+          type="button"
+          onClick={prevMonth}
+          className="w-9 h-9 rounded-[11px] bg-canvas border border-line flex items-center justify-center text-ink-2"
+          aria-label="Mes anterior"
+        >
+          <ChevronLeft size={15} />
+        </button>
+        <div className="text-center">
+          <div className="text-[11px] font-bold uppercase tracking-[0.06em] text-ink-2">
+            Calend\u00E1rio
           </div>
+          <div className="text-[14px] font-extrabold text-ink leading-tight">
+            {MONTHS[currentMonth.getMonth()]} {currentMonth.getFullYear()}
+          </div>
+        </div>
+        <div className="flex items-center gap-1.5">
           <button
+            type="button"
             onClick={nextMonth}
-            className="w-11 h-11 rounded-xl bg-paper2 flex items-center justify-center text-ink-2"
+            className="w-9 h-9 rounded-[11px] bg-canvas border border-line flex items-center justify-center text-ink-2"
+            aria-label="Proximo mes"
           >
-            <ChevronRight size={16} />
-          </button>
-        </div>
-
-        {/* week labels */}
-        <div className="grid grid-cols-7 gap-1 px-4 text-center text-[12px] font-bold text-ink-2 tracking-[0.06em]">
-          {WEEK.map((d, i) => <div key={i}>{d}</div>)}
-        </div>
-
-        {/* days */}
-        <div className="grid grid-cols-7 gap-1 px-4 py-2 justify-items-center">
-          {renderDays()}
-        </div>
-
-        {/* footer */}
-        <div className="px-4 pt-2 pb-3 border-t border-line2 flex items-center gap-2">
-          <button
-            onClick={() => {
-              onSelectDate(new Date());
-              onClose();
-            }}
-            className="flex-1 h-11 rounded-xl bg-paper2 text-[12px] font-bold text-ink"
-          >
-            Hoje
+            <ChevronRight size={15} />
           </button>
           <button
+            type="button"
             onClick={onClose}
-            className="w-10 h-10 rounded-xl bg-paper2 flex items-center justify-center text-ink-2"
-            aria-label="Fechar"
+            className="w-9 h-9 rounded-[11px] bg-canvas border border-line flex items-center justify-center text-ink-2"
+            aria-label="Fechar calendario"
           >
-            <X size={16} />
+            <X size={15} />
           </button>
         </div>
       </div>
+
+      <div className="grid grid-cols-7 gap-1 text-center text-[11px] font-bold text-ink-2 tracking-[0.06em]">
+        {WEEK.map((d, i) => <div key={i}>{d}</div>)}
+      </div>
+
+      <div className="grid grid-cols-7 gap-1 py-2">
+        {renderDays()}
+      </div>
+
+      <button
+        type="button"
+        onClick={() => {
+          onSelectDate(new Date());
+          onClose();
+        }}
+        className="mt-1 h-10 w-full rounded-[13px] bg-canvas border border-line text-[12px] font-bold text-ink"
+      >
+        Hoje
+      </button>
     </div>
-  , document.body);
+  );
 }

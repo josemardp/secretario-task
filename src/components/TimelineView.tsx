@@ -1,12 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { rescheduleToDate, postponeToTomorrow } from '../lib/datetime';
-import { Calendar as CalIcon, Repeat, X, Edit3, Trash2, XCircle } from 'lucide-react';
+import { Repeat, X, Edit3, Trash2, XCircle } from 'lucide-react';
 import type { Task, ResolutionType, BlockerType } from '../types';
 import { useContextStore } from '../stores/contextStore';
 import { useTaskStore } from '../stores/taskStore';
-import { CalendarWidget } from './CalendarWidget';
-import { HeaderActionButtons } from './HeaderActionButtons';
 import { TaskEditModal } from './TaskEditModal';
 import { useToast } from './toastContext';
 import { useAgendaPositions, type TimelineBlock } from '../hooks/useAgendaPositions';
@@ -16,10 +14,7 @@ import { getResolvedTasksForDate, getTaskResolvedAt } from '../lib/taskFilters';
 
 interface TimelineViewProps {
   tasks: Task[];
-  onOpenFoco: () => void;
-  onToggleSearch: () => void;
-  onOpenSettings: () => void;
-  hasBriefingTasks: boolean;
+  selectedDate: Date;
 }
 
 function priorityTone(priority: number): string {
@@ -218,16 +213,16 @@ function TimelineTaskCard({
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerCancel={resetGesture}
-      className="relative z-20 w-full min-w-0 overflow-visible rounded-xl"
+      className="relative z-20 w-full min-w-0 overflow-visible rounded-[18px]"
     >
-      <div className="absolute inset-0 flex items-center justify-between rounded-xl px-4 bg-surface-sunken sm:hidden">
+      <div className="absolute inset-0 flex items-center justify-between rounded-[18px] px-4 bg-surface-sunken sm:hidden">
         <span className="text-[12px] font-bold text-success">Amanhã</span>
         <span className="text-[12px] font-bold text-danger">Excluir</span>
       </div>
 
       <div
         className={[
-          'relative min-w-0 h-auto flex flex-col bg-surface border border-border rounded-xl sm:min-h-[104px]',
+          'relative min-w-0 h-auto flex flex-col bg-surface border border-border rounded-[18px] sm:min-h-[104px]',
           'transition-transform',
           isDragging ? 'duration-0' : 'duration-200',
         ].join(' ')}
@@ -384,16 +379,11 @@ function TimelineSlot({
 
 export function TimelineView({
   tasks,
-  onOpenFoco,
-  onToggleSearch,
-  onOpenSettings,
-  hasBriefingTasks,
+  selectedDate,
 }: TimelineViewProps) {
   const { currentEnergy, activeContext } = useContextStore();
   const { updateTask, deleteTask, recordTaskEvent } = useTaskStore();
   const toast = useToast();
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [dismissedBreaks, setDismissedBreaks] = useState<string[]>([]);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [pendingDeleteTask, setPendingDeleteTask] = useState<Task | null>(null);
@@ -538,35 +528,10 @@ export function TimelineView({
 
   return (
     <div className="flex flex-col gap-3">
-      {/* Day header */}
-      <div className="bg-paper border border-line rounded-2xl p-3 flex items-center justify-between gap-3">
-        <HeaderActionButtons
-          onOpenFoco={onOpenFoco}
-          onToggleSearch={onToggleSearch}
-          onOpenSettings={onOpenSettings}
-          hasBriefingTasks={hasBriefingTasks}
-        />
-        <button
-          onClick={() => setIsCalendarOpen(true)}
-          className="inline-flex items-center gap-1.5 min-h-11 px-3 rounded-xl bg-paper2 text-ink text-[12px] font-bold shrink-0"
-        >
-          <CalIcon size={12} strokeWidth={2.2} /> Mês
-        </button>
-      </div>
-
-      {isCalendarOpen && (
-        <CalendarWidget
-          selectedDate={selectedDate}
-          onSelectDate={setSelectedDate}
-          onClose={() => setIsCalendarOpen(false)}
-          tasks={tasks}
-        />
-      )}
-
       {/* Timeline grid */}
       <div
         ref={timelineScrollRef}
-        className="bg-paper rounded-2xl border border-line overflow-y-auto overflow-x-hidden flex flex-col max-h-[calc(100dvh-220px)] py-2 scroll-py-3"
+        className="bg-paper rounded-[20px] border border-line overflow-y-auto overflow-x-hidden flex flex-col max-h-[calc(100dvh-238px)] py-2 scroll-py-3"
       >
         {timeGrid.map((slot, idx) => {
           const slotBlocks = blocks.filter(b => {
@@ -642,17 +607,17 @@ export function TimelineView({
       </div>
 
       {resolvedTasks.length > 0 && (
-        <section className="bg-paper border border-line rounded-2xl p-4">
-          <div className="flex items-baseline justify-between gap-3 mb-3">
-            <div>
+        <section className="bg-paper border border-line rounded-[20px] overflow-hidden">
+          <div className="flex items-baseline justify-between gap-3 px-4 pt-4 pb-3">
+            <div className="min-w-0">
               <h2 className="text-[15px] font-bold text-ink">Resolvidas neste dia</h2>
               <p className="mt-0.5 text-[11px] text-ink-2">
                 Concluídas e encerradas ficam fora da timeline ativa.
               </p>
             </div>
-            <span className="text-[12px] font-bold text-ink-2 tnum">{resolvedTasks.length}</span>
+            <span className="text-[13px] font-bold text-ink-2 tnum">{resolvedTasks.length}</span>
           </div>
-          <div className="flex flex-col gap-2">
+          <div>
             {resolvedTasks.map((task) => {
               const resolvedAt = getTaskResolvedAt(task);
               const resolvedDate = resolvedAt ? new Date(resolvedAt) : null;
@@ -661,25 +626,28 @@ export function TimelineView({
                   key={task.id}
                   type="button"
                   onClick={() => openEdit(task)}
-                  className="w-full text-left rounded-xl border border-border bg-surface px-3 py-2.5 hover:bg-surface-sunken transition-colors"
+                  className="w-full text-left border-t border-line px-4 py-3 hover:bg-surface-sunken transition-colors"
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5">
                         <span className="text-[11px] font-bold uppercase tracking-[0.06em] text-ink-2">
                           {resolvedTaskLabel(task)}
                         </span>
                         {resolvedDate && (
-                          <span className="text-[11px] font-semibold text-ink-2 tnum">
-                            {formatTime(resolvedDate)}
-                          </span>
+                          <>
+                            <span className="text-[11px] font-bold text-ink-2">{'\u00B7'}</span>
+                            <span className="text-[11px] font-bold text-ink-2 tnum">
+                              {formatTime(resolvedDate)}
+                            </span>
+                          </>
                         )}
                       </div>
-                      <div className="mt-0.5 text-[13px] font-bold text-ink truncate">
+                      <div className="mt-0.5 text-[14px] font-bold text-ink truncate">
                         {task.title}
                       </div>
                     </div>
-                    <span className="shrink-0 text-[11px] font-bold text-accent">
+                    <span className="shrink-0 text-[13px] font-bold text-accent">
                       Reabrir
                     </span>
                   </div>
