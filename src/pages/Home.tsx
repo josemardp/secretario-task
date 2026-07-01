@@ -287,6 +287,10 @@ export default function Home() {
   }, [tasks, semanticResults, searchText]);
 
   const captureBarVisible = viewMode === 'timeline';
+  const handleEnergyChange = (value: string) => {
+    setCurrentEnergy(parseInt(value, 10));
+  };
+
   const energySliderStyle: CSSProperties & { '--energy-percent': string } = {
     '--energy-percent': `${currentEnergy * 10}%`,
   };
@@ -340,16 +344,17 @@ export default function Home() {
           <div className="shrink-0">
             <InstallPWA />
           </div>
-          <label className="flex items-center gap-2 bg-paper border border-line rounded-xl px-2.5 py-2 w-[146px] sm:w-[280px] shrink-0">
+          <label className="order-3 flex w-full items-center gap-2 bg-paper border border-line rounded-xl px-2.5 py-2 sm:order-none sm:w-[280px] sm:shrink-0">
             <Zap size={14} className="text-ink-secondary shrink-0" strokeWidth={2.2} />
-            <span className="text-[12px] font-semibold text-ink shrink-0 hidden min-[380px]:inline">Energia</span>
+            <span className="text-[12px] font-semibold text-ink shrink-0">Energia</span>
             <input
               type="range"
               min="0"
               max="10"
               value={currentEnergy}
-              onChange={(e) => setCurrentEnergy(parseInt(e.target.value, 10))}
-              className="energy-slider flex-1 min-w-0 h-1.5 rounded-full appearance-none"
+              onInput={(e) => handleEnergyChange(e.currentTarget.value)}
+              onChange={(e) => handleEnergyChange(e.currentTarget.value)}
+              className="energy-slider flex-1 min-w-[120px] h-2 rounded-full appearance-none"
               style={energySliderStyle}
             />
             <span className="text-[13px] font-bold tnum text-ink shrink-0">
