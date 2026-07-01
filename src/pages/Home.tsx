@@ -7,8 +7,8 @@ import { parseMultipleTasks } from '../lib/smartParser';
 import { generateEmbedding, estimateTaskTime, transcribeAudio } from '../lib/ai';
 import { useAudioRecorder } from '../hooks/useAudioRecorder';
 import {
-  CalendarDays, BarChart2, Target, Plus, Mic, Search,
-  Settings as SettingsIcon, ArrowRight, X, Zap, ClipboardCheck,
+  CalendarDays, BarChart2, Plus, Mic, Search,
+  ArrowRight, X, Zap, ClipboardCheck,
 } from 'lucide-react';
 import { BuildBadge } from '../components/BuildBadge';
 import { TimelineView } from '../components/TimelineView';
@@ -18,6 +18,7 @@ import { WeeklyReview } from '../components/WeeklyReview';
 import { MultiTaskConfirmModal } from '../components/MultiTaskConfirmModal';
 import { SettingsModal } from '../components/SettingsModal';
 import { InstallPWA } from '../components/InstallPWA';
+import { HeaderActionButtons } from '../components/HeaderActionButtons';
 import { NotificationEngine } from '../components/NotificationEngine';
 import { FocoSheet } from '../components/FocoSheet';
 import { useToast } from '../components/toastContext';
@@ -327,43 +328,35 @@ export default function Home() {
         className="bg-paper border-b border-line sticky top-0 z-30 safe-top"
         style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}
       >
-        <div className="flex items-start justify-between gap-3 px-4 pt-3 pb-3">
-          <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-start justify-between gap-2 px-4 pt-3 pb-3">
+          <div className="min-w-0 flex-1 basis-[130px]">
             <h1 className="font-display text-[22px] leading-[1.1] text-ink truncate">
               {getGreeting()}.
             </h1>
-            <p className="mt-1 text-[12px] text-ink-2 truncate tnum">
+            <p className="mt-1 text-[12px] text-ink-2 tnum leading-snug">
               {formatLongDate()} · {todayCount} para hoje
             </p>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="shrink-0">
             <InstallPWA />
-            <button
-              onClick={() => setFocoOpen(true)}
-              className="relative w-11 h-11 rounded-xl bg-paper2 flex items-center justify-center text-ink active:bg-paper3"
-              aria-label="Abrir Foco do Dia"
-              title="Foco do Dia"
-            >
-              <Target size={16} strokeWidth={2.2} />
-              {briefingTasks.length > 0 && (
-                <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-accent border border-paper2" />
-              )}
-            </button>
-            <button
-              onClick={() => setSearchOpen((v) => !v)}
-              className="w-11 h-11 rounded-xl bg-paper2 flex items-center justify-center text-ink-2 active:bg-paper3"
-              aria-label="Buscar"
-            >
-              <Search size={16} />
-            </button>
-            <button
-              onClick={() => setIsSettingsOpen(true)}
-              className="w-11 h-11 rounded-xl bg-paper2 flex items-center justify-center text-ink-2 active:bg-paper3"
-              aria-label="Configurações"
-            >
-              <SettingsIcon size={16} />
-            </button>
           </div>
+          <label className="flex items-center gap-2 bg-paper border border-line rounded-xl px-2.5 py-2 w-[146px] sm:w-[280px] shrink-0">
+            <Zap size={14} className="text-ink-secondary shrink-0" strokeWidth={2.2} />
+            <span className="text-[12px] font-semibold text-ink shrink-0 hidden min-[380px]:inline">Energia</span>
+            <input
+              type="range"
+              min="0"
+              max="10"
+              value={currentEnergy}
+              onChange={(e) => setCurrentEnergy(parseInt(e.target.value, 10))}
+              className="energy-slider flex-1 min-w-0 h-1.5 rounded-full appearance-none"
+              style={energySliderStyle}
+            />
+            <span className="text-[13px] font-bold tnum text-ink shrink-0">
+              {currentEnergy}
+              <span className="text-ink-2 font-semibold">/10</span>
+            </span>
+          </label>
         </div>
 
         {/* search drawer */}
@@ -397,26 +390,6 @@ export default function Home() {
           </div>
         )}
 
-        {/* energy strip */}
-        <div className="px-4 pb-3">
-          <label className="flex items-center gap-3 bg-paper border border-line rounded-xl px-3 py-2">
-            <Zap size={14} className="text-ink-secondary shrink-0" strokeWidth={2.2} />
-            <span className="text-[12px] font-semibold text-ink shrink-0">Energia</span>
-            <input
-              type="range"
-              min="0"
-              max="10"
-              value={currentEnergy}
-              onChange={(e) => setCurrentEnergy(parseInt(e.target.value, 10))}
-              className="energy-slider flex-1 h-1.5 rounded-full appearance-none"
-              style={energySliderStyle}
-            />
-            <span className="text-[13px] font-bold tnum text-ink shrink-0">
-              {currentEnergy}
-              <span className="text-ink-2 font-semibold">/10</span>
-            </span>
-          </label>
-        </div>
       </header>
 
       <main
@@ -494,9 +467,23 @@ export default function Home() {
             )}
           </div>
         ) : viewMode === 'timeline' ? (
-          <TimelineView tasks={baseVisibleTasks} />
+          <TimelineView
+            tasks={baseVisibleTasks}
+            onOpenFoco={() => setFocoOpen(true)}
+            onToggleSearch={() => setSearchOpen((v) => !v)}
+            onOpenSettings={() => setIsSettingsOpen(true)}
+            hasBriefingTasks={briefingTasks.length > 0}
+          />
         ) : (
           <div className="flex flex-col gap-3">
+            <div className="bg-paper border border-line rounded-2xl p-3">
+              <HeaderActionButtons
+                onOpenFoco={() => setFocoOpen(true)}
+                onToggleSearch={() => setSearchOpen((v) => !v)}
+                onOpenSettings={() => setIsSettingsOpen(true)}
+                hasBriefingTasks={briefingTasks.length > 0}
+              />
+            </div>
             {reviewEligibleTasks.length > 0 && (
               <button
                 type="button"
