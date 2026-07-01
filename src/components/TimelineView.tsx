@@ -6,6 +6,7 @@ import type { Task, ResolutionType, BlockerType } from '../types';
 import { useContextStore } from '../stores/contextStore';
 import { useTaskStore } from '../stores/taskStore';
 import { CalendarWidget } from './CalendarWidget';
+import { HeaderActionButtons } from './HeaderActionButtons';
 import { TaskEditModal } from './TaskEditModal';
 import { useToast } from './toastContext';
 import { useAgendaPositions, type TimelineBlock } from '../hooks/useAgendaPositions';
@@ -15,6 +16,10 @@ import { getResolvedTasksForDate, getTaskResolvedAt } from '../lib/taskFilters';
 
 interface TimelineViewProps {
   tasks: Task[];
+  onOpenFoco: () => void;
+  onToggleSearch: () => void;
+  onOpenSettings: () => void;
+  hasBriefingTasks: boolean;
 }
 
 function priorityTone(priority: number): string {
@@ -377,7 +382,13 @@ function TimelineSlot({
 
 // ─── Main view ──────────────────────────────────────────────────
 
-export function TimelineView({ tasks }: TimelineViewProps) {
+export function TimelineView({
+  tasks,
+  onOpenFoco,
+  onToggleSearch,
+  onOpenSettings,
+  hasBriefingTasks,
+}: TimelineViewProps) {
   const { currentEnergy, activeContext } = useContextStore();
   const { updateTask, deleteTask, recordTaskEvent } = useTaskStore();
   const toast = useToast();
@@ -525,22 +536,16 @@ export function TimelineView({ tasks }: TimelineViewProps) {
 
   const formatTime = (date: Date) => date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
-  const longDate = selectedDate.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
-  const totalBlocks = blocks.length;
-  const totalMins = blocks.reduce((acc, b) => acc + (b.task?.estimated_minutes || 30), 0);
-
   return (
     <div className="flex flex-col gap-3">
       {/* Day header */}
-      <div className="bg-paper border border-line rounded-2xl p-4 flex items-start justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          <div className="font-display text-[24px] leading-[1.1] text-ink tracking-[-0.02em] truncate">
-            {longDate[0].toUpperCase() + longDate.slice(1)}.
-          </div>
-          <div className="text-[11px] text-ink-2 mt-1 tnum">
-            {totalBlocks} blocos · {Math.floor(totalMins / 60)}h {totalMins % 60}m planejado
-          </div>
-        </div>
+      <div className="bg-paper border border-line rounded-2xl p-3 flex items-center justify-between gap-3">
+        <HeaderActionButtons
+          onOpenFoco={onOpenFoco}
+          onToggleSearch={onToggleSearch}
+          onOpenSettings={onOpenSettings}
+          hasBriefingTasks={hasBriefingTasks}
+        />
         <button
           onClick={() => setIsCalendarOpen(true)}
           className="inline-flex items-center gap-1.5 min-h-11 px-3 rounded-xl bg-paper2 text-ink text-[12px] font-bold shrink-0"
