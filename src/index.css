@@ -17,7 +17,7 @@
     --accent-subtle: #EEF2FF;
     --success: #16A34A;
     --warning: #D97706;
-    --danger: #DC2626;
+    --danger: #EF4444;
   }
 
   @media (prefers-color-scheme: dark) {
@@ -123,16 +123,18 @@ input, textarea, [contenteditable] {
   width: 22px;
   height: 22px;
   border-radius: 999px;
-  background: var(--ink);
-  border: 2px solid var(--surface);
+  background: #FFFFFF;
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.35);
 }
 
 .energy-slider::-moz-range-thumb {
   width: 22px;
   height: 22px;
   border-radius: 999px;
-  background: var(--ink);
-  border: 2px solid var(--surface);
+  background: #FFFFFF;
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.35);
 }
 
 /* Subtle pulse used by the Foco button badge */

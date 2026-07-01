@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <meta charset="utf-8"/>
+  <title>Tela principal &mdash; proposta de reorganiza&ccedil;&atilde;o</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@1,500;1,600;1,700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <style>
+    body { margin: 0; background: #F4F4F5; }
+    input::placeholder { color: inherit; opacity: 0.55; }
+  </style>
+</helmet>
+<div style="min-height:100vh; background:#F4F4F5; padding:40px 0 64px; box-sizing:border-box; font-family:'Manrope',sans-serif;">
+  
+<div style="max-width:900px; margin:0 auto 8px; padding:0 20px;">
+  <div style="font-size:12px; font-weight:800; letter-spacing:0.08em; text-transform:uppercase; color:#4F46E5;">Proposta de redistribui&ccedil;&atilde;o &middot; tela principal</div>
+  <div style="font-family:'Playfair Display',serif; font-style:italic; font-weight:600; font-size:34px; color:#18181B; margin-top:6px; line-height:1.15;">Uma hierarquia, n&atilde;o uma pilha de cart&otilde;es.</div>
+  <div style="font-size:14.5px; line-height:1.6; color:#52525B; margin-top:12px; max-width:640px;">
+    Mesma fun&ccedil;&atilde;o, disposi&ccedil;&atilde;o nova. Cabe&ccedil;alho compacto em duas linhas, energia e a&ccedil;&otilde;es unificadas num s&oacute; cart&atilde;o, a timeline ganhando o espa&ccedil;o que sobrava, e o bot&atilde;o de nova tarefa saindo de cima da lista para dentro da barra de navega&ccedil;&atilde;o.
+  </div>
+
+  <div style="margin-top:24px; display:flex; flex-direction:column; gap:0; border:1px solid #E4E4E7; border-radius:20px; overflow:hidden; background:#FFFFFF;">
+    
+    <div style="display:flex; gap:16px; padding:16px 18px; border-bottom:1px solid #E4E4E7;">
+      <div style="flex-shrink:0; width:28px; height:28px; border-radius:9px; background:#F4F4F5; color:#4F46E5; font-size:12px; font-weight:800; display:flex; align-items:center; justify-content:center;">01</div>
+      <div>
+        <div style="font-size:14.5px; font-weight:800; color:#18181B;">Cabe&ccedil;alho solto</div>
+        <div style="font-size:13.5px; line-height:1.55; color:#52525B; margin-top:3px;">Sauda&ccedil;&atilde;o (serifada, it&aacute;lica) + data/contagem direto sobre o fundo, sem cart&atilde;o &mdash; s&oacute; texto, como um t&iacute;tulo de p&aacute;gina.</div>
+      </div>
+    </div>
+    <div style="display:flex; gap:16px; padding:16px 18px; border-bottom:1px solid #E4E4E7;">
+      <div style="flex-shrink:0; width:28px; height:28px; border-radius:9px; background:#F4F4F5; color:#4F46E5; font-size:12px; font-weight:800; display:flex; align-items:center; justify-content:center;">02</div>
+      <div>
+        <div style="font-size:14.5px; font-weight:800; color:#18181B;">Cart&atilde;o &uacute;nico de controles</div>
+        <div style="font-size:13.5px; line-height:1.55; color:#52525B; margin-top:3px;">Energia e as tr&ecirc;s a&ccedil;&otilde;es r&aacute;pidas + M&ecirc;s viram um s&oacute; cart&atilde;o com duas linhas separadas por um filete. Mesmas margens do resto da tela &mdash; acaba o espa&ccedil;o vazio e o desalinhamento.</div>
+      </div>
+    </div>
+    <div style="display:flex; gap:16px; padding:16px 18px; border-bottom:1px solid #E4E4E7;">
+      <div style="flex-shrink:0; width:28px; height:28px; border-radius:9px; background:#F4F4F5; color:#4F46E5; font-size:12px; font-weight:800; display:flex; align-items:center; justify-content:center;">03</div>
+      <div>
+        <div style="font-size:14.5px; font-weight:800; color:#18181B;">Timeline do dia</div>
+        <div style="font-size:13.5px; line-height:1.55; color:#52525B; margin-top:3px;">Passa a ser o bloco dominante da tela: com o topo mais enxuto, sobra bem mais altura vis&iacute;vel para os hor&aacute;rios antes de rolar.</div>
+      </div>
+    </div>
+    <div style="display:flex; gap:16px; padding:16px 18px; border-bottom:1px solid #E4E4E7;">
+      <div style="flex-shrink:0; width:28px; height:28px; border-radius:9px; background:#F4F4F5; color:#4F46E5; font-size:12px; font-weight:800; display:flex; align-items:center; justify-content:center;">04</div>
+      <div>
+        <div style="font-size:14.5px; font-weight:800; color:#18181B;">&ldquo;Resolvidas neste dia&rdquo;</div>
+        <div style="font-size:13.5px; line-height:1.55; color:#52525B; margin-top:3px;">Continua&ccedil;&atilde;o natural da timeline, dentro de um &uacute;nico cart&atilde;o com linhas divis&oacute;rias &mdash; deixa de parecer uma s&eacute;rie de caixinhas soltas.</div>
+      </div>
+    </div>
+    <div style="display:flex; gap:16px; padding:16px 18px; ">
+      <div style="flex-shrink:0; width:28px; height:28px; border-radius:9px; background:#F4F4F5; color:#4F46E5; font-size:12px; font-weight:800; display:flex; align-items:center; justify-content:center;">05</div>
+      <div>
+        <div style="font-size:14.5px; font-weight:800; color:#18181B;">Barra inferior com + embutido</div>
+        <div style="font-size:13.5px; line-height:1.55; color:#52525B; margin-top:3px;">O bot&atilde;o de nova tarefa sai de cima da lista (onde colidia com "Reabrir") e passa a viver dentro da barra de navega&ccedil;&atilde;o, elevado entre Agenda e Painel. Ao tocar, abre um compositor ancorado &agrave; pr&oacute;pria barra, nunca sobre o conte&uacute;do.</div>
+      </div>
+    </div>
+  </div>
+</div>
+  <div style="margin-top:40px;">
+    
+<div style="display:flex; flex-wrap:wrap; gap:48px; justify-content:center; align-items:flex-start;">
+  
+<div data-screen-label="Tela principal - Tema claro" style="display:flex; flex-direction:column; align-items:center; gap:14px;">
+  <div style="font-family:'Manrope',sans-serif; font-size:13px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:#71717A;">Tema claro</div>
+  <div style="width:384px; border-radius:40px; padding:12px; background:#000; box-shadow:0 40px 80px -20px rgba(0,0,0,0.35), 0 0 0 1px rgba(0,0,0,0.06);">
+    <div style="width:100%; height:772px; border-radius:30px; overflow:hidden; background:#FAFAFA; display:flex; flex-direction:column; position:relative; font-family:'Manrope',sans-serif;">
+
+      <div style="flex-shrink:0; height:30px; display:flex; align-items:center; justify-content:space-between; padding:0 22px; font-size:12px; font-weight:700; color:#18181B;">
+        <span>16:33</span>
+        <div style="display:flex; align-items:center; gap:5px; color:#18181B; opacity:0.85;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M2 8.5a15 15 0 0120 0"/><path d="M5.5 12a10 10 0 0113 0"/><path d="M9 15.5a5 5 0 016 0"/><circle cx="12" cy="19" r="1" fill="currentColor" stroke="none"/></svg>
+          <svg width="16" height="11" viewBox="0 0 24 16" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="2" width="18" height="12" rx="2"/><rect x="21" y="6" width="2" height="4" fill="currentColor" stroke="none"/><rect x="3" y="4" width="12" height="8" fill="currentColor" stroke="none"/></svg>
+        </div>
+      </div>
+
+      <div style="flex-shrink:0; padding:2px 20px 14px;">
+        <div style="font-family:'Playfair Display',serif; font-style:italic; font-weight:600; font-size:29px; color:#18181B; line-height:1.15;">Boa tarde.</div>
+        <div style="font-size:13px; color:#52525B; margin-top:3px;">Quarta-feira, 1 de julho &middot; 4 para hoje</div>
+
+        <div style="margin-top:14px; background:#FFFFFF; border:1px solid #E4E4E7; border-radius:20px;">
+          <div style="display:flex; align-items:center; gap:10px; padding:13px 16px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="#18181B" stroke="none" style="flex-shrink:0;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            <span style="font-size:14px; font-weight:700; color:#18181B; flex-shrink:0;">Energia</span>
+            <div onPointerDown="{{ light.onSliderDown }}" style="position:relative; flex:1; height:20px; display:flex; align-items:center; cursor:pointer; touch-action:none;">
+              <div style="width:100%; height:6px; border-radius:3px; background:#E4E4E7;">
+                <div style="height:100%; border-radius:3px; background:#4F46E5; width:{{ light.energyPercent }};"></div>
+              </div>
+              <div style="position:absolute; left:{{ light.energyPercent }}; top:50%; width:18px; height:18px; margin-left:-9px; transform:translateY(-50%); border-radius:50%; background:#fff; box-shadow:0 1px 4px rgba(0,0,0,0.35), 0 0 0 1px #E4E4E7;"></div>
+            </div>
+            <span style="font-size:14px; font-weight:800; color:#18181B; flex-shrink:0; width:34px; text-align:right;">{{ light.energy }}/10</span>
+          </div>
+
+          <div style="height:1px; background:#E4E4E7;"></div>
+
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 12px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <button style="position:relative; width:40px; height:40px; border-radius:13px; background:#FAFAFA; border:1px solid #E4E4E7; display:flex; align-items:center; justify-content:center; color:#18181B; cursor:pointer;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/></svg>
+                <span style="position:absolute; top:6px; right:6px; width:7px; height:7px; border-radius:50%; background:#4F46E5;"></span>
+              </button>
+              <button onClick="{{ light.toggleSearch }}" style="width:40px; height:40px; border-radius:13px; background:#FAFAFA; border:1px solid #E4E4E7; display:flex; align-items:center; justify-content:center; color:#18181B; cursor:pointer;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              </button>
+              <button style="width:40px; height:40px; border-radius:13px; background:#FAFAFA; border:1px solid #E4E4E7; display:flex; align-items:center; justify-content:center; color:#18181B; cursor:pointer;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+              </button>
+            </div>
+            <button onClick="{{ light.toggleMonth }}" style="display:flex; align-items:center; gap:6px; height:40px; padding:0 14px; border-radius:13px; background:#FAFAFA; border:1px solid #E4E4E7; color:#18181B; font-size:13px; font-weight:700; cursor:pointer;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              M&ecirc;s
+            </button>
+          </div>
+
+          <sc-if value="{{ light.searchOpen }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:0 14px 14px;">
+              <div style="display:flex; align-items:center; gap:8px; background:#FAFAFA; border:1px solid #E4E4E7; border-radius:13px; padding:0 12px; height:40px;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#52525B" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input placeholder="Buscar tarefas..." style="flex:1; border:none; outline:none; background:transparent; font-size:13px; color:#18181B; font-family:'Manrope',sans-serif;"/>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+
+      <sc-if value="{{ light.monthOpen }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute; top:186px; left:20px; right:20px; z-index:30; background:#FFFFFF; border:1px solid #E4E4E7; border-radius:20px; padding:16px; box-shadow:0 20px 40px -10px rgba(0,0,0,0.35);">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+            <span style="font-size:14px; font-weight:800; color:#18181B;">Julho 2026</span>
+            <button onClick="{{ light.toggleMonth }}" style="width:26px; height:26px; border-radius:8px; border:none; background:#FAFAFA; color:#52525B; display:flex; align-items:center; justify-content:center; cursor:pointer;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+          <div style="display:grid; grid-template-columns:repeat(7,1fr); gap:6px;">
+            <sc-for list="{{ monthDaysLight }}" as="day" hint-placeholder-count="31">
+              <div style="aspect-ratio:1; display:flex; align-items:center; justify-content:center; border-radius:9px; font-size:12px; font-weight:700; background:{{ day.bg }}; color:{{ day.color }};">{{ day.n }}</div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <div style="flex:1; min-height:0; overflow-y:auto; padding:2px 20px 24px;">
+
+        <div style="display:flex; align-items:flex-start; gap:12px; padding:9px 0; opacity:0.55;">
+          <span style="font-size:12px; font-weight:700; color:#52525B; width:44px; flex-shrink:0;">14:30</span>
+          <div style="flex:1; height:1px; background:#E4E4E7; margin-top:8px;"></div>
+        </div>
+        <div style="display:flex; align-items:flex-start; gap:12px; padding:9px 0;">
+          <span style="font-size:13px; font-weight:800; color:#18181B; width:44px; flex-shrink:0;">15:00</span>
+          <div style="flex:1; height:1px; background:#E4E4E7; margin-top:9px;"></div>
+        </div>
+        <div style="display:flex; align-items:flex-start; gap:12px; padding:9px 0; opacity:0.55;">
+          <span style="font-size:12px; font-weight:700; color:#52525B; width:44px; flex-shrink:0;">15:30</span>
+          <div style="flex:1; height:1px; background:#E4E4E7; margin-top:8px;"></div>
+        </div>
+        <div style="display:flex; align-items:flex-start; gap:12px; padding:9px 0;">
+          <span style="font-size:13px; font-weight:800; color:#18181B; width:44px; flex-shrink:0;">16:00</span>
+          <div style="flex:1; height:1px; background:#E4E4E7; margin-top:9px;"></div>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:12px; padding:6px 0;">
+          <span style="font-size:12px; font-weight:800; color:#EF4444; width:44px; flex-shrink:0;">16:32</span>
+          <div style="flex:1; height:2px; background:#EF4444; border-radius:1px;"></div>
+        </div>
+
+        <div style="display:flex; align-items:flex-start; gap:12px; padding:9px 0; opacity:0.55;">
+          <span style="font-size:12px; font-weight:700; color:#52525B; width:44px; flex-shrink:0;">16:30</span>
+          <div style="flex:1; height:1px; background:#E4E4E7; margin-top:8px;"></div>
+        </div>
+
+        <div style="display:flex; align-items:flex-start; gap:12px; padding:6px 0 14px;">
+          <span style="font-size:13px; font-weight:800; color:#18181B; width:44px; flex-shrink:0; padding-top:14px;">17:00</span>
+          <div style="flex:1; background:#FFFFFF; border:1px solid #E4E4E7; border-radius:18px; padding:14px 14px 15px;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <div style="width:20px; height:20px; border-radius:50%; border:2px solid #E4E4E7; flex-shrink:0;"></div>
+              <span style="font-size:13px; font-weight:700; color:#18181B; flex:1;">17:00 &ndash; 18:00</span>
+              <span style="width:6px; height:6px; border-radius:50%; background:#52525B;"></span>
+              <span style="font-size:12px; font-weight:700; color:#52525B;">P5</span>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#52525B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </div>
+            <div style="font-size:16px; font-weight:800; color:#18181B; margin-top:8px; margin-left:30px;">Academia</div>
+          </div>
+        </div>
+
+        <div style="display:flex; align-items:flex-start; gap:12px; padding:9px 0; opacity:0.55;">
+          <span style="font-size:12px; font-weight:700; color:#52525B; width:44px; flex-shrink:0;">17:30</span>
+          <div style="flex:1; height:1px; background:#E4E4E7; margin-top:8px;"></div>
+        </div>
+
+        <div style="display:flex; align-items:flex-start; gap:12px; padding:6px 0 14px;">
+          <span style="font-size:13px; font-weight:800; color:#18181B; width:44px; flex-shrink:0; padding-top:14px;">18:00</span>
+          <div style="flex:1; background:#FFFFFF; border:1px solid #E4E4E7; border-radius:18px; padding:14px 14px 15px;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <div style="width:20px; height:20px; border-radius:50%; border:2px solid #E4E4E7; flex-shrink:0;"></div>
+              <span style="font-size:13px; font-weight:700; color:#18181B; flex:1;">18:00 &ndash; 19:00</span>
+              <span style="width:6px; height:6px; border-radius:50%; background:#EF4444;"></span>
+              <span style="font-size:12px; font-weight:700; color:#EF4444;">P8</span>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#52525B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </div>
+            <div style="font-size:16px; font-weight:800; color:#18181B; margin-top:8px; margin-left:30px;">M&eacute;dico</div>
+          </div>
+        </div>
+
+        <div style="display:flex; align-items:flex-start; gap:12px; padding:9px 0; opacity:0.55;">
+          <span style="font-size:12px; font-weight:700; color:#52525B; width:44px; flex-shrink:0;">18:30</span>
+          <div style="flex:1; height:1px; background:#E4E4E7; margin-top:8px;"></div>
+        </div>
+        <div style="display:flex; align-items:flex-start; gap:12px; padding:9px 0;">
+          <span style="font-size:13px; font-weight:800; color:#18181B; width:44px; flex-shrink:0;">19:00</span>
+          <div style="flex:1; height:1px; background:#E4E4E7; margin-top:9px;"></div>
+        </div>
+
+        <div style="display:flex; align-items:center; justify-content:center; padding:10px 0;">
+          <span style="font-size:11px; font-weight:700; letter-spacing:0.08em; color:#52525B; opacity:0.6;">&middot; &middot; &middot;</span>
+        </div>
+
+        <div style="display:flex; align-items:flex-start; gap:12px; padding:6px 0 10px;">
+          <span style="font-size:13px; font-weight:800; color:#18181B; width:44px; flex-shrink:0; padding-top:14px;">21:00</span>
+          <div style="flex:1; display:flex; flex-direction:column; gap:8px;">
+            <div style="background:#FFFFFF; border:1px solid #E4E4E7; border-radius:18px; padding:14px 14px 15px;">
+              <div style="display:flex; align-items:center; gap:10px;">
+                <div style="width:20px; height:20px; border-radius:50%; border:2px solid #E4E4E7; flex-shrink:0;"></div>
+                <span style="font-size:13px; font-weight:700; color:#18181B; flex:1;">21:00 &ndash; 21:30</span>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#52525B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </div>
+              <div style="font-size:16px; font-weight:800; color:#18181B; margin-top:8px; margin-left:30px;">Lamitor</div>
+            </div>
+            <div style="background:#FFFFFF; border:1px solid #E4E4E7; border-radius:18px; padding:14px 14px 15px;">
+              <div style="display:flex; align-items:center; gap:10px;">
+                <div style="width:20px; height:20px; border-radius:50%; border:2px solid #E4E4E7; flex-shrink:0;"></div>
+                <span style="font-size:13px; font-weight:700; color:#18181B; flex:1;">21:00 &ndash; 21:30</span>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#52525B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </div>
+              <div style="font-size:16px; font-weight:800; color:#18181B; margin-top:8px; margin-left:30px;">Camiseta, cueca, farda, meia</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex; align-items:flex-start; gap:12px; padding:9px 0 18px;">
+          <span style="font-size:13px; font-weight:800; color:#18181B; width:44px; flex-shrink:0;">21:30</span>
+          <div style="flex:1; height:1px; background:#E4E4E7; margin-top:9px;"></div>
+        </div>
+
+        <div style="background:#FFFFFF; border:1px solid #E4E4E7; border-radius:20px; overflow:hidden; margin-top:4px;">
+          <div style="padding:16px 16px 12px;">
+            <div style="display:flex; align-items:baseline; justify-content:space-between;">
+              <span style="font-size:15px; font-weight:800; color:#18181B;">Resolvidas neste dia</span>
+              <span style="font-size:13px; font-weight:700; color:#52525B;">20</span>
+            </div>
+            <div style="font-size:12px; color:#52525B; margin-top:3px;">Conclu&iacute;das e encerradas ficam fora da timeline ativa.</div>
+          </div>
+          <sc-for list="{{ resolvedItems }}" as="item" hint-placeholder-count="5">
+            <div style="padding:12px 16px; border-top:1px solid #E4E4E7; display:flex; align-items:center; justify-content:space-between; gap:12px;">
+              <div style="min-width:0;">
+                <div style="font-size:11px; font-weight:800; letter-spacing:0.05em; color:#52525B;">CONCLU&Iacute;DA &middot; {{ item.time }}</div>
+                <div style="font-size:14px; font-weight:700; color:#18181B; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ item.title }}</div>
+              </div>
+              <a style="font-size:13px; font-weight:700; color:#4F46E5; flex-shrink:0; cursor:pointer;">Reabrir</a>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <sc-if value="{{ light.composeOpen }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute; left:0; right:0; bottom:70px; z-index:40; background:#FFFFFF; border-top:1px solid #E4E4E7; border-radius:22px 22px 0 0; padding:14px 16px calc(14px + env(safe-area-inset-bottom,0px)); box-shadow:0 -16px 32px -8px rgba(0,0,0,0.28);">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <input value="{{ light.composeText }}" onChange="{{ light.onComposeText }}" placeholder="Nova tarefa..." autoFocus="{{ true }}" style="flex:1; border:1px solid #E4E4E7; background:#FAFAFA; border-radius:14px; padding:0 14px; height:44px; font-size:14px; color:#18181B; font-family:'Manrope',sans-serif; outline:none;"/>
+            <button onClick="{{ light.toggleRecording }}" style="width:44px; height:44px; border-radius:14px; background:{{ light.recordingBg }}; border:1px solid #E4E4E7; display:flex; align-items:center; justify-content:center; flex-shrink:0; cursor:pointer;">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="{{ light.micColor }}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 00-3 3v6a3 3 0 006 0V5a3 3 0 00-3-3z"/><path d="M19 10v1a7 7 0 01-14 0v-1"/><line x1="12" y1="18" x2="12" y2="22"/></svg>
+            </button>
+            <button onClick="{{ light.toggleCompose }}" style="width:44px; height:44px; border-radius:14px; background:#4F46E5; border:none; display:flex; align-items:center; justify-content:center; flex-shrink:0; cursor:pointer;">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </button>
+          </div>
+        </div>
+      </sc-if>
+
+      <div style="flex-shrink:0; position:relative; height:70px; background:#FFFFFF; border-top:1px solid #E4E4E7; display:flex; align-items:center; padding-bottom:6px;">
+        <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; color:#4F46E5;">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <span style="font-size:11px; font-weight:800;">Agenda</span>
+        </div>
+        <div style="width:76px; flex-shrink:0;"></div>
+        <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; color:#52525B;">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
+          <span style="font-size:11px; font-weight:700;">Painel</span>
+        </div>
+        <button onClick="{{ light.toggleCompose }}" style="position:absolute; left:50%; top:-26px; transform:translateX(-50%); width:58px; height:58px; border-radius:50%; background:#4F46E5; border:5px solid #FAFAFA; box-shadow:0 10px 22px -4px rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; cursor:pointer;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+  
+<div data-screen-label="Tela principal - Tema escuro" style="display:flex; flex-direction:column; align-items:center; gap:14px;">
+  <div style="font-family:'Manrope',sans-serif; font-size:13px; font-weight:700; letter-spacing:0.06em; text-transform:uppercase; color:#71717A;">Tema escuro</div>
+  <div style="width:384px; border-radius:40px; padding:12px; background:#000; box-shadow:0 40px 80px -20px rgba(0,0,0,0.35), 0 0 0 1px rgba(0,0,0,0.06);">
+    <div style="width:100%; height:772px; border-radius:30px; overflow:hidden; background:#0A0A0B; display:flex; flex-direction:column; position:relative; font-family:'Manrope',sans-serif;">
+
+      <div style="flex-shrink:0; height:30px; display:flex; align-items:center; justify-content:space-between; padding:0 22px; font-size:12px; font-weight:700; color:#FAFAFA;">
+        <span>16:33</span>
+        <div style="display:flex; align-items:center; gap:5px; color:#FAFAFA; opacity:0.85;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M2 8.5a15 15 0 0120 0"/><path d="M5.5 12a10 10 0 0113 0"/><path d="M9 15.5a5 5 0 016 0"/><circle cx="12" cy="19" r="1" fill="currentColor" stroke="none"/></svg>
+          <svg width="16" height="11" viewBox="0 0 24 16" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="2" width="18" height="12" rx="2"/><rect x="21" y="6" width="2" height="4" fill="currentColor" stroke="none"/><rect x="3" y="4" width="12" height="8" fill="currentColor" stroke="none"/></svg>
+        </div>
+      </div>
+
+      <div style="flex-shrink:0; padding:2px 20px 14px;">
+        <div style="font-family:'Playfair Display',serif; font-style:italic; font-weight:600; font-size:29px; color:#FAFAFA; line-height:1.15;">Boa tarde.</div>
+        <div style="font-size:13px; color:#A1A1AA; margin-top:3px;">Quarta-feira, 1 de julho &middot; 4 para hoje</div>
+
+        <div style="margin-top:14px; background:#18181B; border:1px solid #27272A; border-radius:20px;">
+          <div style="display:flex; align-items:center; gap:10px; padding:13px 16px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="#FAFAFA" stroke="none" style="flex-shrink:0;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            <span style="font-size:14px; font-weight:700; color:#FAFAFA; flex-shrink:0;">Energia</span>
+            <div onPointerDown="{{ dark.onSliderDown }}" style="position:relative; flex:1; height:20px; display:flex; align-items:center; cursor:pointer; touch-action:none;">
+              <div style="width:100%; height:6px; border-radius:3px; background:#27272A;">
+                <div style="height:100%; border-radius:3px; background:#6366F1; width:{{ dark.energyPercent }};"></div>
+              </div>
+              <div style="position:absolute; left:{{ dark.energyPercent }}; top:50%; width:18px; height:18px; margin-left:-9px; transform:translateY(-50%); border-radius:50%; background:#fff; box-shadow:0 1px 4px rgba(0,0,0,0.35), 0 0 0 1px #27272A;"></div>
+            </div>
+            <span style="font-size:14px; font-weight:800; color:#FAFAFA; flex-shrink:0; width:34px; text-align:right;">{{ dark.energy }}/10</span>
+          </div>
+
+          <div style="height:1px; background:#27272A;"></div>
+
+          <div style="display:flex; align-items:center; justify-content:space-between; padding:10px 12px;">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <button style="position:relative; width:40px; height:40px; border-radius:13px; background:#0A0A0B; border:1px solid #27272A; display:flex; align-items:center; justify-content:center; color:#FAFAFA; cursor:pointer;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/></svg>
+                <span style="position:absolute; top:6px; right:6px; width:7px; height:7px; border-radius:50%; background:#6366F1;"></span>
+              </button>
+              <button onClick="{{ dark.toggleSearch }}" style="width:40px; height:40px; border-radius:13px; background:#0A0A0B; border:1px solid #27272A; display:flex; align-items:center; justify-content:center; color:#FAFAFA; cursor:pointer;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+              </button>
+              <button style="width:40px; height:40px; border-radius:13px; background:#0A0A0B; border:1px solid #27272A; display:flex; align-items:center; justify-content:center; color:#FAFAFA; cursor:pointer;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06A1.65 1.65 0 004.6 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06A1.65 1.65 0 009 4.6a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+              </button>
+            </div>
+            <button onClick="{{ dark.toggleMonth }}" style="display:flex; align-items:center; gap:6px; height:40px; padding:0 14px; border-radius:13px; background:#0A0A0B; border:1px solid #27272A; color:#FAFAFA; font-size:13px; font-weight:700; cursor:pointer;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+              M&ecirc;s
+            </button>
+          </div>
+
+          <sc-if value="{{ dark.searchOpen }}" hint-placeholder-val="{{ false }}">
+            <div style="padding:0 14px 14px;">
+              <div style="display:flex; align-items:center; gap:8px; background:#0A0A0B; border:1px solid #27272A; border-radius:13px; padding:0 12px; height:40px;">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#A1A1AA" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input placeholder="Buscar tarefas..." style="flex:1; border:none; outline:none; background:transparent; font-size:13px; color:#FAFAFA; font-family:'Manrope',sans-serif;"/>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+
+      <sc-if value="{{ dark.monthOpen }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute; top:186px; left:20px; right:20px; z-index:30; background:#18181B; border:1px solid #27272A; border-radius:20px; padding:16px; box-shadow:0 20px 40px -10px rgba(0,0,0,0.35);">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px;">
+            <span style="font-size:14px; font-weight:800; color:#FAFAFA;">Julho 2026</span>
+            <button onClick="{{ dark.toggleMonth }}" style="width:26px; height:26px; border-radius:8px; border:none; background:#0A0A0B; color:#A1A1AA; display:flex; align-items:center; justify-content:center; cursor:pointer;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+          </div>
+          <div style="display:grid; grid-template-columns:repeat(7,1fr); gap:6px;">
+            <sc-for list="{{ monthDaysDark }}" as="day" hint-placeholder-count="31">
+              <div style="aspect-ratio:1; display:flex; align-items:center; justify-content:center; border-radius:9px; font-size:12px; font-weight:700; background:{{ day.bg }}; color:{{ day.color }};">{{ day.n }}</div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <div style="flex:1; min-height:0; overflow-y:auto; padding:2px 20px 24px;">
+
+        <div style="display:flex; align-items:flex-start; gap:12px; padding:9px 0; opacity:0.55;">
+          <span style="font-size:12px; font-weight:700; color:#A1A1AA; width:44px; flex-shrink:0;">14:30</span>
+          <div style="flex:1; height:1px; background:#27272A; margin-top:8px;"></div>
+        </div>
+        <div style="display:flex; align-items:flex-start; gap:12px; padding:9px 0;">
+          <span style="font-size:13px; font-weight:800; color:#FAFAFA; width:44px; flex-shrink:0;">15:00</span>
+          <div style="flex:1; height:1px; background:#27272A; margin-top:9px;"></div>
+        </div>
+        <div style="display:flex; align-items:flex-start; gap:12px; padding:9px 0; opacity:0.55;">
+          <span style="font-size:12px; font-weight:700; color:#A1A1AA; width:44px; flex-shrink:0;">15:30</span>
+          <div style="flex:1; height:1px; background:#27272A; margin-top:8px;"></div>
+        </div>
+        <div style="display:flex; align-items:flex-start; gap:12px; padding:9px 0;">
+          <span style="font-size:13px; font-weight:800; color:#FAFAFA; width:44px; flex-shrink:0;">16:00</span>
+          <div style="flex:1; height:1px; background:#27272A; margin-top:9px;"></div>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:12px; padding:6px 0;">
+          <span style="font-size:12px; font-weight:800; color:#EF4444; width:44px; flex-shrink:0;">16:32</span>
+          <div style="flex:1; height:2px; background:#EF4444; border-radius:1px;"></div>
+        </div>
+
+        <div style="display:flex; align-items:flex-start; gap:12px; padding:9px 0; opacity:0.55;">
+          <span style="font-size:12px; font-weight:700; color:#A1A1AA; width:44px; flex-shrink:0;">16:30</span>
+          <div style="flex:1; height:1px; background:#27272A; margin-top:8px;"></div>
+        </div>
+
+        <div style="display:flex; align-items:flex-start; gap:12px; padding:6px 0 14px;">
+          <span style="font-size:13px; font-weight:800; color:#FAFAFA; width:44px; flex-shrink:0; padding-top:14px;">17:00</span>
+          <div style="flex:1; background:#18181B; border:1px solid #27272A; border-radius:18px; padding:14px 14px 15px;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <div style="width:20px; height:20px; border-radius:50%; border:2px solid #27272A; flex-shrink:0;"></div>
+              <span style="font-size:13px; font-weight:700; color:#FAFAFA; flex:1;">17:00 &ndash; 18:00</span>
+              <span style="width:6px; height:6px; border-radius:50%; background:#A1A1AA;"></span>
+              <span style="font-size:12px; font-weight:700; color:#A1A1AA;">P5</span>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#A1A1AA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </div>
+            <div style="font-size:16px; font-weight:800; color:#FAFAFA; margin-top:8px; margin-left:30px;">Academia</div>
+          </div>
+        </div>
+
+        <div style="display:flex; align-items:flex-start; gap:12px; padding:9px 0; opacity:0.55;">
+          <span style="font-size:12px; font-weight:700; color:#A1A1AA; width:44px; flex-shrink:0;">17:30</span>
+          <div style="flex:1; height:1px; background:#27272A; margin-top:8px;"></div>
+        </div>
+
+        <div style="display:flex; align-items:flex-start; gap:12px; padding:6px 0 14px;">
+          <span style="font-size:13px; font-weight:800; color:#FAFAFA; width:44px; flex-shrink:0; padding-top:14px;">18:00</span>
+          <div style="flex:1; background:#18181B; border:1px solid #27272A; border-radius:18px; padding:14px 14px 15px;">
+            <div style="display:flex; align-items:center; gap:10px;">
+              <div style="width:20px; height:20px; border-radius:50%; border:2px solid #27272A; flex-shrink:0;"></div>
+              <span style="font-size:13px; font-weight:700; color:#FAFAFA; flex:1;">18:00 &ndash; 19:00</span>
+              <span style="width:6px; height:6px; border-radius:50%; background:#EF4444;"></span>
+              <span style="font-size:12px; font-weight:700; color:#EF4444;">P8</span>
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#A1A1AA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </div>
+            <div style="font-size:16px; font-weight:800; color:#FAFAFA; margin-top:8px; margin-left:30px;">M&eacute;dico</div>
+          </div>
+        </div>
+
+        <div style="display:flex; align-items:flex-start; gap:12px; padding:9px 0; opacity:0.55;">
+          <span style="font-size:12px; font-weight:700; color:#A1A1AA; width:44px; flex-shrink:0;">18:30</span>
+          <div style="flex:1; height:1px; background:#27272A; margin-top:8px;"></div>
+        </div>
+        <div style="display:flex; align-items:flex-start; gap:12px; padding:9px 0;">
+          <span style="font-size:13px; font-weight:800; color:#FAFAFA; width:44px; flex-shrink:0;">19:00</span>
+          <div style="flex:1; height:1px; background:#27272A; margin-top:9px;"></div>
+        </div>
+
+        <div style="display:flex; align-items:center; justify-content:center; padding:10px 0;">
+          <span style="font-size:11px; font-weight:700; letter-spacing:0.08em; color:#A1A1AA; opacity:0.6;">&middot; &middot; &middot;</span>
+        </div>
+
+        <div style="display:flex; align-items:flex-start; gap:12px; padding:6px 0 10px;">
+          <span style="font-size:13px; font-weight:800; color:#FAFAFA; width:44px; flex-shrink:0; padding-top:14px;">21:00</span>
+          <div style="flex:1; display:flex; flex-direction:column; gap:8px;">
+            <div style="background:#18181B; border:1px solid #27272A; border-radius:18px; padding:14px 14px 15px;">
+              <div style="display:flex; align-items:center; gap:10px;">
+                <div style="width:20px; height:20px; border-radius:50%; border:2px solid #27272A; flex-shrink:0;"></div>
+                <span style="font-size:13px; font-weight:700; color:#FAFAFA; flex:1;">21:00 &ndash; 21:30</span>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#A1A1AA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </div>
+              <div style="font-size:16px; font-weight:800; color:#FAFAFA; margin-top:8px; margin-left:30px;">Lamitor</div>
+            </div>
+            <div style="background:#18181B; border:1px solid #27272A; border-radius:18px; padding:14px 14px 15px;">
+              <div style="display:flex; align-items:center; gap:10px;">
+                <div style="width:20px; height:20px; border-radius:50%; border:2px solid #27272A; flex-shrink:0;"></div>
+                <span style="font-size:13px; font-weight:700; color:#FAFAFA; flex:1;">21:00 &ndash; 21:30</span>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#A1A1AA" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+              </div>
+              <div style="font-size:16px; font-weight:800; color:#FAFAFA; margin-top:8px; margin-left:30px;">Camiseta, cueca, farda, meia</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex; align-items:flex-start; gap:12px; padding:9px 0 18px;">
+          <span style="font-size:13px; font-weight:800; color:#FAFAFA; width:44px; flex-shrink:0;">21:30</span>
+          <div style="flex:1; height:1px; background:#27272A; margin-top:9px;"></div>
+        </div>
+
+        <div style="background:#18181B; border:1px solid #27272A; border-radius:20px; overflow:hidden; margin-top:4px;">
+          <div style="padding:16px 16px 12px;">
+            <div style="display:flex; align-items:baseline; justify-content:space-between;">
+              <span style="font-size:15px; font-weight:800; color:#FAFAFA;">Resolvidas neste dia</span>
+              <span style="font-size:13px; font-weight:700; color:#A1A1AA;">20</span>
+            </div>
+            <div style="font-size:12px; color:#A1A1AA; margin-top:3px;">Conclu&iacute;das e encerradas ficam fora da timeline ativa.</div>
+          </div>
+          <sc-for list="{{ resolvedItems }}" as="item" hint-placeholder-count="5">
+            <div style="padding:12px 16px; border-top:1px solid #27272A; display:flex; align-items:center; justify-content:space-between; gap:12px;">
+              <div style="min-width:0;">
+                <div style="font-size:11px; font-weight:800; letter-spacing:0.05em; color:#A1A1AA;">CONCLU&Iacute;DA &middot; {{ item.time }}</div>
+                <div style="font-size:14px; font-weight:700; color:#FAFAFA; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ item.title }}</div>
+              </div>
+              <a style="font-size:13px; font-weight:700; color:#6366F1; flex-shrink:0; cursor:pointer;">Reabrir</a>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <sc-if value="{{ dark.composeOpen }}" hint-placeholder-val="{{ false }}">
+        <div style="position:absolute; left:0; right:0; bottom:70px; z-index:40; background:#18181B; border-top:1px solid #27272A; border-radius:22px 22px 0 0; padding:14px 16px calc(14px + env(safe-area-inset-bottom,0px)); box-shadow:0 -16px 32px -8px rgba(0,0,0,0.28);">
+          <div style="display:flex; align-items:center; gap:10px;">
+            <input value="{{ dark.composeText }}" onChange="{{ dark.onComposeText }}" placeholder="Nova tarefa..." autoFocus="{{ true }}" style="flex:1; border:1px solid #27272A; background:#0A0A0B; border-radius:14px; padding:0 14px; height:44px; font-size:14px; color:#FAFAFA; font-family:'Manrope',sans-serif; outline:none;"/>
+            <button onClick="{{ dark.toggleRecording }}" style="width:44px; height:44px; border-radius:14px; background:{{ dark.recordingBg }}; border:1px solid #27272A; display:flex; align-items:center; justify-content:center; flex-shrink:0; cursor:pointer;">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="{{ dark.micColor }}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 00-3 3v6a3 3 0 006 0V5a3 3 0 00-3-3z"/><path d="M19 10v1a7 7 0 01-14 0v-1"/><line x1="12" y1="18" x2="12" y2="22"/></svg>
+            </button>
+            <button onClick="{{ dark.toggleCompose }}" style="width:44px; height:44px; border-radius:14px; background:#6366F1; border:none; display:flex; align-items:center; justify-content:center; flex-shrink:0; cursor:pointer;">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+            </button>
+          </div>
+        </div>
+      </sc-if>
+
+      <div style="flex-shrink:0; position:relative; height:70px; background:#18181B; border-top:1px solid #27272A; display:flex; align-items:center; padding-bottom:6px;">
+        <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; color:#6366F1;">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+          <span style="font-size:11px; font-weight:800;">Agenda</span>
+        </div>
+        <div style="width:76px; flex-shrink:0;"></div>
+        <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:3px; color:#A1A1AA;">
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>
+          <span style="font-size:11px; font-weight:700;">Painel</span>
+        </div>
+        <button onClick="{{ dark.toggleCompose }}" style="position:absolute; left:50%; top:-26px; transform:translateX(-50%); width:58px; height:58px; border-radius:50%; background:#6366F1; border:5px solid #0A0A0B; box-shadow:0 10px 22px -4px rgba(0,0,0,0.4); display:flex; align-items:center; justify-content:center; cursor:pointer;">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+</div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    energyLight: 4, energyDark: 4,
+    composeLight: false, composeDark: false,
+    composeTextLight: '', composeTextDark: '',
+    searchLight: false, searchDark: false,
+    monthLight: false, monthDark: false,
+    recordingLight: false, recordingDark: false,
+  };
+
+  handleSlider(e, key) {
+    const track = e.currentTarget;
+    const update = (evt) => {
+      const rect = track.getBoundingClientRect();
+      const x = Math.min(Math.max(evt.clientX - rect.left, 0), rect.width);
+      const val = Math.round((x / rect.width) * 10);
+      this.setState({ [key]: val });
+    };
+    update(e);
+    const onMove = (evt) => update(evt);
+    const onUp = () => {
+      window.removeEventListener('pointermove', onMove);
+      window.removeEventListener('pointerup', onUp);
+    };
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+  }
+
+  buildMonthDays(tokens) {
+    return Array.from({ length: 31 }, (_, i) => {
+      const n = i + 1;
+      const isToday = n === 1;
+      return {
+        n,
+        bg: isToday ? tokens.ACCENT : 'transparent',
+        color: isToday ? '#FFFFFF' : tokens.TEXT,
+      };
+    });
+  }
+
+  themeVals(suffix, tokens) {
+    const key = (n) => n + suffix;
+    const energy = this.state[key('energy')];
+    const recording = this.state[key('recording')];
+    return {
+      energy,
+      energyPercent: (energy / 10 * 100) + '%',
+      onSliderDown: (e) => this.handleSlider(e, key('energy')),
+      composeOpen: this.state[key('compose')],
+      composeText: this.state[key('composeText')],
+      toggleCompose: () => this.setState((s) => ({
+        [key('compose')]: !s[key('compose')],
+        [key('composeText')]: s[key('compose')] ? s[key('composeText')] : '',
+      })),
+      onComposeText: (e) => this.setState({ [key('composeText')]: e.target.value }),
+      searchOpen: this.state[key('search')],
+      toggleSearch: () => this.setState((s) => ({ [key('search')]: !s[key('search')] })),
+      monthOpen: this.state[key('month')],
+      toggleMonth: () => this.setState((s) => ({ [key('month')]: !s[key('month')] })),
+      recording,
+      toggleRecording: () => this.setState((s) => ({ [key('recording')]: !s[key('recording')] })),
+      recordingBg: recording ? '#EF4444' : tokens.BG,
+      micColor: recording ? '#FFFFFF' : tokens.TEXT,
+    };
+  }
+
+  renderVals() {
+    const LIGHT = { BG: '#FAFAFA', TEXT: '#18181B', ACCENT: '#4F46E5' };
+    const DARK = { BG: '#0A0A0B', TEXT: '#FAFAFA', ACCENT: '#6366F1' };
+    return {
+      light: this.themeVals('Light', LIGHT),
+      dark: this.themeVals('Dark', DARK),
+      monthDaysLight: this.buildMonthDays(LIGHT),
+      monthDaysDark: this.buildMonthDays(DARK),
+      resolvedItems: [
+        { time: '14:57', title: 'Musculação' },
+        { time: '14:57', title: 'Nubank mensalmente' },
+        { time: '14:57', title: 'Entonação, intenção, gesticulação' },
+        { time: '14:57', title: 'Pedir coldre' },
+        { time: '14:57', title: 'Uniforme completo' },
+      ],
+    };
+  }
+}
+</script>
+</body>
+</html>
