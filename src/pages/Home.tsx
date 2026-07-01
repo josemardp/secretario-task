@@ -57,9 +57,10 @@ export default function Home() {
   const [focoOpen, setFocoOpen] = useState(false);
   const [briefingText, setBriefingText] = useState<string | null>(null);
   const [isGeneratingBriefing, setIsGeneratingBriefing] = useState(false);
+  const [captureBarExpanded, setCaptureBarExpanded] = useState(false);
   const taskInputRef = useRef<HTMLTextAreaElement | null>(null);
-  const captureBarRef = useRef<HTMLFormElement | null>(null);
-  const [captureBarHeight, setCaptureBarHeight] = useState(56);
+  const captureBarRef = useRef<HTMLElement | null>(null);
+  const [captureBarHeight, setCaptureBarHeight] = useState(48);
   const toast = useToast();
 
   const tasks = useTaskStore((s) => s.tasks);
@@ -102,6 +103,7 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    if (!captureBarExpanded) return;
     const input = taskInputRef.current;
     if (!input) return;
 
@@ -109,12 +111,39 @@ export default function Home() {
     input.style.height = 'auto';
     input.style.height = `${Math.max(36, Math.min(input.scrollHeight, maxHeight))}px`;
     input.style.overflowY = input.scrollHeight > maxHeight ? 'auto' : 'hidden';
+  }, [taskText, captureBarExpanded]);
 
+  useEffect(() => {
     const captureBar = captureBarRef.current;
-    if (captureBar) {
+    if (!captureBar) return;
+
+    const measure = () => {
       setCaptureBarHeight(Math.ceil(captureBar.getBoundingClientRect().height));
-    }
-  }, [taskText]);
+    };
+
+    measure();
+
+    if (!('ResizeObserver' in window)) return;
+
+    const resizeObserver = new ResizeObserver(measure);
+    resizeObserver.observe(captureBar);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [taskText, captureBarExpanded]);
+
+  useEffect(() => {
+    if (!captureBarExpanded) return;
+
+    const frame = window.requestAnimationFrame(() => {
+      taskInputRef.current?.focus();
+    });
+
+    return () => {
+      window.cancelAnimationFrame(frame);
+    };
+  }, [captureBarExpanded]);
 
   useEffect(() => {
     async function handle() {
@@ -223,6 +252,7 @@ export default function Home() {
         });
       }
       setTaskText('');
+      setCaptureBarExpanded(false);
       if (options.closeModal !== false) setPendingSmartTasks(null);
       toast(finalTasks.length === 1 ? 'Tarefa adicionada.' : 'Tarefas adicionadas.', 'success');
     } catch (err) {
@@ -287,6 +317,15 @@ export default function Home() {
   }, [tasks, semanticResults, searchText]);
 
   const captureBarVisible = viewMode === 'timeline';
+  const setCaptureElementRef = (node: HTMLElement | null) => {
+    captureBarRef.current = node;
+  };
+
+  const handleCollapseCaptureBar = () => {
+    if (isRecording) return;
+    setCaptureBarExpanded(false);
+  };
+
   const handleEnergyChange = (value: string) => {
     setCurrentEnergy(parseInt(value, 10));
   };
@@ -518,9 +557,24 @@ export default function Home() {
       )}
 
       {/* ── Capture bar ──────────────────────────────────────────── */}
-      {captureBarVisible && (
+      {captureBarVisible && !captureBarExpanded && (
+        <button
+          ref={setCaptureElementRef}
+          type="button"
+          onClick={() => setCaptureBarExpanded(true)}
+          className="fixed right-4 z-40 w-12 h-12 rounded-2xl bg-accent text-white flex items-center justify-center shadow-lg select-none active:scale-95 transition-transform"
+          style={{
+            bottom: 'calc(var(--kb, 0px) + 72px + env(safe-area-inset-bottom))',
+          }}
+          aria-label="Abrir captura de tarefa"
+          title="Nova tarefa"
+        >
+          <Plus size={22} strokeWidth={2.4} />
+        </button>
+      )}
+      {captureBarVisible && captureBarExpanded && (
         <form
-          ref={captureBarRef}
+          ref={setCaptureElementRef}
           onSubmit={handleTaskSubmit}
           className="fixed left-0 right-0 z-40 bg-paper border-t border-line px-3 flex items-end gap-2 select-none"
           style={{
@@ -545,6 +599,16 @@ export default function Home() {
             className="flex-1 min-w-0 bg-transparent text-[14px] leading-5 text-ink placeholder:text-ink-2 outline-none resize-none min-h-11 py-2.5"
             style={{ fontSize: 16 }}
           />
+          <button
+            type="button"
+            onClick={handleCollapseCaptureBar}
+            disabled={isRecording || isAddingTask || isTranscribing}
+            className="w-11 h-11 rounded-xl bg-paper2 text-ink flex items-center justify-center transition-colors shrink-0 disabled:opacity-40"
+            aria-label="Fechar captura"
+            title="Fechar"
+          >
+            <X size={16} />
+          </button>
           <button
             type="button"
             onMouseDown={startRecording}
@@ -585,7 +649,10 @@ export default function Home() {
           return (
             <button
               key={it.id}
-              onClick={() => setViewMode(it.id)}
+              onClick={() => {
+                setViewMode(it.id);
+                if (it.id !== 'timeline') setCaptureBarExpanded(false);
+              }}
               className="flex-1 flex flex-col items-center justify-center gap-1 relative focus:outline-none"
             >
               <it.icon size={20} strokeWidth={on ? 2.2 : 1.7} className={on ? 'text-accent' : 'text-ink-tertiary'} />
