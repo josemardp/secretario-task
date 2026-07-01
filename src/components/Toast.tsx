@@ -30,7 +30,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                 ? 'bg-danger text-white'
                 : toast.tone === 'success'
                   ? 'bg-success text-white'
-                  : 'bg-ink text-white')
+                  : 'bg-ink text-canvas')
             }
           >
             {toast.msg}

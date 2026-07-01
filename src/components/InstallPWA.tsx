@@ -34,7 +34,7 @@ export function InstallPWA() {
   return (
     <button
       onClick={onClick}
-      className="inline-flex items-center gap-1.5 bg-ink text-white px-3 h-11 rounded-xl text-[12px] font-bold shrink-0"
+      className="inline-flex items-center gap-1.5 bg-ink text-canvas px-3 h-11 rounded-xl text-[12px] font-bold shrink-0"
       title="Instalar aplicativo"
     >
       <Download size={13} strokeWidth={2.4} />

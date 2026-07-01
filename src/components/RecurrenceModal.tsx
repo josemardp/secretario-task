@@ -341,7 +341,7 @@ export function RecurrenceModal({ dueAt, currentRule, onSave, onClose }: Recurre
           </button>
           <button
             onClick={handleSave}
-            className="flex-1 h-11 rounded-xl text-[13px] font-bold text-white bg-ink active:opacity-75 transition-opacity"
+            className="flex-1 h-11 rounded-xl text-[13px] font-bold text-canvas bg-ink active:opacity-75 transition-opacity"
           >
             Concluir
           </button>

@@ -97,7 +97,7 @@ export default function Login() {
           <button
             type="submit"
             disabled={loading}
-            className="h-12 mt-1 rounded-xl bg-ink text-white text-[14px] font-bold disabled:opacity-50"
+            className="h-12 mt-1 rounded-xl bg-ink text-canvas text-[14px] font-bold disabled:opacity-50"
           >
             {loading ? 'Entrando...' : 'Entrar'}
           </button>

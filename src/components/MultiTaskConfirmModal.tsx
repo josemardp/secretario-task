@@ -78,7 +78,7 @@ export function MultiTaskConfirmModal({
         {/* header */}
         <div className="px-5 pt-2 pb-3 flex items-start justify-between">
           <div className="flex items-start gap-2.5">
-            <div className="w-11 h-11 rounded-xl bg-ink text-white flex items-center justify-center shrink-0">
+            <div className="w-11 h-11 rounded-xl bg-ink text-canvas flex items-center justify-center shrink-0">
               <Sparkles size={16} strokeWidth={2.2} />
             </div>
             <div>
@@ -211,10 +211,10 @@ export function MultiTaskConfirmModal({
                           onClick={() => updateTask(idx, { priority: p.value })}
                           className={[
                             'flex-1 inline-flex items-center justify-center gap-1 py-2 rounded-lg text-[12px] font-bold transition-colors',
-                            on ? 'bg-ink text-white' : 'text-ink-2',
+                            on ? 'bg-ink text-canvas' : 'text-ink-2',
                           ].join(' ')}
                         >
-                          <Flag size={10} strokeWidth={2.4} style={{ color: on ? '#fff' : p.swatch }} />
+                          <Flag size={10} strokeWidth={2.4} style={on ? undefined : { color: p.swatch }} />
                           {p.label}
                         </button>
                       );
@@ -243,7 +243,7 @@ export function MultiTaskConfirmModal({
           <button
             onClick={() => onConfirm(tasks)}
             disabled={tasks.length === 0}
-            className="flex-[1.4] h-11 rounded-xl bg-ink text-[13px] font-bold text-white disabled:opacity-40"
+            className="flex-[1.4] h-11 rounded-xl bg-ink text-[13px] font-bold text-canvas disabled:opacity-40"
           >
             Salvar {tasks.length > 0 ? tasks.length : ''} {tasks.length === 1 ? 'tarefa' : 'tarefas'}
           </button>

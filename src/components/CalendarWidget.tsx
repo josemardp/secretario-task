@@ -76,7 +76,7 @@ export function CalendarWidget({ selectedDate, onSelectDate, onClose, tasks }: C
           className={[
             'h-10 w-10 rounded-xl flex items-center justify-center relative transition-colors tnum',
             isSelected
-              ? 'bg-ink text-white font-bold'
+              ? 'bg-ink text-canvas font-bold'
               : isToday
                 ? 'bg-paper2 text-ink font-bold ring-1 ring-line'
                 : 'text-ink hover:bg-paper2',

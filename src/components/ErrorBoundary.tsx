@@ -53,7 +53,7 @@ export class ErrorBoundary extends Component<Props, State> {
           <div className="flex flex-col gap-3 w-full max-w-xs">
             <button
               onClick={this.handleReset}
-              className="bg-ink text-white px-6 py-3 rounded-2xl text-sm font-bold w-full"
+              className="bg-ink text-canvas px-6 py-3 rounded-2xl text-sm font-bold w-full"
             >
               Limpar dados e recarregar
             </button>
