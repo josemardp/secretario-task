@@ -97,9 +97,11 @@ export async function fetchProfileFromCloud(): Promise<void> {
   const { data: sessionData } = await supabase.auth.getSession();
   if (!sessionData.session) return;
 
+  // current_energy permanece no schema (ver docs/energia-removida.md) mas o
+  // app parou de ler/escrever essa coluna — só active_context é sincronizado.
   const { data, error } = await supabase
     .from('profiles')
-    .select('openai_api_key, current_energy, active_context, energy_updated_at')
+    .select('openai_api_key, active_context, energy_updated_at')
     .eq('id', sessionData.session.user.id)
     .maybeSingle();
 
@@ -107,7 +109,6 @@ export async function fetchProfileFromCloud(): Promise<void> {
 
   const profile = data as {
     openai_api_key?: string | null;
-    current_energy?: number | null;
     active_context?: string | null;
     energy_updated_at?: string | null;
   } | null;
@@ -116,27 +117,25 @@ export async function fetchProfileFromCloud(): Promise<void> {
 
   useContextStore.getState().setAiApiKey(profile.openai_api_key ?? null);
 
-  // LWW: only overwrite local energy/context if the remote timestamp is strictly newer
+  // LWW: only overwrite local context if the remote timestamp is strictly newer
   const contextStore = useContextStore.getState();
-  const remoteEnergyTs = toTimestampOrZero(profile.energy_updated_at);
-  const localEnergyTs  = toTimestampOrZero(contextStore.energyUpdatedAt);
+  const remoteTs = toTimestampOrZero(profile.energy_updated_at);
+  const localTs  = toTimestampOrZero(contextStore.contextUpdatedAt);
 
-  if (remoteEnergyTs > localEnergyTs && profile.current_energy != null) {
-    contextStore.setEnergyFromRemote(
-      profile.current_energy,
-      (profile.active_context as ContextType) ?? contextStore.activeContext,
+  if (remoteTs > localTs && profile.active_context != null) {
+    contextStore.setContextFromRemote(
+      profile.active_context as ContextType,
       profile.energy_updated_at!
     );
   }
 }
 
-export async function pushEnergyToCloud(energy: number, context: string, updatedAt: string): Promise<void> {
+export async function pushContextToCloud(context: string, updatedAt: string): Promise<void> {
   const { data: sessionData } = await supabase.auth.getSession();
   if (!sessionData.session) return;
 
   const { error } = await supabase.from('profiles').upsert({
     id: sessionData.session.user.id,
-    current_energy: energy,
     active_context: context,
     energy_updated_at: updatedAt,
   }, { onConflict: 'id' });

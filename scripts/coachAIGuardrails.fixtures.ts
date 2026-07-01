@@ -80,7 +80,6 @@ function buildPayload(overrides: Partial<Task>[] = []) {
   return buildGovernedCoachAIPayload({
     topTasks: tasks,
     allTasks: tasks,
-    energy: 6,
     now: NOW,
   });
 }

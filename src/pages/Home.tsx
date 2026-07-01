@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef, type CSSProperties } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { useTaskStore } from '../stores/taskStore';
 import { useContextStore } from '../stores/contextStore';
 
@@ -8,7 +8,7 @@ import { generateEmbedding, estimateTaskTime, transcribeAudio } from '../lib/ai'
 import { useAudioRecorder } from '../hooks/useAudioRecorder';
 import {
   CalendarDays, BarChart2, Plus, Mic, Search,
-  ArrowRight, X, Zap, ClipboardCheck,
+  ArrowRight, X, ClipboardCheck,
 } from 'lucide-react';
 import { BuildBadge } from '../components/BuildBadge';
 import { TimelineView } from '../components/TimelineView';
@@ -71,7 +71,7 @@ export default function Home() {
   const addTask = useTaskStore((s) => s.addTask);
   const updateTask = useTaskStore((s) => s.updateTask);
   const recordTaskEvent = useTaskStore((s) => s.recordTaskEvent);
-  const { activeContext, currentEnergy, setCurrentEnergy, aiApiKey } = useContextStore();
+  const { activeContext, aiApiKey } = useContextStore();
 
   const isTaskForToday = (dueAt: string | null) => {
     if (!dueAt) return false;
@@ -173,8 +173,8 @@ export default function Home() {
   }, [audioBlob, aiApiKey, clearAudio, toast]);
 
   const briefingTasks = useMemo(() => {
-    return getDailyBriefing(tasks, currentEnergy, activeContext, 3);
-  }, [tasks, currentEnergy, activeContext]);
+    return getDailyBriefing(tasks, activeContext, 3);
+  }, [tasks, activeContext]);
 
   const todayCount = useMemo(() => {
     return tasks.filter((t) => isOpenTask(t) && isTaskForToday(t.due_at)).length;
@@ -192,7 +192,7 @@ export default function Home() {
 
     setIsGeneratingBriefing(true);
     try {
-      const text = await generateBriefingFromTopTasks(briefingTasks, tasks, currentEnergy, aiApiKey);
+      const text = await generateBriefingFromTopTasks(briefingTasks, tasks, aiApiKey);
       setBriefingText(text);
     } catch (err) {
       console.error(err);
@@ -325,14 +325,6 @@ export default function Home() {
     captureBarRef.current = node;
   };
 
-  const handleEnergyChange = (value: string) => {
-    setCurrentEnergy(parseInt(value, 10));
-  };
-
-  const energySliderStyle: CSSProperties & { '--energy-percent': string } = {
-    '--energy-percent': `${currentEnergy * 10}%`,
-  };
-
   return (
     <div
       className="min-h-screen bg-canvas font-sans text-ink"
@@ -386,26 +378,6 @@ export default function Home() {
           </div>
           <div className="relative mt-3">
           <div className="overflow-hidden rounded-[20px] border border-line bg-paper">
-          <label className="flex items-center gap-2.5 px-4 py-[13px]">
-            <Zap size={16} className="text-ink shrink-0" strokeWidth={2.2} />
-            <span className="text-[14px] font-bold text-ink shrink-0">Energia</span>
-            <input
-              type="range"
-              min="0"
-              max="10"
-              value={currentEnergy}
-              onInput={(e) => handleEnergyChange(e.currentTarget.value)}
-              onChange={(e) => handleEnergyChange(e.currentTarget.value)}
-              className="energy-slider flex-1 min-w-[96px] h-2 rounded-full appearance-none"
-              style={energySliderStyle}
-            />
-            <span className="w-9 text-right text-[14px] font-extrabold tnum text-ink shrink-0">
-              {currentEnergy}/10
-            </span>
-          </label>
-
-          <div className="h-px bg-line" />
-
           <div className="flex items-center justify-between gap-3 px-3 py-2.5">
             <HeaderActionButtons
               onOpenFoco={() => setFocoOpen(true)}

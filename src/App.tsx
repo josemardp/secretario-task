@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { supabase } from './lib/supabase';
 import { useAuthStore } from './stores/authStore';
 import { NetworkStatus } from './components/NetworkStatus';
-import { fetchRemoteTasks, processSyncQueue, fetchProfileFromCloud, pushEnergyToCloud } from './lib/sync';
+import { fetchRemoteTasks, processSyncQueue, fetchProfileFromCloud, pushContextToCloud } from './lib/sync';
 import { useContextStore } from './stores/contextStore';
 import { useNetwork } from './hooks/useNetwork';
 import type { RealtimeChannel } from '@supabase/supabase-js';
@@ -91,12 +91,12 @@ function App() {
     let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
     const unsubscribe = useContextStore.subscribe((state, prev) => {
-      if (!prev || (state.currentEnergy === prev.currentEnergy && state.activeContext === prev.activeContext)) return;
+      if (!prev || state.activeContext === prev.activeContext) return;
       if (debounceTimer) clearTimeout(debounceTimer);
       debounceTimer = setTimeout(() => {
-        const { currentEnergy, activeContext, energyUpdatedAt } = useContextStore.getState();
-        pushEnergyToCloud(currentEnergy, activeContext, energyUpdatedAt ?? new Date().toISOString())
-          .catch((err) => console.error('[sync] pushEnergyToCloud falhou:', err));
+        const { activeContext, contextUpdatedAt } = useContextStore.getState();
+        pushContextToCloud(activeContext, contextUpdatedAt ?? new Date().toISOString())
+          .catch((err) => console.error('[sync] pushContextToCloud falhou:', err));
       }, 800);
     });
 

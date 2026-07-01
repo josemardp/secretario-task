@@ -4,7 +4,7 @@ import { generateSmartBriefing } from './ai';
 import { buildGovernedCoachAIPayload } from './coachAIGuardrails';
 import { isActionableBriefingTask } from './taskFilters';
 
-export function getDailyBriefing(tasks: Task[], currentEnergy: number, activeContext: ContextType, limit: number = 3): Task[] {
+export function getDailyBriefing(tasks: Task[], activeContext: ContextType, limit: number = 3): Task[] {
   const now = new Date();
   const start = new Date(now);
   start.setHours(0, 0, 0, 0);
@@ -23,7 +23,7 @@ export function getDailyBriefing(tasks: Task[], currentEnergy: number, activeCon
   // Calculate scores without mutating task shape
   const tasksWithScore = pendingTodayTasks.map((task) => ({
     task,
-    score: calculateTaskScore(task, currentEnergy, activeContext),
+    score: calculateTaskScore(task, activeContext),
   }));
 
   // Sort deterministically (stable tie-breakers)
@@ -48,7 +48,6 @@ export function getDailyBriefing(tasks: Task[], currentEnergy: number, activeCon
 export async function generateBriefingFromTopTasks(
   topTasks: Task[],
   allTasks: Task[],
-  currentEnergy: number,
   aiApiKey: string
 ): Promise<string> {
   const now = new Date();
@@ -56,9 +55,8 @@ export async function generateBriefingFromTopTasks(
   const governedPayload = buildGovernedCoachAIPayload({
     topTasks: actionableTasks,
     allTasks,
-    energy: currentEnergy,
     now,
   });
 
-  return generateSmartBriefing(actionableTasks, currentEnergy, aiApiKey, governedPayload);
+  return generateSmartBriefing(actionableTasks, aiApiKey, governedPayload);
 }

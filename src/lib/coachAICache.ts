@@ -49,7 +49,6 @@ export function buildCoachAIInputHash(
   return stableHash({
     prompt_version: promptVersion,
     guardrails_version: guardrailsVersion,
-    current_energy: payload.current_energy,
     briefing_window: payload.generated_at.slice(0, 13),
     top_tasks: payload.top_tasks.map((task, index) => ({
       rank: index + 1,
