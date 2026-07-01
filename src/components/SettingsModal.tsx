@@ -135,7 +135,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               <button
                 type="button"
                 onClick={() => requestPermission()}
-                className="inline-flex items-center gap-1.5 min-h-11 bg-ink text-white px-3 py-2 rounded-xl text-[12px] font-bold"
+                className="inline-flex items-center gap-1.5 min-h-11 bg-ink text-canvas px-3 py-2 rounded-xl text-[12px] font-bold"
               >
                 Ativar notificações
               </button>
@@ -171,7 +171,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
           <button
             onClick={handleSave}
             disabled={isSaving}
-            className="flex-1 h-11 rounded-xl bg-ink text-[13px] font-bold text-white"
+            className="flex-1 h-11 rounded-xl bg-ink text-[13px] font-bold text-canvas"
           >
             {isSaving ? 'Salvando...' : 'Salvar'}
           </button>
