@@ -252,7 +252,6 @@ function TimelineTaskCard({
         onClick={handleCardClick}
         className={[
           'relative min-w-0 h-auto flex flex-col bg-surface border border-border rounded-[18px] sm:min-h-[104px]',
-          expanded ? '' : 'min-h-[140px]',
           'transition-transform',
           isDragging ? 'duration-0' : 'duration-200',
         ].join(' ')}
