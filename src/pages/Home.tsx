@@ -360,17 +360,17 @@ export default function Home() {
         style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}
       >
         <div className="px-4 pt-3 pb-3">
-          <div className="flex items-start gap-3">
-            <div className="min-w-0 flex-1">
-              <h1 className="truncate font-display text-[29px] leading-[1.05] text-ink">
+          <div className="flex items-end gap-3">
+            <div className="min-w-0 flex-1 flex flex-col gap-2">
+              <h1 className="truncate text-center font-display text-[29px] leading-[1.05] text-ink">
                 {getGreeting()}
               </h1>
-              <p className="mt-2 min-w-0 truncate text-[13px] text-ink-2 tnum leading-snug">
+              <p className="min-w-0 truncate text-center text-[13px] text-ink-2 tnum leading-snug">
                 {formatLongDate()}
               </p>
             </div>
 
-            <div className="shrink-0 flex flex-col items-end gap-2">
+            <div className="shrink-0 flex flex-col items-center gap-2">
               <div className="flex items-center gap-1.5">
                 <InstallPWA />
                 <button
