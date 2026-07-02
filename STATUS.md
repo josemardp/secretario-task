@@ -1,6 +1,6 @@
 # STATUS.md — SecretárioTask
 
-Última atualização: 2026-06-30 (Fase A — Revisão Semanal)
+Última atualização: 2026-07-01 (Fechamento UX mobile e documentação)
 
 ---
 
@@ -23,7 +23,33 @@
 
 # Sprint atual
 
-Fase A — Revisão Semanal (Plano de Inteligência v5) — concluída
+Fechamento UX mobile e documentação de energia — concluído
+
+---
+
+# Fechamento UX mobile e documentação de energia (2026-07-01)
+
+## Objetivo
+Alinhar a documentação ao estado real após a remoção da energia atual do usuário e consolidar o refinamento mobile do header/tab bar.
+
+## Entregas
+- `ARCHITECTURE.md` e `PRD.md` corrigidos para `f_energy` com `BASELINE_ENERGY = 5`, sem `contextStore.energiaAtual`.
+- Governança IA documentada sem parâmetro/hash de energia atual.
+- Header mobile reestruturado: saudação recuada, `InstallPWA` compacto, botão "Mês" na linha 1, data e contador separados na linha 2.
+- Tab bar mobile consolidada em Agenda, Foco, FAB, Busca e Painel.
+- Configurações movidas para dentro do Painel.
+- Ícones coloridos nativos em Agenda, Busca, Painel e "Mês"; Foco preserva `Target`.
+
+## Validações
+- [x] `npm run lint` — zero erros
+- [x] `npm run build` — zero erros TypeScript; aviso conhecido de chunk maior que 500 kB
+- [x] `npm run test` — todos passando
+
+## Resultado
+- Nenhuma migration criada.
+- Nenhum comando Supabase executado.
+- Captura rápida, Agenda, Foco, Busca, Painel e sync/offline-first preservados.
+- Próximo passo: smoke visual em dispositivo real e seguir uso por 2-4 semanas antes da Fase B do Plano de Inteligência v5.
 
 ---
 

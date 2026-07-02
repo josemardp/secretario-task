@@ -1,8 +1,38 @@
 # SPRINT_LOG.md — SecretárioTask
 
-Última revisão: 2026-06-30
+Última revisão: 2026-07-01
 Status: alinhado ao ROADMAP oficial
 Duração sugerida por sprint: 1–2 semanas
+
+---
+
+# Fechamento UX mobile e documentação de energia
+Data: 2026-07-01
+
+## Entregáveis
+- `src/pages/Home.tsx`: header reorganizado em duas linhas, contador separado, tab bar com Agenda/Foco/FAB/Busca/Painel e ícones nativos coloridos onde aplicável.
+- `src/components/InstallPWA.tsx`: botão de instalação PWA compactado para card quadrado.
+- `src/components/DashboardView.tsx`: acesso a Configurações mantido dentro do Painel.
+- `ARCHITECTURE.md`: ranking e payload/cache IA alinhados à remoção da energia atual do usuário.
+- `PRD.md`: UX mobile vigente e ranking por baseline fixa documentados.
+- `STATUS.md` e `DECISIONS.md`: fechamento e decisão de navegação registrados.
+
+## Critérios de conclusão
+- [x] `npm run lint` — zero erros
+- [x] `npm run build` — zero erros TypeScript; aviso conhecido de chunk maior que 500 kB
+- [x] `npm run test` — todos passando
+- [x] Nenhuma migration criada.
+- [x] Nenhum comando Supabase executado.
+- [x] Captura rápida e tab bar preservadas.
+
+## Escopo excluído
+- Nenhuma alteração de schema, RLS, sync ou Supabase remoto.
+- Nenhuma alteração de `TaskStatus`.
+- Nenhuma mudança em cálculos do Dashboard/Coach além da documentação do estado já implementado.
+- Nenhuma nova dependência.
+
+## Resultado
+Fechamento de documentação e refinamento mobile concluído. A remoção da energia atual do usuário fica referenciada em `DECISIONS.md` e `docs/energia-removida.md`; a UI mobile vigente fica descrita no PRD.
 
 ---
 

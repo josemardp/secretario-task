@@ -1,6 +1,6 @@
 # PRD.md — SecretárioTask
 
-Última revisão: 2026-05-12
+Última revisão: 2026-07-01
 Status: Documento consolidado e alinhado ao MVP enxuto, com correções da auditoria de 2026-05-12
 
 ---
@@ -116,7 +116,7 @@ CREATE TYPE context_type AS ENUM (
 - soft delete (via `deleted_at`)
 - Agenda/Timeline como view operacional principal
 - parser local determinístico
-- ranking determinístico (com `due_at` e energia compatível com usuário)
+- ranking determinístico (com `due_at` e energia da tarefa comparada a baseline fixa)
 - briefing determinístico
 - persistência local
 - fila offline de mutações
@@ -161,6 +161,12 @@ Métricas de semana, hoje e horário de pico usam somente conclusões confirmada
 A experiência operacional principal é a Agenda/Timeline. A captura rápida fica disponível na Agenda e preserva parser determinístico, IA opcional e origem da estimativa. O Dashboard permanece como Painel analítico. O FocoSheet permanece para orientação, briefing e top tarefas, sem iniciar timer, sem escrever `started_at` e sem emitir evento `started`.
 
 Campos históricos de tempo (`started_at`, `actual_minutes`, `actual_minutes_source`) continuam preservados para compatibilidade e qualidade de dado, mas timer manual não volta como entrada nova sem decisão explícita.
+
+## UX mobile vigente — header e tab bar
+
+O header mobile mostra a saudação recuada, o botão compacto de instalação PWA quando disponível, e o botão "Mês" na primeira linha. A segunda linha separa a data por extenso do contador de tarefas para hoje, com o contador em destaque de acento.
+
+A tab bar inferior possui cinco posições: Agenda, Foco, FAB central de captura, Busca e Painel. Foco e Busca são acessos principais no rodapé, não no header. Configurações ficam dentro do Painel/Dashboard. Agenda, Busca, Painel e Mês usam emoji nativo colorido como ícone visual; Foco mantém o alvo vetorial.
 
 ## Revisão Semanal
 
@@ -313,7 +319,7 @@ O briefing com IA deve narrar sinais operacionais e ranking determinístico, sem
 
 Quando a IA falhar ou retornar linguagem proibida, o produto exibe fallback operacional cauteloso em vez de bloquear o fluxo.
 
-O briefing pode reaproveitar, dentro da mesma sessão, uma narrativa segura já gerada quando a entrada governada não mudou. Mudanças relevantes no ranking, sinais, limitações, energia, janela temporal ou versão do contrato invalidam esse reaproveitamento.
+O briefing pode reaproveitar, dentro da mesma sessão, uma narrativa segura já gerada quando a entrada governada não mudou. Mudanças relevantes no ranking, sinais, limitações, janela temporal ou versão do contrato invalidam esse reaproveitamento.
 
 Dados frágeis aparecem como limitação:
 - `legacy_approx` não vira conclusão confirmada;
@@ -401,7 +407,7 @@ O ranking deve ser:
 
 ## Fatores considerados
 - urgência (combinação de `priority` e proximidade de `due_at`)
-- compatibilidade entre energia da tarefa e energia disponível do usuário
+- compatibilidade entre energia da tarefa e baseline fixa
 - idade da tarefa
 - contexto ativo
 
@@ -426,7 +432,7 @@ Pesos somam 1.0. Todos os fatores normalizados para 0–1.
 
 - `f_urgency`: combina `priority` (peso 0.6) e proximidade de `due_at` (peso 0.4). Para tarefas sem `due_at`, reduz-se a `priority / 10`.
 
-- `f_energy`: `1 - |energy_tarefa/10 - energy_usuario/10|`. Mede proximidade entre a exigência da tarefa e a energia disponível do usuário (do `contextStore.energiaAtual`). Tarefas exigentes não sobem no ranking quando o usuário está cansado.
+- `f_energy`: `1 - |energy_tarefa/10 - 5/10|`. Mede proximidade entre a exigência da tarefa e a baseline fixa `BASELINE_ENERGY = 5` em `src/lib/ranking.ts`. A energia atual manual do usuário foi removida; ver `DECISIONS.md` e `docs/energia-removida.md`.
 
 - `f_age`: idade da tarefa em dias, limitada a 30, normalizada para 0–1.
 
@@ -568,9 +574,9 @@ A fila `PendingMutation[]` é criada no Sprint 1 mas só passa a ser totalmente 
 ---
 
 ## Sprint 3 — Ranking Engine
-- ranking determinístico (com `f_urgency` combinando `priority` + `due_at`, `f_energy` por proximidade)
+- ranking determinístico (com `f_urgency` combinando `priority` + `due_at`, `f_energy` por proximidade contra baseline fixa)
 - priorização previsível
-- consumo do `contextStore.energiaAtual` no cálculo de `f_energy`
+- uso de `task.energy` contra `BASELINE_ENERGY = 5` no cálculo de `f_energy`
 
 ## Observação
 O termo "Ranking Engine" substitui "Recommendation Engine" para evitar associação com ML ou IA.
