@@ -5,6 +5,7 @@ import { useContextStore } from '../stores/contextStore';
 import { useNotifications } from '../hooks/useNotifications';
 import { saveApiKeyToCloud } from '../lib/sync';
 import { supabase } from '../lib/supabase';
+import { BuildBadge } from './BuildBadge';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -158,6 +159,10 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               <LogOut size={14} /> Sair
             </button>
           </section>
+
+          <div className="text-center">
+            <BuildBadge />
+          </div>
         </div>
 
         {/* footer */}
