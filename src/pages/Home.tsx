@@ -363,7 +363,7 @@ export default function Home() {
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
               <h1 className="font-display text-[29px] leading-[1.05] text-ink truncate">
-                {getGreeting()}.
+                {getGreeting()}
               </h1>
             </div>
             <div className="shrink-0 flex items-center gap-2">
