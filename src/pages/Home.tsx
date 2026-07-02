@@ -8,7 +8,7 @@ import { generateEmbedding, estimateTaskTime, transcribeAudio } from '../lib/ai'
 import { useAudioRecorder } from '../hooks/useAudioRecorder';
 import {
   CalendarDays, BarChart2, Plus, Mic, Search,
-  ArrowRight, X, ClipboardCheck, Settings, Target,
+  ArrowRight, X, ClipboardCheck, Target,
 } from 'lucide-react';
 import { TimelineView } from '../components/TimelineView';
 import { TaskEditModal } from '../components/TaskEditModal';
@@ -368,15 +368,6 @@ export default function Home() {
             </div>
             <div className="shrink-0 flex items-center gap-2">
               <InstallPWA />
-              <button
-                type="button"
-                onClick={() => setIsSettingsOpen(true)}
-                className="flex h-10 w-10 items-center justify-center rounded-[13px] border border-line bg-paper text-ink-2 active:bg-paper2"
-                aria-label="Configurações"
-                title="Configurações"
-              >
-                <Settings size={18} strokeWidth={2.1} />
-              </button>
             </div>
           </div>
           <div className="mt-2 flex items-center justify-between gap-3">
@@ -537,7 +528,7 @@ export default function Home() {
                 <ArrowRight size={15} className="text-ink-2 shrink-0" />
               </button>
             )}
-            <DashboardView tasks={tasks} />
+            <DashboardView tasks={tasks} onOpenSettings={() => setIsSettingsOpen(true)} />
           </div>
         )}
       </main>
