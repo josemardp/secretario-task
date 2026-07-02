@@ -360,27 +360,32 @@ export default function Home() {
         style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}
       >
         <div className="px-4 pt-3 pb-3">
-          <div className="flex items-center justify-between gap-3">
-            <h1 className="ml-7 min-w-0 truncate font-display text-[29px] leading-[1.05] text-ink">
-              {getGreeting()}
-            </h1>
-            <InstallPWA />
-            <button
-              ref={monthButtonRef}
-              type="button"
-              onClick={() => setIsCalendarOpen((v) => !v)}
-              className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-[13px] border border-line bg-paper px-3.5 text-[13px] font-bold text-ink active:bg-paper2"
-            >
-              <span className="text-[15px] leading-none">📅</span> M{'\u00EA'}s
-            </button>
-          </div>
-          <div className="mt-2 flex items-center justify-between gap-3">
-            <p className="min-w-0 flex-1 truncate text-[13px] text-ink-2 tnum leading-snug">
-              {formatLongDate()}
-            </p>
-            <span className="shrink-0 text-[13px] font-bold text-accent tnum">
-              {todayCount} para hoje
-            </span>
+          <div className="flex items-start gap-3">
+            <div className="min-w-0 flex-1">
+              <h1 className="truncate font-display text-[29px] leading-[1.05] text-ink">
+                {getGreeting()}
+              </h1>
+              <p className="mt-2 min-w-0 truncate text-[13px] text-ink-2 tnum leading-snug">
+                {formatLongDate()}
+              </p>
+            </div>
+
+            <div className="shrink-0 flex flex-col items-end gap-2">
+              <div className="flex items-center gap-1.5">
+                <InstallPWA />
+                <button
+                  ref={monthButtonRef}
+                  type="button"
+                  onClick={() => setIsCalendarOpen((v) => !v)}
+                  className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-[13px] border border-line bg-paper px-3.5 text-[13px] font-bold text-ink active:bg-paper2"
+                >
+                  <span className="text-[15px] leading-none">📅</span> M{'\u00EA'}s
+                </button>
+              </div>
+              <span className="text-[13px] font-bold text-accent tnum">
+                {todayCount} para hoje
+              </span>
+            </div>
           </div>
 
           {searchOpen && (
