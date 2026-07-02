@@ -2,13 +2,14 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from 'recharts';
-import { ChevronUp } from 'lucide-react';
+import { ChevronUp, Settings } from 'lucide-react';
 import type { Task, ContextType } from '../types';
 import { EmptyState } from './EmptyState';
 import { isClosedWithoutExecution, isOpenTask } from '../lib/taskFilters';
 
 interface DashboardViewProps {
   tasks: Task[];
+  onOpenSettings: () => void;
 }
 
 // Excecao categorica deliberada do design system: contextos precisam manter distincao visual.
@@ -134,6 +135,22 @@ function DataLine({ label, value, detail }: { label: string; value: React.ReactN
   );
 }
 
+function DashboardHeader({ onOpenSettings }: { onOpenSettings: () => void }) {
+  return (
+    <div className="flex items-center justify-end">
+      <button
+        type="button"
+        onClick={onOpenSettings}
+        className="flex h-10 w-10 items-center justify-center rounded-[13px] border border-border bg-surface text-ink-secondary active:bg-surface-sunken"
+        aria-label="Configurações"
+        title="Configurações"
+      >
+        <Settings size={18} strokeWidth={2.1} />
+      </button>
+    </div>
+  );
+}
+
 function isConfirmedCompletion(task: Task): boolean {
   return task.resolution_type === 'completed' &&
     !!task.completed_at &&
@@ -161,7 +178,7 @@ function blockerLabel(type: Task['blocker_type']): string {
   return 'Sem motivo informado';
 }
 
-export function DashboardView({ tasks }: DashboardViewProps) {
+export function DashboardView({ tasks, onOpenSettings }: DashboardViewProps) {
   const chartTheme = useChartTheme();
 
   const liveTasks = useMemo(
@@ -330,12 +347,17 @@ export function DashboardView({ tasks }: DashboardViewProps) {
 
   if (liveTasks.length === 0) {
     return (
-      <EmptyState title="Sem dados ainda" hint="Capture ou conclua tarefas para ver a higiene da fila." />
+      <div className="flex flex-col gap-3">
+        <DashboardHeader onOpenSettings={onOpenSettings} />
+        <EmptyState title="Sem dados ainda" hint="Capture ou conclua tarefas para ver a higiene da fila." />
+      </div>
     );
   }
 
   return (
     <div className="flex flex-col gap-3">
+      <DashboardHeader onOpenSettings={onOpenSettings} />
+
       {/* Top hero */}
       <div className="bg-surface border border-border rounded-2xl p-4">
         <div className="flex items-start justify-between gap-3">
