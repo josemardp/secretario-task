@@ -10,7 +10,6 @@ import {
   CalendarDays, BarChart2, Plus, Mic, Search,
   ArrowRight, X, ClipboardCheck, Settings, Target,
 } from 'lucide-react';
-import { BuildBadge } from '../components/BuildBadge';
 import { TimelineView } from '../components/TimelineView';
 import { TaskEditModal } from '../components/TaskEditModal';
 import { DashboardView } from '../components/DashboardView';
@@ -329,7 +328,6 @@ export default function Home() {
       className="min-h-screen bg-canvas font-sans text-ink"
       style={{ width: '100%', maxWidth: '100vw', overflowX: 'clip' }}
     >
-      <BuildBadge />
       {pendingSmartTasks && (
         <MultiTaskConfirmModal
           initialTasks={pendingSmartTasks}
