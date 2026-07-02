@@ -1,6 +1,6 @@
 # DECISIONS.md — SecretárioTask
 
-Última atualização: 2026-06-27 (v4.3-fix-01)
+Última atualização: 2026-07-01 (UX mobile e energia)
 Status: registro vivo de decisões técnicas e operacionais
 
 ---
@@ -39,6 +39,16 @@ Motivo: por que essa escolha foi feita.
 Alternativas descartadas: o que foi considerado e por que não foi escolhido.
 Contexto: sprint atual ou situação que motivou.
 ```
+
+---
+
+# Decisões — UX mobile (2026-07-01)
+
+## 2026-07-01 — Ações principais no rodapé e Configurações no Painel
+Decisão: mover Foco e Busca para a tab bar mobile, manter o FAB central de captura, remover Configurações do header e colocá-las dentro do Painel/Dashboard. O header fica reservado para saudação, instalação PWA quando aplicável, calendário mensal, data e contador do dia.
+Motivo: reduzir competição visual no topo, tornar Foco/Busca acessos primários recorrentes e deixar Configurações como ação de manutenção dentro do Painel.
+Alternativas descartadas: manter Foco/Busca no header — descartada por deixar a área superior congestionada; manter Configurações no header — descartada por competir com saudação/calendário; criar menu extra — descartada por adicionar estado e fricção.
+Contexto: refinamento visual mobile de 2026-07-01, após reorganização do header e da tab bar.
 
 ---
 
