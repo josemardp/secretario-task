@@ -257,7 +257,7 @@ function TimelineTaskCard({
         ].join(' ')}
         style={{ transform: `translateX(${dragX}px)` }}
       >
-      <div className="relative p-[14px] sm:px-4 sm:py-3">
+      <div className="relative px-[14px] py-[9px] sm:px-4 sm:py-3">
         <div className="flex items-start gap-2">
           <button
             type="button"
@@ -265,13 +265,13 @@ function TimelineTaskCard({
               e.stopPropagation();
               handleComplete(t.id);
             }}
-            className="w-10 h-10 mt-0.5 shrink-0 inline-flex items-center justify-center rounded-full border-2 border-border-strong sm:hidden"
+            className="w-9 h-9 mt-0.5 shrink-0 inline-flex items-center justify-center rounded-full border-2 border-border-strong sm:hidden"
             aria-label="Concluir tarefa"
             title="Concluir"
           />
 
-          <div className="min-w-0 flex-1 pr-[30px] sm:pr-0">
-            <div className="flex items-center gap-2 min-h-[24px]">
+          <div className="min-w-0 flex-1 pr-[42px] sm:pr-0">
+            <div className="flex items-center gap-2 min-h-[20px]">
               <span className="text-[12px] font-bold tnum text-ink-secondary tracking-wide shrink-0">
                 {formatTime(block.startTime)} – {formatTime(block.endTime)}
               </span>
@@ -293,7 +293,7 @@ function TimelineTaskCard({
               </div>
             </div>
 
-            <div className="relative min-h-[44px] mt-[6px]">
+            <div className="relative min-h-[42px] mt-[4px]">
               <h3 className="text-[15px] font-bold text-ink leading-snug tracking-tight break-words flex items-start gap-1.5 sm:text-[14px] sm:leading-tight">
                 {t.recurrence_rule && <Repeat size={13} className="mt-0.5 shrink-0 text-ink-tertiary" />}
                 <span ref={titleRef} className={['min-w-0', !expanded ? 'line-clamp-2 sm:line-clamp-none' : ''].join(' ')}>
@@ -309,7 +309,7 @@ function TimelineTaskCard({
                   }}
                   aria-label={expanded ? 'Recolher tarefa' : 'Expandir tarefa'}
                   title={expanded ? 'Recolher' : 'Expandir'}
-                  className="absolute bottom-0 right-0 flex h-[22px] w-9 items-center justify-end sm:hidden"
+                  className="absolute bottom-0 right-0 flex h-[20px] w-9 items-center justify-end sm:hidden"
                   style={{ background: 'linear-gradient(to right, transparent, var(--surface) 60%)' }}
                 >
                   <ChevronDown
@@ -321,7 +321,7 @@ function TimelineTaskCard({
               )}
             </div>
 
-            <div className="flex items-center min-h-[22px] mt-[6px]">
+            <div className="flex items-center min-h-[18px] mt-[4px]">
               {(t.postponed_count ?? 0) > 0 && (
                 <span title={`${t.postponed_count}x adiada`} className="inline-flex text-[11px] font-bold bg-surface-sunken text-ink-tertiary px-1.5 py-0.5 rounded">
                   Adiada {t.postponed_count}x
