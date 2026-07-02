@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { rescheduleToDate, postponeToTomorrow } from '../lib/datetime';
-import { Repeat, X, Edit3, Trash2, XCircle } from 'lucide-react';
+import { Repeat, X, Edit3, Trash2, XCircle, ChevronDown } from 'lucide-react';
 import type { Task, ResolutionType, BlockerType } from '../types';
 import { useContextStore } from '../stores/contextStore';
 import { useTaskStore } from '../stores/taskStore';
@@ -154,7 +154,11 @@ function TimelineTaskCard({
   const t = block.task!;
   const [dragX, setDragX] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+  const [truncated, setTruncated] = useState(false);
   const dragXRef = useRef(0);
+  const wasDragRef = useRef(false);
+  const titleRef = useRef<HTMLSpanElement | null>(null);
   const gestureStartRef = useRef<{ x: number; y: number; active: boolean } | null>(null);
   const isLate =
     (t.due_at && new Date(t.due_at) < now) ||
@@ -165,6 +169,20 @@ function TimelineTaskCard({
   const style: React.CSSProperties = {
     touchAction: 'pan-y',
   };
+
+  useEffect(() => {
+    if (expanded) return;
+    const el = titleRef.current;
+    if (!el) return;
+
+    const measure = () => setTruncated(el.scrollHeight > el.clientHeight + 1);
+    measure();
+
+    if (!('ResizeObserver' in window)) return;
+    const resizeObserver = new ResizeObserver(measure);
+    resizeObserver.observe(el);
+    return () => resizeObserver.disconnect();
+  }, [expanded, block.title]);
 
   const resetGesture = () => {
     gestureStartRef.current = null;
@@ -198,12 +216,22 @@ function TimelineTaskCard({
 
   const handlePointerUp = () => {
     const finalX = dragXRef.current;
+    const wasActive = gestureStartRef.current?.active ?? false;
     resetGesture();
+    if (wasActive) wasDragRef.current = true;
     if (finalX > 72) {
       handlePostponeTomorrow(t.id);
     } else if (finalX < -72) {
       requestDelete(t);
     }
+  };
+
+  const handleCardClick = () => {
+    if (wasDragRef.current) {
+      wasDragRef.current = false;
+      return;
+    }
+    setExpanded((v) => !v);
   };
 
   return (
@@ -221,14 +249,16 @@ function TimelineTaskCard({
       </div>
 
       <div
+        onClick={handleCardClick}
         className={[
           'relative min-w-0 h-auto flex flex-col bg-surface border border-border rounded-[18px] sm:min-h-[104px]',
+          expanded ? '' : 'min-h-[140px]',
           'transition-transform',
           isDragging ? 'duration-0' : 'duration-200',
         ].join(' ')}
         style={{ transform: `translateX(${dragX}px)` }}
       >
-      <div className="px-2.5 py-3 sm:px-4 sm:py-3">
+      <div className="relative p-[14px] sm:px-4 sm:py-3">
         <div className="flex items-start gap-2">
           <button
             type="button"
@@ -236,18 +266,17 @@ function TimelineTaskCard({
               e.stopPropagation();
               handleComplete(t.id);
             }}
-            className="w-11 h-11 -ml-1.5 -mt-1.5 shrink-0 inline-flex items-center justify-center rounded-full text-ink-tertiary sm:hidden"
+            className="w-10 h-10 mt-0.5 shrink-0 inline-flex items-center justify-center rounded-full border-2 border-border-strong sm:hidden"
             aria-label="Concluir tarefa"
             title="Concluir"
-          >
-            <span className="w-6 h-6 rounded-full border-2 border-border-strong inline-flex items-center justify-center" />
-          </button>
+          />
 
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center justify-between gap-2">
-              <span className="text-[12px] font-bold tnum text-ink-secondary tracking-wide">
+          <div className="min-w-0 flex-1 pr-[30px] sm:pr-0">
+            <div className="flex items-center gap-2 min-h-[24px]">
+              <span className="text-[12px] font-bold tnum text-ink-secondary tracking-wide shrink-0">
                 {formatTime(block.startTime)} – {formatTime(block.endTime)}
               </span>
+              <div className="flex-1" />
               <div className="flex items-center gap-1.5 shrink-0">
                 {isLate && (
                   <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-danger-light text-danger tracking-[0.05em]">
@@ -262,34 +291,58 @@ function TimelineTaskCard({
                     P{t.priority}
                   </span>
                 )}
+              </div>
+            </div>
+
+            <div className="relative min-h-[44px] mt-[6px]">
+              <h3 className="text-[15px] font-bold text-ink leading-snug tracking-tight break-words flex items-start gap-1.5 sm:text-[14px] sm:leading-tight">
+                {t.recurrence_rule && <Repeat size={13} className="mt-0.5 shrink-0 text-ink-tertiary" />}
+                <span ref={titleRef} className={['min-w-0', !expanded ? 'line-clamp-2 sm:line-clamp-none' : ''].join(' ')}>
+                  {block.title}
+                </span>
+              </h3>
+              {(truncated || expanded) && (
                 <button
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation();
-                    openEdit(t);
+                    setExpanded((v) => !v);
                   }}
-                  className="w-8 h-8 -mr-1.5 rounded-full inline-flex items-center justify-center text-ink-tertiary hover:text-ink sm:hidden"
-                  aria-label="Editar tarefa"
-                  title="Editar"
+                  aria-label={expanded ? 'Recolher tarefa' : 'Expandir tarefa'}
+                  title={expanded ? 'Recolher' : 'Expandir'}
+                  className="absolute bottom-0 right-0 flex h-[22px] w-9 items-center justify-end sm:hidden"
+                  style={{ background: 'linear-gradient(to right, transparent, var(--surface) 60%)' }}
                 >
-                  <Edit3 size={15} strokeWidth={2.2} />
+                  <ChevronDown
+                    size={14}
+                    strokeWidth={2.4}
+                    className={`text-ink-tertiary transition-transform ${expanded ? 'rotate-180' : ''}`}
+                  />
                 </button>
-              </div>
+              )}
             </div>
 
-            <h3 className="mt-1 text-[15px] font-bold text-ink leading-snug tracking-tight break-words flex items-start gap-1.5 sm:text-[14px] sm:leading-tight">
-              {t.recurrence_rule && <Repeat size={13} className="mt-0.5 shrink-0 text-ink-tertiary" />}
-              <span className="min-w-0">{block.title}</span>
-            </h3>
-
-            {(t.postponed_count ?? 0) > 0 && (
-              <div className="mt-1">
+            <div className="flex items-center min-h-[22px] mt-[6px]">
+              {(t.postponed_count ?? 0) > 0 && (
                 <span title={`${t.postponed_count}x adiada`} className="inline-flex text-[11px] font-bold bg-surface-sunken text-ink-tertiary px-1.5 py-0.5 rounded">
                   Adiada {t.postponed_count}x
                 </span>
-              </div>
-            )}
+              )}
+            </div>
           </div>
+
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              openEdit(t);
+            }}
+            className="absolute top-[10px] right-2 w-8 h-8 rounded-full inline-flex items-center justify-center text-ink-tertiary hover:text-ink sm:hidden"
+            aria-label="Editar tarefa"
+            title="Editar"
+          >
+            <Edit3 size={15} strokeWidth={2.2} />
+          </button>
         </div>
 
         <div
