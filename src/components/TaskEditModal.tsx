@@ -18,6 +18,7 @@ interface TaskEditModalProps {
 
 type EditFormState = {
   title: string;
+  description: string;
   due_at: string;
   estimated_minutes: number;
   context: ContextType;
@@ -46,6 +47,7 @@ function buildInitialEditForm(task: Task | null): EditFormState {
   if (!task) {
     return {
       title: '',
+      description: '',
       due_at: '',
       estimated_minutes: 30,
       context: 'Pessoal' as ContextType,
@@ -58,6 +60,7 @@ function buildInitialEditForm(task: Task | null): EditFormState {
 
   return {
     title: task.title,
+    description: task.description ?? '',
     due_at: toLocalDatetimeInput(task.due_at),
     estimated_minutes: task.estimated_minutes || 30,
     context: task.context,
@@ -93,6 +96,7 @@ export function TaskEditModal({ task, onClose }: TaskEditModalProps) {
 
     const updates: Partial<Task> = {
       title: editForm.title,
+      description: editForm.description.trim() === '' ? null : editForm.description.trim(),
       due_at: newDueAt,
       context: editForm.context,
       priority: editForm.priority,
@@ -298,6 +302,17 @@ export function TaskEditModal({ task, onClose }: TaskEditModalProps) {
                   onChange={(e) => setEditForm((f) => ({ ...f, title: e.target.value }))}
                   className="bg-paper2 rounded-xl px-3 py-2.5 text-[14px] text-ink outline-none border-0"
                   autoFocus
+                />
+              </label>
+
+              <label className="flex flex-col gap-1">
+                <span className="text-[12px] font-semibold uppercase tracking-wide text-ink-2">Observações</span>
+                <textarea
+                  value={editForm.description}
+                  onChange={(e) => setEditForm((f) => ({ ...f, description: e.target.value }))}
+                  placeholder="Detalhes, checklist, links, contexto..."
+                  rows={4}
+                  className="bg-paper2 rounded-xl px-3 py-2.5 text-base text-ink outline-none border-0 resize-y"
                 />
               </label>
 

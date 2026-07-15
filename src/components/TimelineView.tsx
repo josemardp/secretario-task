@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { rescheduleToDate, postponeToTomorrow } from '../lib/datetime';
-import { Repeat, X, Edit3, Trash2, XCircle, ChevronDown } from 'lucide-react';
+import { Repeat, X, Edit3, Trash2, XCircle, ChevronDown, FileText } from 'lucide-react';
 import type { Task, ResolutionType, BlockerType } from '../types';
 import { useContextStore } from '../stores/contextStore';
 import { useTaskStore } from '../stores/taskStore';
@@ -325,6 +325,15 @@ function TimelineTaskCard({
               {(t.postponed_count ?? 0) > 0 && (
                 <span title={`${t.postponed_count}x adiada`} className="inline-flex text-[11px] font-bold bg-surface-sunken text-ink-tertiary px-1.5 py-0.5 rounded">
                   Adiada {t.postponed_count}x
+                </span>
+              )}
+              {t.description?.trim() && (
+                <span
+                  className="inline-flex items-center justify-center ml-1.5 text-ink-tertiary"
+                  title="Esta tarefa tem observações"
+                  aria-label="Esta tarefa tem observações"
+                >
+                  <FileText size={13} strokeWidth={2.2} />
                 </span>
               )}
             </div>
