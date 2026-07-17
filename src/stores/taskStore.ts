@@ -52,7 +52,7 @@ interface TaskState {
   tasks: Task[];
   mutations: PendingMutation[];
   viewedRecords: Record<string, string>;
-  addTask: (task: TaskInput) => void;
+  addTask: (task: TaskInput) => string;
   updateTask: (id: string, updates: Partial<Task>) => void;
   deleteTask: (id: string) => void;
   recordTaskEvent: (taskId: string, type: TaskEventType, payload?: Record<string, unknown>) => void;
@@ -96,6 +96,8 @@ export const useTaskStore = create<TaskState>()(
           entityId: id,
           payload: newTask
         });
+
+        return id;
       },
 
       updateTask: (id, updates) => {

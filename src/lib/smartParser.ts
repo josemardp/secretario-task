@@ -1,6 +1,7 @@
 import type { Task, ContextType, RecurrenceRuleV2 } from '../types';
 import { parseTaskInput } from './parser';
 import { getNextOccurrenceFromNow } from './recurrence';
+import { extractDecisionCaptureHints } from './decisionCapture';
 
 const OPENAI_API_URL = 'https://api.openai.com/v1';
 const CONTEXTS = ['PM', 'Esdra', 'Pessoal', 'Familia', 'CCB', 'Estudo', 'Saude'];
@@ -277,6 +278,7 @@ Responda APENAS com JSON válido com array "tasks".`;
         const t = rawTask as Record<string, unknown>;
         // Linha original correspondente (melhor esforço: por índice)
         const originalLine = originalLines[idx] ?? rawText;
+        const decisionHints = extractDecisionCaptureHints(originalLine);
 
         // ── Pós-processamento determinístico de HORÁRIO ──────────────────
         // A AI erra sistematicamente o formato "09h05". Corrigimos no cliente.
@@ -317,13 +319,20 @@ Responda APENAS com JSON válido com array "tasks".`;
           finalDueAt = computeFirstOccurrence(recurrence) ?? undefined;
         }
 
+        const normalizedAiTitle = extractDecisionCaptureHints(String(t.title || decisionHints.cleanedText || rawText)).cleanedText;
+
         return {
-          title: String(t.title || rawText),
+          title: normalizedAiTitle || decisionHints.cleanedText || rawText,
           context: typeof t.context === 'string' && CONTEXTS.includes(t.context) ? t.context as ContextType : defaultContext,
-          priority: Number(t.priority) || 0,
+          priority: decisionHints.priority ?? (Number(t.priority) || 0),
           energy: Number(t.energy) || 0,
           due_at: finalDueAt,
           recurrence_rule: recurrence,
+          ...(decisionHints.estimatedMinutes != null ? {
+            estimated_minutes: decisionHints.estimatedMinutes,
+            estimated_minutes_source: 'parser' as const,
+          } : {}),
+          ...(decisionHints.metadata ? { decision_metadata: decisionHints.metadata } : {}),
         };
       });
     }

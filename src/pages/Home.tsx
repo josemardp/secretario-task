@@ -23,6 +23,9 @@ import { FocoSheet } from '../components/FocoSheet';
 import { useToast } from '../components/toastContext';
 import { generateBriefingFromTopTasks, getDailyBriefing } from '../lib/briefing';
 import { isOpenTask, filterTasksByText, getReviewEligibleTasks } from '../lib/taskFilters';
+import { buildCompleteUpdates } from '../lib/taskLifecycle';
+import { postponeToTomorrow } from '../lib/datetime';
+import { buildDailyReview, buildDecisionPlan } from '../lib/decisionEngine';
 import type { EstimatedMinutesSource, Task } from '../types';
 
 function getGreeting(): string {
@@ -58,6 +61,7 @@ export default function Home() {
   const [focoOpen, setFocoOpen] = useState(false);
   const [briefingText, setBriefingText] = useState<string | null>(null);
   const [isGeneratingBriefing, setIsGeneratingBriefing] = useState(false);
+  const [decisionNow, setDecisionNow] = useState(() => new Date());
   const [captureBarExpanded, setCaptureBarExpanded] = useState(false);
   const taskInputRef = useRef<HTMLTextAreaElement | null>(null);
   const captureBarRef = useRef<HTMLElement | null>(null);
@@ -69,7 +73,25 @@ export default function Home() {
   const addTask = useTaskStore((s) => s.addTask);
   const updateTask = useTaskStore((s) => s.updateTask);
   const recordTaskEvent = useTaskStore((s) => s.recordTaskEvent);
-  const { activeContext, aiApiKey } = useContextStore();
+  const {
+    activeContext,
+    aiApiKey,
+    decisionEnergy,
+    availableMinutes,
+    dailyCapacityMinutes,
+    currentLocation,
+    skippedTaskIds,
+    skippedTaskDay,
+    taskDecisionMetadata,
+    setActiveContext,
+    setDecisionEnergy,
+    setAvailableMinutes,
+    setDailyCapacityMinutes,
+    setCurrentLocation,
+    skipTaskForToday,
+    clearSkippedTasks,
+    setTaskDecisionMetadata,
+  } = useContextStore();
 
   const isTaskForToday = (dueAt: string | null) => {
     if (!dueAt) return false;
@@ -148,6 +170,12 @@ export default function Home() {
   }, [captureBarExpanded]);
 
   useEffect(() => {
+    if (!focoOpen) return undefined;
+    const interval = window.setInterval(() => setDecisionNow(new Date()), 60_000);
+    return () => window.clearInterval(interval);
+  }, [focoOpen]);
+
+  useEffect(() => {
     async function handle() {
       if (audioBlob && aiApiKey) {
         setIsTranscribing(true);
@@ -170,9 +198,51 @@ export default function Home() {
     handle();
   }, [audioBlob, aiApiKey, clearAudio, toast]);
 
+  const skippedIdsForToday = useMemo(() => {
+    const today = `${decisionNow.getFullYear()}-${String(decisionNow.getMonth() + 1).padStart(2, '0')}-${String(decisionNow.getDate()).padStart(2, '0')}`;
+    return skippedTaskDay === today ? skippedTaskIds : [];
+  }, [decisionNow, skippedTaskDay, skippedTaskIds]);
+
+  const decisionContext = useMemo(() => ({
+    now: decisionNow,
+    activeContext,
+    currentLocation,
+    energy: decisionEnergy,
+    availableMinutes,
+    dailyCapacityMinutes,
+    skippedTaskIds: skippedIdsForToday,
+  }), [
+    decisionNow,
+    activeContext,
+    currentLocation,
+    decisionEnergy,
+    availableMinutes,
+    dailyCapacityMinutes,
+    skippedIdsForToday,
+  ]);
+
+  const decisionTasks = useMemo(
+    () => tasks.map((task) => ({
+      ...task,
+      decision_metadata: taskDecisionMetadata[task.id] ?? null,
+    })),
+    [tasks, taskDecisionMetadata],
+  );
+
+  const decisionPlan = useMemo(
+    () => buildDecisionPlan(decisionTasks, decisionContext),
+    [decisionTasks, decisionContext],
+  );
+
+  const dailyReview = useMemo(
+    () => buildDailyReview(decisionTasks, decisionContext),
+    [decisionTasks, decisionContext],
+  );
+
   const briefingTasks = useMemo(() => {
-    return getDailyBriefing(tasks, activeContext, 3);
-  }, [tasks, activeContext]);
+    const missionTasks = decisionPlan.mission.slice(0, 3).map((candidate) => candidate.task);
+    return missionTasks.length > 0 ? missionTasks : getDailyBriefing(tasks, activeContext, 3);
+  }, [decisionPlan.mission, tasks, activeContext]);
 
   const todayCount = useMemo(() => {
     return tasks.filter((t) => isOpenTask(t) && isTaskForToday(t.due_at)).length;
@@ -238,7 +308,7 @@ export default function Home() {
       }));
 
       for (const { task: t, estimated, estimatedSource } of tasksWithEstimates) {
-        addTask({
+        const taskId = addTask({
           user_id: '',
           title: t.title || 'Nova Tarefa',
           description: null,
@@ -252,6 +322,7 @@ export default function Home() {
           estimated_minutes_source: estimatedSource,
           recurrence_rule: t.recurrence_rule || null,
         });
+        if (t.decision_metadata) setTaskDecisionMetadata(taskId, t.decision_metadata);
       }
       setTaskText('');
       setCaptureBarExpanded(false);
@@ -310,6 +381,30 @@ export default function Home() {
     }
   };
 
+  const handleDecisionComplete = (task: Task) => {
+    const updates = buildCompleteUpdates(task);
+    updateTask(task.id, updates);
+    recordTaskEvent(task.id, 'completed', {
+      completed_at: updates.completed_at ?? task.completed_at ?? null,
+      source: 'decision_engine',
+    });
+    toast('Missão concluída. Próxima ação recalculada.', 'success');
+  };
+
+  const handleDecisionPostpone = (task: Task) => {
+    updateTask(task.id, {
+      due_at: postponeToTomorrow(task.due_at),
+      postponed_count: (task.postponed_count ?? 0) + 1,
+      blocker_type: 'no_time',
+    });
+    recordTaskEvent(task.id, 'postponed', {
+      mode: 'tomorrow',
+      blocker_type: 'no_time',
+      source: 'decision_engine',
+    });
+    toast('Movida para amanhã. A missão foi recalculada.', 'success');
+  };
+
   const baseVisibleTasks = useMemo(() => {
     const activeTasks = tasks.filter((t) => !t.deleted_at);
     if (semanticResults) {
@@ -348,10 +443,32 @@ export default function Home() {
       <FocoSheet
         isOpen={focoOpen}
         onClose={() => setFocoOpen(false)}
-        topTasks={briefingTasks}
+        plan={decisionPlan}
+        dailyReview={dailyReview}
+        activeContext={activeContext}
+        currentLocation={currentLocation}
+        decisionEnergy={decisionEnergy}
+        availableMinutes={availableMinutes}
+        dailyCapacityMinutes={dailyCapacityMinutes}
         briefingText={briefingText}
         isGeneratingBriefing={isGeneratingBriefing}
         onGenerateBriefing={handleGenerateBriefing}
+        onSetActiveContext={setActiveContext}
+        onSetLocation={setCurrentLocation}
+        onSetEnergy={setDecisionEnergy}
+        onSetAvailableMinutes={setAvailableMinutes}
+        onSetDailyCapacityMinutes={setDailyCapacityMinutes}
+        onCompleteTask={handleDecisionComplete}
+        onPostponeTask={handleDecisionPostpone}
+        onSkipTask={(task) => {
+          skipTaskForToday(task.id);
+          toast('Ação pulada por hoje. Missão recalculada.', 'success');
+        }}
+        onResetSkipped={clearSkippedTasks}
+        onOpenTask={(task) => {
+          setFocoOpen(false);
+          setEditingTask(task);
+        }}
       />
 
       {/* ── Header ──────────────────────────────────────────────── */}
@@ -614,6 +731,7 @@ export default function Home() {
         <button
           type="button"
           onClick={() => {
+            setDecisionNow(new Date());
             setFocoOpen(true);
             setCaptureBarExpanded(false);
           }}

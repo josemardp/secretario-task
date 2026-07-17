@@ -1,5 +1,11 @@
 # Energia — estado de retirada (removida em 01/07/2026)
 
+> Atualização V5 (17/07/2026): o Decision Engine introduziu `decisionEnergy`
+> como contexto momentâneo e local dentro do Foco. Isso **não** reativa o slider
+> antigo no header, `profiles.current_energy`, `pushEnergyToCloud` ou o LWW de
+> energia. A energia atual V5 serve somente para recalcular a próxima ação no
+> dispositivo; `task.energy` continua sendo a exigência durável da tarefa.
+
 Este documento registra a funcionalidade de "energia atual do usuário" como ela
 existia **antes** da remoção cirúrgica de 01/07/2026, para permitir reimplementação
 completa caso o usuário decida trazê-la de volta no futuro. Veja a decisão em

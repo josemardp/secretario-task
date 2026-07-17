@@ -1,6 +1,6 @@
 # STATUS.md — SecretárioTask
 
-Última atualização: 2026-07-01 (Fechamento UX mobile e documentação)
+Última atualização: 2026-07-17 (V5 Decision Engine)
 
 ---
 
@@ -23,7 +23,38 @@
 
 # Sprint atual
 
-Fechamento UX mobile e documentação de energia — concluído
+V5 Decision Engine — concluída
+
+---
+
+# V5 Decision Engine (2026-07-17)
+
+## Objetivo
+Transformar o Foco em um sistema de decisão operacional que responde “o que fazer agora?”, mantendo Agenda, captura rápida, mobile/PWA, sync/offline-first e IA opcional.
+
+## Entregas
+- Motor puro `decisionEngine.ts` com próxima melhor ação explicável, missão do dia, dependências, contexto de tempo/local/energia, capacidade diária e desempates estáveis.
+- Captura determinística de duração, local, período preferido, impacto e dependência sem exigir IA.
+- `FocoSheet` evoluído com contexto reativo, sessão de foco local, concluir, pular por hoje, mover para amanhã, missão do dia, briefing opcional e revisão diária.
+- Metadados de local, período e dependências persistidos no PWA, isolados do contrato remoto de `tasks`.
+- Edição de local, melhor período e múltiplas dependências no modal de tarefa.
+- Painel com insights acionáveis objetivos, sem diagnóstico psicológico e sem score de produtividade.
+- 10 fixtures novas do Decision Engine, somadas à suíte existente.
+
+## Invariantes preservadas
+- `TaskStatus` continua `todo | doing | done`.
+- `updated_at` não é conclusão; `deleted_at` não é resolução.
+- IA permanece opcional, narrativa e fora do caminho crítico.
+- Energia disponível da V5 fica local no PWA e não reativa `profiles.current_energy` nem o sync legado.
+- Sessão de foco é contagem regressiva local e não reativa `started_at`/timer histórico.
+
+## Estado de validação/publicação
+- [x] Baseline anterior verde em lint, typecheck, testes e build.
+- [x] Checagem de tipos após implementação.
+- [x] Suíte de testes com 10 fixtures V5.
+- [x] Smoke visual mobile em 390×844, incluindo captura, localização, dependência, janela curta, foco, edição e insights.
+- [x] Gate final de lint/typecheck/test/build.
+- [x] Nenhuma migration criada ou aplicada; schema e sync remotos preservados.
 
 ---
 

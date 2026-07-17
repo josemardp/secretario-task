@@ -5,9 +5,18 @@ import { formatDateTime, postponeToTomorrow, wasEdited } from '../lib/datetime';
 import { describeRecurrenceRule, getNextOccurrenceFromNow } from '../lib/recurrence';
 import { buildCompleteUpdates, buildResolutionUpdates } from '../lib/taskLifecycle';
 import { buildReopenUpdates } from '../lib/timeTracking';
+import { useContextStore } from '../stores/contextStore';
 import { useTaskStore } from '../stores/taskStore';
 import { BLOCKER_TYPES, CONTEXTS_LIST } from '../types';
-import type { BlockerType, ContextType, ResolutionType, Task } from '../types';
+import type {
+  BlockerType,
+  ContextType,
+  DecisionLocation,
+  PreferredPeriod,
+  ResolutionType,
+  Task,
+  TaskDecisionMetadata,
+} from '../types';
 import { RecurrenceModal } from './RecurrenceModal';
 import { useToast } from './toastContext';
 
@@ -26,7 +35,29 @@ type EditFormState = {
   energy: number;
   recurrence_rule: string | null;
   blocker_type: BlockerType | '';
+  decision_location: DecisionLocation | '';
+  preferred_period: PreferredPeriod;
+  dependency_ids: string[];
+  dependency_titles: string[];
 };
+
+const DECISION_LOCATIONS: Array<{ value: DecisionLocation; label: string }> = [
+  { value: 'anywhere', label: 'Qualquer local' },
+  { value: 'home', label: 'Casa' },
+  { value: 'company', label: 'Companhia' },
+  { value: 'center', label: 'Centro' },
+  { value: 'car', label: 'Carro' },
+  { value: 'forum', label: 'Fórum' },
+  { value: 'church', label: 'Igreja' },
+  { value: 'remote', label: 'Remoto / online' },
+];
+
+const PREFERRED_PERIODS: Array<{ value: PreferredPeriod; label: string }> = [
+  { value: 'any', label: 'Qualquer horário' },
+  { value: 'morning', label: 'Manhã' },
+  { value: 'afternoon', label: 'Tarde' },
+  { value: 'evening', label: 'Noite' },
+];
 
 function toLocalDatetimeInput(iso: string | null | undefined): string {
   if (!iso) return '';
@@ -43,7 +74,10 @@ function blockerTypeLabel(type: BlockerType): string {
   return 'Dependência';
 }
 
-function buildInitialEditForm(task: Task | null): EditFormState {
+function buildInitialEditForm(
+  task: Task | null,
+  storedMetadata?: TaskDecisionMetadata,
+): EditFormState {
   if (!task) {
     return {
       title: '',
@@ -55,8 +89,14 @@ function buildInitialEditForm(task: Task | null): EditFormState {
       energy: 0,
       recurrence_rule: null,
       blocker_type: '',
+      decision_location: '',
+      preferred_period: 'any',
+      dependency_ids: [],
+      dependency_titles: [],
     };
   }
+
+  const decisionMetadata = storedMetadata ?? task.decision_metadata;
 
   return {
     title: task.title,
@@ -68,6 +108,10 @@ function buildInitialEditForm(task: Task | null): EditFormState {
     energy: task.energy,
     recurrence_rule: typeof task.recurrence_rule === 'string' ? task.recurrence_rule : null,
     blocker_type: task.blocker_type ?? '',
+    decision_location: decisionMetadata?.location ?? '',
+    preferred_period: decisionMetadata?.preferred_period ?? 'any',
+    dependency_ids: decisionMetadata?.dependency_ids ?? [],
+    dependency_titles: decisionMetadata?.dependency_titles ?? [],
   };
 }
 
@@ -76,10 +120,16 @@ export function TaskEditModal({ task, onClose }: TaskEditModalProps) {
   const updateTask = useTaskStore((s) => s.updateTask);
   const deleteTask = useTaskStore((s) => s.deleteTask);
   const recordTaskEvent = useTaskStore((s) => s.recordTaskEvent);
+  const taskDecisionMetadata = useContextStore((s) => s.taskDecisionMetadata);
+  const setTaskDecisionMetadata = useContextStore((s) => s.setTaskDecisionMetadata);
+  const removeTaskDecisionMetadata = useContextStore((s) => s.removeTaskDecisionMetadata);
   const toast = useToast();
   const [pendingDeleteTask, setPendingDeleteTask] = useState<Task | null>(null);
   const [showRecurrenceModal, setShowRecurrenceModal] = useState(false);
-  const [editForm, setEditForm] = useState<EditFormState>(() => buildInitialEditForm(task));
+  const [editForm, setEditForm] = useState<EditFormState>(() => buildInitialEditForm(
+    task,
+    task ? taskDecisionMetadata[task.id] : undefined,
+  ));
 
   const saveEdit = () => {
     if (!task) return;
@@ -111,6 +161,13 @@ export function TaskEditModal({ task, onClose }: TaskEditModalProps) {
     }
 
     updateTask(task.id, updates);
+    setTaskDecisionMetadata(task.id, {
+      ...(taskDecisionMetadata[task.id] ?? task.decision_metadata ?? {}),
+      location: editForm.decision_location || null,
+      preferred_period: editForm.preferred_period,
+      dependency_ids: editForm.dependency_ids,
+      dependency_titles: editForm.dependency_titles,
+    });
     onClose();
   };
 
@@ -168,12 +225,18 @@ export function TaskEditModal({ task, onClose }: TaskEditModalProps) {
   const confirmDelete = () => {
     if (!pendingDeleteTask) return;
     deleteTask(pendingDeleteTask.id);
+    removeTaskDecisionMetadata(pendingDeleteTask.id);
     setPendingDeleteTask(null);
     onClose();
     toast('Tarefa excluída.', 'success');
   };
 
   const taskIsResolved = task ? task.status === 'done' || !!task.resolution_type : false;
+  const dependencyOptions = tasks.filter((candidate) =>
+    candidate.id !== task?.id
+    && !candidate.deleted_at
+    && !editForm.dependency_ids.includes(candidate.id)
+  );
 
   return (
     <>
@@ -363,6 +426,91 @@ export function TaskEditModal({ task, onClose }: TaskEditModalProps) {
                   ))}
                 </select>
               </label>
+
+              <div className="grid grid-cols-2 gap-2">
+                <label className="flex flex-col gap-1">
+                  <span className="text-[12px] font-semibold uppercase tracking-wide text-ink-2">Local</span>
+                  <select
+                    value={editForm.decision_location}
+                    onChange={(e) => setEditForm((f) => ({ ...f, decision_location: e.target.value as DecisionLocation | '' }))}
+                    className="bg-paper2 rounded-xl px-3 py-2.5 text-[13px] font-semibold text-ink outline-none border-0"
+                  >
+                    <option value="">Inferir pelo contexto</option>
+                    {DECISION_LOCATIONS.map((item) => (
+                      <option key={item.value} value={item.value}>{item.label}</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="flex flex-col gap-1">
+                  <span className="text-[12px] font-semibold uppercase tracking-wide text-ink-2">Melhor período</span>
+                  <select
+                    value={editForm.preferred_period}
+                    onChange={(e) => setEditForm((f) => ({ ...f, preferred_period: e.target.value as PreferredPeriod }))}
+                    className="bg-paper2 rounded-xl px-3 py-2.5 text-[13px] font-semibold text-ink outline-none border-0"
+                  >
+                    {PREFERRED_PERIODS.map((item) => (
+                      <option key={item.value} value={item.value}>{item.label}</option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+
+              <div className="flex flex-col gap-1.5">
+                <span className="text-[12px] font-semibold uppercase tracking-wide text-ink-2">Dependências</span>
+                {(editForm.dependency_ids.length > 0 || editForm.dependency_titles.length > 0) && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {editForm.dependency_ids.map((dependencyId) => {
+                      const dependency = tasks.find((candidate) => candidate.id === dependencyId);
+                      return (
+                        <button
+                          key={dependencyId}
+                          type="button"
+                          onClick={() => setEditForm((f) => ({
+                            ...f,
+                            dependency_ids: f.dependency_ids.filter((id) => id !== dependencyId),
+                          }))}
+                          className="min-h-9 rounded-full bg-paper2 px-3 text-[12px] font-semibold text-ink inline-flex items-center gap-1.5"
+                          title="Remover dependência"
+                        >
+                          {dependency?.title ?? 'Tarefa removida'} <span aria-hidden="true">×</span>
+                        </button>
+                      );
+                    })}
+                    {editForm.dependency_titles.map((title) => (
+                      <button
+                        key={title}
+                        type="button"
+                        onClick={() => setEditForm((f) => ({
+                          ...f,
+                          dependency_titles: f.dependency_titles.filter((value) => value !== title),
+                        }))}
+                        className="min-h-9 rounded-full bg-amber-soft px-3 text-[12px] font-semibold text-ink inline-flex items-center gap-1.5"
+                        title="Remover dependência capturada"
+                      >
+                        {title} <span aria-hidden="true">×</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <select
+                  value=""
+                  onChange={(e) => {
+                    const dependencyId = e.target.value;
+                    if (!dependencyId) return;
+                    setEditForm((f) => ({
+                      ...f,
+                      dependency_ids: [...f.dependency_ids, dependencyId],
+                    }));
+                  }}
+                  className="min-h-11 bg-paper2 rounded-xl px-3 py-2.5 text-[13px] font-semibold text-ink outline-none border-0"
+                >
+                  <option value="">Adicionar tarefa necessária…</option>
+                  {dependencyOptions.map((candidate) => (
+                    <option key={candidate.id} value={candidate.id}>{candidate.title}</option>
+                  ))}
+                </select>
+                <span className="text-[11px] text-ink-2">A tarefa só entra como próxima ação quando as dependências forem concluídas.</span>
+              </div>
 
               <div className="flex flex-col gap-1.5">
                 <span className="text-[12px] font-semibold uppercase tracking-wide text-ink-2">Recorrência</span>

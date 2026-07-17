@@ -1,6 +1,6 @@
 # PRD.md — SecretárioTask
 
-Última revisão: 2026-07-01
+Última revisão: 2026-07-17
 Status: Documento consolidado e alinhado ao MVP enxuto, com correções da auditoria de 2026-05-12
 
 ---
@@ -175,6 +175,23 @@ A Revisão Semanal é uma visão opcional acessível por ação discreta no Pain
 Na revisão, cada tarefa pode receber um `blocker_type`, ser concluída, ser encerrada sem execução ou ser mantida aberta para sair apenas da sessão atual. A captura rápida e a Agenda permanecem sem nova fricção.
 
 A revisão é determinística e não usa IA, score, push, streak ou gamificação.
+
+## V5 — Decision Engine
+
+O Foco responde “o que fazer agora?” com uma próxima ação e uma missão diária curta. A recomendação é determinística, recalculada quando mudam tempo disponível, energia, local ou modo operacional, e mostra os motivos que a colocaram no topo.
+
+Funcionalidades perceptíveis:
+- próxima melhor ação com duração, impacto, local e explicação;
+- missão de até cinco ações dentro da capacidade do dia;
+- controles rápidos de 5/15/30/60 minutos, energia baixa/média/alta, local e contexto;
+- tarefas com dependências ficam fora da execução até o desbloqueio;
+- “Agora não” replaneja o dia sem alterar a tarefa; “Amanhã” adia explicitamente;
+- sessão de foco com contagem regressiva local;
+- revisão diária com feitas, abertas, encerradas, adiadas e prévia de amanhã;
+- insights acionáveis no Painel, sem diagnóstico psicológico ou nota de produtividade;
+- captura local de `15 min`, `@centro`, `@manhã`, `impacto alto` e `depende de ...`, mesmo sem chave de IA.
+
+Metadados de local/período/dependências e contexto momentâneo ficam persistidos no dispositivo, sem alterar schema ou sync remoto nesta primeira entrega. Agenda/Timeline continua sendo a visão operacional principal e a captura rápida continua no FAB.
 
 ---
 

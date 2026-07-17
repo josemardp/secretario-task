@@ -1,7 +1,35 @@
 # DECISIONS.md — SecretárioTask
 
-Última atualização: 2026-07-01 (UX mobile e energia)
+Última atualização: 2026-07-17 (V5 Decision Engine)
 Status: registro vivo de decisões técnicas e operacionais
+
+---
+
+# Decisões — V5 Decision Engine (2026-07-17)
+
+## 2026-07-17 — Metadados V5 no store local, sem mudança de schema
+Decisão: persistir local, período preferido e dependências em `contextStore.taskDecisionMetadata`, indexados pelo ID da tarefa. O parser pode produzir `decision_metadata` transitoriamente, mas esse campo não entra no payload remoto de `tasks`.
+Motivo: o gate de inspeção remota do Supabase ficou indisponível por timeout. Manter os metadados no PWA entrega a V5 offline sem introduzir uma migration não validada nem alterar o sync estável.
+Alternativas descartadas: migration sem dry-run remoto — viola o gate operacional do projeto; nova tabela de dependências — aumentaria sync/outbox/RLS prematuramente; codificar metadados em `description` — contaminaria observações do usuário.
+Contexto: V5 Decision Engine.
+
+## 2026-07-17 — Contexto momentâneo local e energia sem reativar sync legado
+Decisão: tempo disponível, energia atual, capacidade diária, local atual e tarefas puladas ficam no store local do PWA; `profiles.current_energy` continua sem leitura/escrita.
+Motivo: são estados momentâneos de decisão, não fatos duráveis da tarefa. Isso entrega contexto reativo sem recriar a inconsistência multi-device que motivou a remoção anterior da energia no header.
+Alternativas descartadas: reativar `pushEnergyToCloud` — descartada por ressuscitar um fluxo removido; migration de perfil V5 — desnecessária para contexto efêmero.
+Contexto: V5 Decision Engine e `docs/energia-removida.md`.
+
+## 2026-07-17 — Replanejamento não altera a agenda silenciosamente
+Decisão: mudanças de contexto recalculam missão/próxima ação; “Agora não” retira a tarefa apenas da decisão do dia; somente “Amanhã” altera `due_at` explicitamente e registra evento.
+Motivo: manter previsibilidade e evitar uma automação silenciosa que mova compromissos ou dependências sem intenção do usuário.
+Alternativas descartadas: reescrever toda a agenda automaticamente — alto risco operacional e de sync; ocultar sem explicação — incompatível com auditabilidade.
+Contexto: V5 Decision Engine.
+
+## 2026-07-17 — Sessão de foco não é retorno do timer histórico
+Decisão: a contagem regressiva do Foco é local e efêmera; não grava `started_at`, `actual_minutes` nem evento `started`.
+Motivo: oferecer apoio à execução sem reabrir a semântica de cronômetro aposentada e sem contaminar registros históricos de tempo.
+Alternativas descartadas: reutilizar `started_at` — quebraria a decisão de 2026-06-27; remover foco temporizado — não atenderia a experiência V5 solicitada.
+Contexto: V5 Decision Engine.
 
 ---
 

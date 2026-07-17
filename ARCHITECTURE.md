@@ -1,7 +1,71 @@
 # ARCHITECTURE.md — SecretárioTask
 
-Última revisão: 2026-07-01
+Última revisão: 2026-07-17
 Status: MVP enxuto alinhado ao PRD, com correções da auditoria de 2026-05-12
+
+---
+
+# Nota arquitetural — V5 Decision Engine (2026-07-17)
+
+## Núcleo determinístico
+
+`src/lib/decisionEngine.ts` é puro e recebe tarefas + `DecisionContext` por parâmetro. O contexto contém `now`, modo operacional (`activeContext`), local atual, energia disponível, janela em minutos, capacidade diária e IDs pulados no dia.
+
+Cada candidata recebe fatores normalizados e explicáveis:
+- urgência/prazo (27%);
+- impacto, representado pela prioridade já existente (22%);
+- modo/contexto ativo (14%);
+- compatibilidade de energia (10%);
+- encaixe na janela disponível (10%);
+- idade da tarefa (7%);
+- local (6%);
+- período preferido (4%).
+
+O valor resultante é prioridade operacional da tarefa, não score de produtividade do usuário. Desempates são estáveis por prazo, prioridade, criação e ID.
+
+## Elegibilidade e dependências
+
+Uma tarefa só vira próxima ação quando:
+- está aberta por `isOpenTask`;
+- cabe na janela disponível;
+- não aguarda terceiro nem dependência sem detalhe;
+- todas as dependências encontradas estão concluídas;
+- um local explicitamente exigido coincide com o local atual.
+
+Dependências podem ser IDs escolhidos no modal ou títulos capturados deterministicamente. A conclusão da tarefa prévia desbloqueia a dependente no próximo cálculo, sem mutation adicional.
+
+## Missão, replanejamento e revisão
+
+A missão seleciona até cinco ações e respeita `dailyCapacityMinutes`. Mudanças no contexto recalculam a saída em memória. “Agora não” persiste apenas o ID pulado no dia local; “Amanhã” usa o fluxo existente de adiamento e evento `postponed`.
+
+`buildDailyReview` usa `completed_at` confirmado e `resolved_at`, nunca `updated_at`, e prepara uma prévia determinística da missão de amanhã.
+
+## Persistência
+
+O parser e o motor compartilham o contrato transitório `TaskDecisionMetadata`:
+
+```ts
+type TaskDecisionMetadata = {
+  location?: DecisionLocation | null;
+  preferred_period?: PreferredPeriod | null;
+  dependency_ids?: string[];
+  dependency_titles?: string[];
+};
+```
+
+O `contextStore.taskDecisionMetadata` persiste esses dados no PWA, indexados pelo ID estável da tarefa. `Home` combina a tarefa com seus metadados somente ao montar a entrada do motor. O campo não integra `TASK_COLUMNS`, o outbox ou o payload remoto; nenhuma migration foi criada ou aplicada. A captura guarda os metadados depois que `taskStore.addTask` devolve o ID local gerado.
+
+Tempo, energia, local atual, capacidade e pulos do dia também vivem no `contextStore` local. Eles não reativam `profiles.current_energy` nem alteram o contrato LWW de contexto remoto existente. Sincronização multi-device desses novos metadados fica adiada até o modelo ser validado em uso real e houver gate remoto controlado.
+
+## Captura e foco
+
+`decisionCapture.ts` extrai deterministicamente duração (`15 min`, `1h`), local (`@centro`), período (`@manhã`), impacto e `depende de ...`. O `smartParser` apenas complementa: IA continua opcional e o fallback local preserva todos esses recursos.
+
+A sessão de foco no `FocoSheet` é contagem regressiva local. Não escreve `started_at`, `actual_minutes` ou eventos de timer.
+
+## Insights
+
+`buildDecisionInsights` produz no máximo quatro leituras objetivas (fluxo semanal, faixa de conclusões confirmadas, fila por contexto e adiamentos). Não usa `updated_at`, não faz diagnóstico psicológico e não gera score global.
 
 ---
 

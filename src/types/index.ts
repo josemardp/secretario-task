@@ -33,6 +33,18 @@ export type EstimatedMinutesSource = 'default_30' | 'manual' | 'ai' | 'parser';
 export type ActualMinutesSource = 'timer' | 'manual' | 'retroactive' | 'unknown';
 export type BlockerType = 'waiting_third_party' | 'no_time' | 'priority_changed' | 'needs_split' | 'dependency';
 export const BLOCKER_TYPES: BlockerType[] = ['waiting_third_party', 'no_time', 'priority_changed', 'needs_split', 'dependency'];
+export type DecisionLocation = 'anywhere' | 'home' | 'company' | 'center' | 'car' | 'forum' | 'church' | 'remote';
+export type PreferredPeriod = 'any' | 'morning' | 'afternoon' | 'evening';
+
+/** Metadados opcionais consumidos pelo Decision Engine v5. O objeto pode
+ * acompanhar tarefas transitórias do parser/motor, mas a persistência vigente
+ * fica no store local V5 para não alterar o contrato remoto de tasks. */
+export type TaskDecisionMetadata = {
+  location?: DecisionLocation | null;
+  preferred_period?: PreferredPeriod | null;
+  dependency_ids?: string[];
+  dependency_titles?: string[];
+};
 export type TaskEventType =
   | 'created'
   | 'updated'
@@ -65,6 +77,7 @@ export interface Task {
   estimated_minutes_source?: EstimatedMinutesSource | null;
   actual_minutes_source?: ActualMinutesSource | null;
   blocker_type?: BlockerType | null;
+  decision_metadata?: TaskDecisionMetadata | null;
   started_at?: string | null;
   recurrence_rule?: string | null;
   recurrence_origin_id?: string | null;
