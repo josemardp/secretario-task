@@ -1,10 +1,12 @@
 import type { ContextType, Task } from '../types';
 import { nextDefaultDueTime, applyDefaultTimeToDate } from './datetime';
+import { extractDecisionCaptureHints } from './decisionCapture';
 
 const CONTEXTS: ContextType[] = ['PM', 'Esdra', 'Pessoal', 'Familia', 'CCB', 'Estudo', 'Saude'];
 
 export function parseTaskInput(rawText: string, defaultContext: ContextType): Partial<Task> {
-  let title = rawText;
+  const decisionHints = extractDecisionCaptureHints(rawText);
+  let title = decisionHints.cleanedText;
   let context: ContextType = defaultContext;
   let priority = 0;
   let energy = 0;
@@ -190,9 +192,14 @@ export function parseTaskInput(rawText: string, defaultContext: ContextType): Pa
   return {
     title: title.trim().replace(/\s+/g, ' '),
     context,
-    priority,
+    priority: decisionHints.priority ?? priority,
     energy,
     due_at: due_at ?? undefined,
-    recurrence_rule: recurrence_rule ?? undefined
+    recurrence_rule: recurrence_rule ?? undefined,
+    ...(decisionHints.estimatedMinutes != null ? {
+      estimated_minutes: decisionHints.estimatedMinutes,
+      estimated_minutes_source: 'parser' as const,
+    } : {}),
+    ...(decisionHints.metadata ? { decision_metadata: decisionHints.metadata } : {}),
   };
 }

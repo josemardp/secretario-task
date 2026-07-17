@@ -1,8 +1,27 @@
 # ROADMAP.md — SecretárioTask
 
-Última revisão: 2026-06-27
+Última revisão: 2026-07-17
 Linha de base oficial: MVP enxuto
 Duração sugerida por sprint: 1–2 semanas
+
+---
+
+# Marco V5 — Decision Engine
+
+Status: implementação concluída em 2026-07-17.
+
+Entregas:
+- próxima melhor ação determinística e explicável;
+- missão diária de até cinco ações dentro da capacidade configurada;
+- contexto reativo de tempo disponível, energia, local e modo operacional;
+- dependências persistidas localmente com desbloqueio automático;
+- replanejamento por mudança de contexto, “agora não” e adiamento para amanhã;
+- captura inteligente determinística, com IA apenas opcional;
+- sessão de foco local, sem reativar o timer histórico;
+- insights objetivos e revisão diária com prévia de amanhã;
+- compatibilidade Agenda/Timeline, mobile, PWA e offline-first preservada.
+
+Próximo marco recomendado: uso real e calibração apenas dos pesos do motor com base em decisões observadas, sem criar score de produtividade ou IA diagnóstica.
 
 ---
 

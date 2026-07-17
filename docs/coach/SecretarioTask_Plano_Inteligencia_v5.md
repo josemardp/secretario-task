@@ -1,6 +1,13 @@
 # SecretárioTask — Da Métrica ao Sentido
 ## Plano de Inteligência v5 (Fases A → D)
 
+> Atualização de 17/07/2026: este documento permanece como histórico do plano
+> de amadurecimento de dados que entregou a Fase A. A evolução V5 vigente passou
+> a ser o **Decision Engine**, solicitada explicitamente após esse ciclo e
+> documentada em `ROADMAP.md`, `ARCHITECTURE.md`, `PRD.md`, `DECISIONS.md` e
+> `STATUS.md`. As antigas Fases B–D não são pré-requisito do motor e continuam
+> adiadas; nenhuma análise frágil ou IA diagnóstica foi ativada.
+
 > Baseline: coach-v4.3-hardening (main 7add939), Agenda como única view, Supabase alinhado até 0020. Este plano NÃO é sobre mais engenharia de dados — a fundação honesta já existe. É sobre o que fazer com ela: transformar registro em entendimento, sem violar nenhum princípio da v4 (determinismo no caminho crítico; IA narra, nunca origina diagnóstico; sem score; dado frágil rebaixa confiança, não vira afirmação forte).
 
 ---

@@ -6,6 +6,7 @@ import { ChevronUp, Settings } from 'lucide-react';
 import type { Task, ContextType } from '../types';
 import { EmptyState } from './EmptyState';
 import { isClosedWithoutExecution, isOpenTask } from '../lib/taskFilters';
+import { DecisionInsightsCard } from './DecisionInsightsCard';
 
 interface DashboardViewProps {
   tasks: Task[];
@@ -358,6 +359,8 @@ export function DashboardView({ tasks, onOpenSettings }: DashboardViewProps) {
     <div className="flex flex-col gap-3">
       <DashboardHeader onOpenSettings={onOpenSettings} />
 
+      <DecisionInsightsCard tasks={liveTasks} />
+
       {/* Top hero */}
       <div className="bg-surface border border-border rounded-2xl p-4">
         <div className="flex items-start justify-between gap-3">
@@ -533,8 +536,8 @@ export function DashboardView({ tasks, onOpenSettings }: DashboardViewProps) {
         <div className="text-[12px] text-ink-secondary -mt-1 mb-3">
           Usa somente conclusões confirmadas; histórico anterior fica fora desta métrica.
         </div>
-        <div className="h-48 -ml-3">
-          <ResponsiveContainer width="100%" height="100%">
+        <div className="h-48 min-w-0 -ml-3">
+          <ResponsiveContainer width="100%" height="100%" minWidth={0}>
             <BarChart data={peakHourData}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={chartTheme.border} />
               <XAxis

@@ -442,7 +442,7 @@ export function TimelineView({
   tasks,
   selectedDate,
 }: TimelineViewProps) {
-  const { activeContext } = useContextStore();
+  const { activeContext, removeTaskDecisionMetadata } = useContextStore();
   const { updateTask, deleteTask, recordTaskEvent } = useTaskStore();
   const toast = useToast();
   const [dismissedBreaks, setDismissedBreaks] = useState<string[]>([]);
@@ -536,6 +536,7 @@ export function TimelineView({
   const confirmDelete = () => {
     if (!pendingDeleteTask) return;
     deleteTask(pendingDeleteTask.id);
+    removeTaskDecisionMetadata(pendingDeleteTask.id);
     setPendingDeleteTask(null);
     toast('Tarefa excluída.', 'success');
   };

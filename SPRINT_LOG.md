@@ -1,8 +1,48 @@
 # SPRINT_LOG.md — SecretárioTask
 
-Última revisão: 2026-07-01
+Última revisão: 2026-07-17
 Status: alinhado ao ROADMAP oficial
 Duração sugerida por sprint: 1–2 semanas
+
+---
+
+# V5 — Decision Engine
+Data: 2026-07-17
+
+## Objetivo
+Entregar integralmente a evolução do SecretárioTask para um sistema determinístico de decisão operacional, sem substituir a Agenda e sem tornar IA obrigatória.
+
+## Entregáveis
+- `src/lib/decisionEngine.ts`: ranking explicável, próxima ação, missão, dependências, local, período, energia, janela, revisão diária e insights.
+- `src/lib/decisionCapture.ts`: extração determinística das pistas V5 na captura.
+- `src/components/FocoSheet.tsx`: central operacional V5 e foco local.
+- `src/components/DecisionInsightsCard.tsx`: insights objetivos no Painel.
+- `src/components/TaskEditModal.tsx`: edição de metadados e dependências.
+- `src/stores/contextStore.ts`: contexto momentâneo, ações puladas por dia e metadados V5 por tarefa, todos persistidos localmente.
+- `src/types/index.ts`: contrato transitório de `decision_metadata` consumido pelo parser e pelo motor, sem alterar o payload remoto de tarefas.
+- `scripts/decisionEngine.fixtures.ts`: 10 cenários determinísticos.
+
+## Smoke visual executado
+- Captura offline de três tarefas com duração/local/impacto/energia/dependência.
+- Dependência pendente retirou tarefa da execução imediata.
+- Local “centro” recalculou a próxima ação.
+- Janela de 5 min declarou que nenhuma tarefa cabia.
+- Sessão de foco iniciou e exibiu contagem regressiva.
+- Modal exibiu local, melhor período e dependências.
+- Painel exibiu insights acionáveis sem diagnóstico.
+
+## Validações
+- [x] baseline: lint, typecheck, testes e build verdes.
+- [x] typecheck intermediário verde.
+- [x] 10 fixtures V5 verdes; suíte anterior preservada.
+- [x] gate final completo.
+- [x] nenhuma migration ou escrita remota necessária.
+
+## Decisões
+- Metadados V5 persistidos no store local por ID de tarefa, sem ampliar `TaskStatus`, schema ou sync.
+- Uma migration futura só deve ser considerada após validar o modelo em uso real e com acesso controlado ao banco remoto.
+- Foco local não escreve tempo real histórico.
+- Replanejamento reativo e por um toque; nenhuma alteração silenciosa em massa de `due_at`.
 
 ---
 
