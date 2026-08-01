@@ -1,6 +1,6 @@
 # STATUS.md — SecretárioTask
 
-Última atualização: 2026-07-17 (V5 Decision Engine)
+Última atualização: 2026-08-01 (Hotfix recorrência mensal)
 
 ---
 
@@ -23,7 +23,44 @@
 
 # Sprint atual
 
-V5 Decision Engine — concluída
+Hotfix recorrência mensal — concluído (2026-08-01)
+
+---
+
+# Hotfix recorrência mensal (2026-08-01)
+
+## Objetivo
+Corrigir bug relatado pelo Josemar: tarefas recorrentes mensais com dia específico (ex.: "todo mês, dia 15") apareciam na Agenda no dia em que foram criadas, não no dia configurado.
+
+## Causa raiz
+- `RecurrenceModal.handleSave()` só trocava a hora da data existente da tarefa, nunca recalculava o dia com base no "Dia do mês" escolhido no formulário.
+- `parser.ts` (parser determinístico, usado por padrão sem chave de IA) reconhecia "todo mês" mas ignorava "dia N" no texto — o número acabava sendo interpretado como horário pelo regex de hora.
+
+## Entregas
+- `computeFirstOccurrenceV2` novo em `src/lib/recurrence.ts`: ponto único para calcular a data da primeira ocorrência de uma regra V2. Mensal com dia específico/ordinal recalcula sempre a partir de agora; diária/semanal/anual (e mensal sem dia) preservam a data atual se ainda for futura.
+- `RecurrenceModal.tsx` usa a nova função ao salvar, e mostra a data corrigida no preview do modal.
+- `TaskEditModal.tsx` não reprocessa mais a data quando ela já veio corrigida do `RecurrenceModal` (evita avanço duplicado).
+- `parser.ts` captura "dia N" junto de "todo mês" na captura rápida sem IA, gera regra V2 com `byMonthDay` e ancora `due_at` no dia certo; remove "dia N" do texto antes do parser de horário rodar, para não confundir com "15h".
+- `smartParser.ts` parou de duplicar a lógica de "primeira ocorrência" — delega para `recurrence.ts`.
+- Executado via Codex (prompt gerado pelo Claude), revisado em duas rodadas: a primeira correção enviada tinha uma regressão (diária/semanal/anual pulavam a data atual mesmo quando ainda válida); corrigida na segunda rodada.
+- Decisão técnica registrada em `DECISIONS.md`.
+
+## Validações
+- `npm run lint`: passou.
+- `npm run build`: passou; aviso conhecido de chunk maior que 500 kB.
+- `npm run test`: passou (todas as suítes existentes, sem teste novo — MVP não usa framework de teste automatizado).
+- Revisão manual do diff completo, linha a linha, nas duas rodadas.
+
+## Resultado
+- Nenhuma migration criada ou aplicada.
+- Nenhum comando Supabase executado.
+- Fluxo de "concluir tarefa recorrente → gerar próxima ocorrência" (`computeNextRuleAndDate`/`taskStore.ts`) não foi alterado.
+
+## Pendência
+- As tarefas que já foram criadas erradas antes do fix (as que apareceram todas no dia 1/08) continuam com a data errada — precisam ser reabertas e reconfiguradas manualmente (reabrir "Recorrência" em cada uma, ou ajustar a data direto). Não foi feita correção em massa nos dados.
+
+## Próximo passo recomendado
+Conferir na Agenda real, após o deploy, que uma tarefa nova com "Mensal, dia X" cai no dia certo — e corrigir manualmente as tarefas antigas afetadas pelo bug.
 
 ---
 
@@ -778,14 +815,11 @@ Foi corrigido novo corte de bordas dos cards na Agenda: slots com tarefa agora c
 
 # Próximo passo concreto
 
-Aplicar `0013` no SQL Editor, se ainda não foi aplicada → publicar (`vercel --prod`) → validar em celular real:
-1. Concluir uma tarefa no celular → no PC ela deve sumir (não ressuscitar) dentro de 30s.
-2. Editar a mesma tarefa nos dois devices quase ao mesmo tempo → segundo push descartado silenciosamente (log: "LWW conflict … version/updated_at divergente"), sem híbrido nem loop de retry.
-3. Concluir tarefa recorrente em dois devices → sobra uma próxima ocorrência (não duas).
-4. Mudar energia num device → o outro reflete em até 30s.
-5. Criar tarefa offline → aparece no outro device após reconectar, sem duplicata.
-6. Abrir Hoje em viewport pequena → ver bloco Agora, captura acima do teclado, checkbox concluindo e swipe funcionando.
-7. Abrir Agenda/Painel → confirmar ausência da capture bar fixa e navegação inferior sem sobreposição.
+Publicar o hotfix de recorrência mensal (2026-08-01) → validar no app real:
+1. Criar/editar uma tarefa e configurar recorrência "Mensal, dia X" → conferir que `due_at` cai no dia X (não no dia da criação).
+2. Digitar na captura rápida algo como "conta de luz todo mês dia 15" → conferir que a tarefa criada tem recorrência mensal dia 15 e título limpo ("conta de luz").
+3. Configurar recorrência "Diária"/"Semanal"/"Anual" numa tarefa com data futura já definida → conferir que a data não pula para o próximo intervalo sem necessidade.
+4. Corrigir manualmente as tarefas recorrentes já afetadas pelo bug antigo (as que venceram todas no dia 1/08).
 
 ---
 

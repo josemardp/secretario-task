@@ -126,6 +126,7 @@ export function TaskEditModal({ task, onClose }: TaskEditModalProps) {
   const toast = useToast();
   const [pendingDeleteTask, setPendingDeleteTask] = useState<Task | null>(null);
   const [showRecurrenceModal, setShowRecurrenceModal] = useState(false);
+  const [recurrenceDueAtFromModal, setRecurrenceDueAtFromModal] = useState(false);
   const [editForm, setEditForm] = useState<EditFormState>(() => buildInitialEditForm(
     task,
     task ? taskDecisionMetadata[task.id] : undefined,
@@ -136,7 +137,7 @@ export function TaskEditModal({ task, onClose }: TaskEditModalProps) {
 
     const ruleChanged = editForm.recurrence_rule !== (task.recurrence_rule ?? null);
     let newDueAt = editForm.due_at ? new Date(editForm.due_at).toISOString() : null;
-    if (ruleChanged && editForm.recurrence_rule && task.status !== 'done') {
+    if (ruleChanged && editForm.recurrence_rule && task.status !== 'done' && !recurrenceDueAtFromModal) {
       const candidate = getNextOccurrenceFromNow(
         newDueAt ?? task.due_at,
         editForm.recurrence_rule,
@@ -385,7 +386,10 @@ export function TaskEditModal({ task, onClose }: TaskEditModalProps) {
                   <input
                     type="datetime-local"
                     value={editForm.due_at}
-                    onChange={(e) => setEditForm((f) => ({ ...f, due_at: e.target.value }))}
+                    onChange={(e) => {
+                      setRecurrenceDueAtFromModal(false);
+                      setEditForm((f) => ({ ...f, due_at: e.target.value }));
+                    }}
                     className="bg-paper2 rounded-xl px-3 py-2.5 text-[13px] text-ink outline-none border-0 tnum"
                   />
                 </label>
@@ -525,7 +529,10 @@ export function TaskEditModal({ task, onClose }: TaskEditModalProps) {
                   {editForm.recurrence_rule && (
                     <button
                       type="button"
-                      onClick={() => setEditForm((f) => ({ ...f, recurrence_rule: null }))}
+                      onClick={() => {
+                        setRecurrenceDueAtFromModal(false);
+                        setEditForm((f) => ({ ...f, recurrence_rule: null }));
+                      }}
                       className="w-11 h-11 shrink-0 flex items-center justify-center bg-paper2 rounded-xl text-ink-2 text-[14px] font-bold hover:text-danger"
                       aria-label="Remover recorrência"
                     >
@@ -538,6 +545,7 @@ export function TaskEditModal({ task, onClose }: TaskEditModalProps) {
                     dueAt={editForm.due_at ? new Date(editForm.due_at).toISOString() : null}
                     currentRule={editForm.recurrence_rule}
                     onSave={(rule, newDueAt) => {
+                      setRecurrenceDueAtFromModal(Boolean(newDueAt));
                       setEditForm((f) => ({
                         ...f,
                         recurrence_rule: rule,

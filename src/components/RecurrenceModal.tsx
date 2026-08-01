@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { RecurrenceRuleV2 } from '../types';
-import { parseRecurrenceRule } from '../lib/recurrence';
+import { computeFirstOccurrenceV2, parseRecurrenceRule } from '../lib/recurrence';
 
 type DayCode = NonNullable<RecurrenceRuleV2['byDay']>;
 type SetPos = NonNullable<RecurrenceRuleV2['bySetPos']>;
@@ -90,7 +90,7 @@ function initForm(currentRule: string | null, dueAt: string | null): FormState {
   };
 }
 
-function serializeForm(form: FormState): string {
+function buildRuleFromForm(form: FormState): RecurrenceRuleV2 {
   const end: RecurrenceRuleV2['end'] =
     form.endType === 'never' ? null :
     form.endType === 'date'  ? { type: 'date',  value: form.endDate } :
@@ -107,7 +107,16 @@ function serializeForm(form: FormState): string {
     }
   }
 
-  return JSON.stringify(rule);
+  return rule;
+}
+
+function applyFormTime(iso: string, time: string): string {
+  const d = new Date(iso);
+  const [h, m] = time.split(':').map(Number);
+  if (Number.isFinite(h) && Number.isFinite(m)) {
+    d.setHours(h, m, 0, 0);
+  }
+  return d.toISOString();
 }
 
 function formatFirstDate(dueAt: string | null): string {
@@ -126,18 +135,28 @@ export function RecurrenceModal({ dueAt, currentRule, onSave, onClose }: Recurre
   }
 
   function handleSave() {
-    const rule = serializeForm(form);
+    const rule = buildRuleFromForm(form);
+    const ruleText = JSON.stringify(rule);
     let newDueAt: string | undefined;
-    if (dueAt && form.time) {
+
+    const firstOccurrence = computeFirstOccurrenceV2(rule, new Date(), dueAt);
+    if (firstOccurrence && form.time) {
+      newDueAt = applyFormTime(firstOccurrence, form.time);
+    } else if (dueAt && form.time) {
       const d = new Date(dueAt);
       const [h, m] = form.time.split(':').map(Number);
       d.setHours(h, m, 0, 0);
       newDueAt = d.toISOString();
     }
-    onSave(rule, newDueAt);
+
+    onSave(ruleText, newDueAt);
   }
 
-  const firstDate = formatFirstDate(dueAt);
+  const previewDueAt = useMemo(() => {
+    const firstOccurrence = computeFirstOccurrenceV2(buildRuleFromForm(form), new Date(), dueAt);
+    return firstOccurrence && form.time ? applyFormTime(firstOccurrence, form.time) : dueAt;
+  }, [dueAt, form]);
+  const firstDate = formatFirstDate(previewDueAt);
 
   return createPortal(
     <div

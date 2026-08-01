@@ -200,6 +200,133 @@ export function getNextOccurrenceV2(
   return next.toISOString();
 }
 
+/** Calcula a primeira ocorrência válida de uma regra V2 a partir de `now`.
+ * Para regras mensais com dia específico/ordinal, ancora dentro do mês atual
+ * quando o candidato ainda não passou; o avanço por intervalo completo fica
+ * reservado para getNextOccurrenceV2/computeNextRuleAndDate. */
+export function computeFirstOccurrenceV2(
+  rule: RecurrenceRuleV2,
+  now: Date = new Date(),
+  currentDueAt: string | null = null,
+): string | null {
+  const reference = new Date(now);
+  const interval = Math.max(1, rule.interval);
+  const endDate = rule.end?.type === 'date' ? new Date(rule.end.value + 'T23:59:59') : null;
+  const currentDueDate = currentDueAt ? new Date(currentDueAt) : null;
+  const hasValidCurrentDueDate = currentDueDate != null && !isNaN(currentDueDate.getTime());
+
+  if (rule.end?.type === 'count' && rule.end.value <= 0) return null;
+  if (endDate && reference > endDate) return null;
+
+  if (rule.freq === 'monthly') {
+    if (rule.byMonthDay != null || (rule.byDay != null && rule.bySetPos != null)) {
+      for (let offset = 0; offset < 36; offset++) {
+        const rawMonth = reference.getMonth() + offset;
+        const year = reference.getFullYear() + Math.floor(rawMonth / 12);
+        const month = rawMonth % 12;
+        let candidate: Date | null = null;
+
+        if (rule.byMonthDay != null) {
+          if (rule.byMonthDay === 'last') {
+            candidate = new Date(year, month + 1, 0);
+          } else if (rule.byMonthDay >= 1 && rule.byMonthDay <= 31) {
+            const dayCandidate = new Date(year, month, rule.byMonthDay);
+            if (dayCandidate.getMonth() === month) candidate = dayCandidate;
+          }
+        } else if (rule.byDay != null && rule.bySetPos != null) {
+          candidate = getNthWeekdayOfMonth(year, month, rule.byDay, rule.bySetPos);
+        }
+
+        if (!candidate) continue;
+
+        candidate.setHours(
+          reference.getHours(),
+          reference.getMinutes(),
+          reference.getSeconds(),
+          reference.getMilliseconds(),
+        );
+
+        if (candidate >= reference) {
+          if (endDate && candidate > endDate) return null;
+          return candidate.toISOString();
+        }
+      }
+
+      return null;
+    }
+  }
+
+  if (hasValidCurrentDueDate && currentDueDate > reference) {
+    if (endDate && currentDueDate > endDate) return null;
+    return currentDueDate.toISOString();
+  }
+
+  if (hasValidCurrentDueDate) {
+    let candidate: Date | null = null;
+
+    if (rule.freq === 'daily') {
+      candidate = new Date(reference);
+      candidate.setHours(
+        currentDueDate.getHours(),
+        currentDueDate.getMinutes(),
+        currentDueDate.getSeconds(),
+        currentDueDate.getMilliseconds(),
+      );
+      if (candidate <= reference) candidate.setDate(candidate.getDate() + interval);
+    } else if (rule.freq === 'weekly') {
+      candidate = new Date(reference);
+      candidate.setHours(
+        currentDueDate.getHours(),
+        currentDueDate.getMinutes(),
+        currentDueDate.getSeconds(),
+        currentDueDate.getMilliseconds(),
+      );
+      while (candidate.getDay() !== currentDueDate.getDay()) {
+        candidate.setDate(candidate.getDate() + 1);
+      }
+      if (candidate <= reference) candidate.setDate(candidate.getDate() + interval * 7);
+    } else if (rule.freq === 'monthly') {
+      for (let offset = 0; offset < 36; offset += interval) {
+        const rawMonth = reference.getMonth() + offset;
+        const year = reference.getFullYear() + Math.floor(rawMonth / 12);
+        const month = rawMonth % 12;
+        const dayCandidate = new Date(
+          year,
+          month,
+          currentDueDate.getDate(),
+          currentDueDate.getHours(),
+          currentDueDate.getMinutes(),
+          currentDueDate.getSeconds(),
+          currentDueDate.getMilliseconds(),
+        );
+        if (dayCandidate.getMonth() === month && dayCandidate > reference) {
+          candidate = dayCandidate;
+          break;
+        }
+      }
+    } else if (rule.freq === 'yearly') {
+      candidate = new Date(
+        reference.getFullYear(),
+        currentDueDate.getMonth(),
+        currentDueDate.getDate(),
+        currentDueDate.getHours(),
+        currentDueDate.getMinutes(),
+        currentDueDate.getSeconds(),
+        currentDueDate.getMilliseconds(),
+      );
+      while (candidate <= reference) {
+        candidate.setFullYear(candidate.getFullYear() + interval);
+      }
+    }
+
+    if (!candidate) return null;
+    if (endDate && candidate > endDate) return null;
+    return candidate.toISOString();
+  }
+
+  return getNextOccurrenceV2(reference.toISOString(), rule);
+}
+
 // ─── Motor legado (replica lógica do taskStore) ───────────────────
 
 function getNextLegacyOccurrence(baseDateStr: string | null, rule: string): string | null {
