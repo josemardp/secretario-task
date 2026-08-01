@@ -1,6 +1,6 @@
-import type { Task, ContextType, RecurrenceRuleV2 } from '../types';
+import type { Task, ContextType } from '../types';
 import { parseTaskInput } from './parser';
-import { getNextOccurrenceFromNow } from './recurrence';
+import { computeFirstOccurrenceV2, getNextOccurrenceFromNow, parseRecurrenceRule } from './recurrence';
 import { extractDecisionCaptureHints } from './decisionCapture';
 
 const OPENAI_API_URL = 'https://api.openai.com/v1';
@@ -17,57 +17,9 @@ function extractBrazilianTime(text: string): { hour: number; minute: number } | 
   return null;
 }
 
-// Para a data âncora da primeira ocorrência de uma série recorrente sem data explícita:
-// varre mês a mês a partir de hoje e retorna o primeiro match futuro do padrão.
-// Diferente de getNextOccurrenceFromNow, não avança pelo interval — isso seria correto
-// para a 2ª ocorrência em diante, mas para a 1ª queremos o sábado mais próximo disponível.
-function computeFirstOccurrence(rule: string): string | null {
-  if (!rule.startsWith('{')) return getNextOccurrenceFromNow(null, rule);
-  let v2: RecurrenceRuleV2;
-  try { v2 = JSON.parse(rule) as RecurrenceRuleV2; } catch { return null; }
-  if (!v2?.freq) return null;
-
-  if (v2.freq === 'monthly') {
-    const dowMap: Record<string, number> = { SU: 0, MO: 1, TU: 2, WE: 3, TH: 4, FR: 5, SA: 6 };
-    const now = new Date();
-
-    for (let offset = 0; offset < 36; offset++) {
-      const raw = now.getMonth() + offset;
-      const y = now.getFullYear() + Math.floor(raw / 12);
-      const m = raw % 12;
-      let candidate: Date | null = null;
-
-      if (v2.byDay != null && v2.bySetPos != null) {
-        const targetDow = dowMap[v2.byDay];
-        if (targetDow === undefined) break;
-        if (v2.bySetPos === -1) {
-          const last = new Date(y, m + 1, 0);
-          while (last.getDay() !== targetDow) last.setDate(last.getDate() - 1);
-          candidate = last;
-        } else {
-          const first = new Date(y, m, 1);
-          while (first.getDay() !== targetDow) first.setDate(first.getDate() + 1);
-          first.setDate(first.getDate() + (v2.bySetPos - 1) * 7);
-          if (first.getMonth() === m) candidate = first;
-        }
-      } else if (v2.byMonthDay != null) {
-        if (v2.byMonthDay === 'last') {
-          candidate = new Date(y, m + 1, 0);
-        } else {
-          const d = new Date(y, m, v2.byMonthDay as number);
-          if (d.getMonth() === m) candidate = d;
-        }
-      } else {
-        break; // sem restrição de dia → cai no fallback
-      }
-
-      if (candidate && candidate > now) {
-        candidate.setHours(now.getHours(), now.getMinutes(), 0, 0);
-        return candidate.toISOString();
-      }
-    }
-  }
-
+function computeFirstOccurrence(rule: string, now: Date = new Date()): string | null {
+  const v2 = parseRecurrenceRule(rule);
+  if (v2) return computeFirstOccurrenceV2(v2, now);
   return getNextOccurrenceFromNow(null, rule);
 }
 

@@ -1,7 +1,17 @@
 # DECISIONS.md — SecretárioTask
 
-Última atualização: 2026-07-17 (V5 Decision Engine)
+Última atualização: 2026-08-01 (Hotfix recorrência mensal)
 Status: registro vivo de decisões técnicas e operacionais
+
+---
+
+# Decisões — Hotfix recorrência mensal (2026-08-01)
+
+## 2026-08-01 — `due_at` de recorrência sempre recalculado a partir de uma âncora explícita, nunca herdado por acaso
+Decisão: `computeFirstOccurrenceV2` (`src/lib/recurrence.ts`) passa a ser o único ponto que decide a data da primeira ocorrência ao configurar/alterar recorrência — usado por `RecurrenceModal` (UI) e `parser.ts` (texto). Para mensal com dia específico/ordinal, recalcula sempre a partir de agora. Para diária/semanal/anual (e mensal sem dia), preserva a data atual se ela ainda for futura; só avança se estiver no passado ou não existir.
+Motivo: bug relatado pelo usuário — tarefas recorrentes mensais com dia configurado (ex.: "todo mês, dia 15") apareciam na data de criação em vez do dia escolhido, porque `RecurrenceModal.handleSave()` só trocava a hora da data existente, nunca recalculava o dia. Correção ingênua inicial (recalcular sempre via `getNextOccurrenceV2`) criou regressão nova: diária/semanal/anual passavam a pular a data atual mesmo quando ainda válida.
+Alternativas descartadas: manter a data antiga sempre e só deixar o usuário editar a data manualmente — não resolve o caso de texto ("todo mês dia 15" na captura rápida); avançar sempre por um intervalo completo — regressão descrita acima.
+Contexto: bug relatado 2026-08-01, print da Agenda com várias recorrências mensais todas vencendo no dia 1. Fluxo de conclusão de tarefa recorrente (`computeNextRuleAndDate`/`taskStore.ts`) não foi alterado — continua avançando um intervalo completo a partir da última ocorrência concluída, que é o comportamento correto para esse caso.
 
 ---
 

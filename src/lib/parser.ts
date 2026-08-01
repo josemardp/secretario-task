@@ -1,6 +1,7 @@
-import type { ContextType, Task } from '../types';
+import type { ContextType, RecurrenceRuleV2, Task } from '../types';
 import { nextDefaultDueTime, applyDefaultTimeToDate } from './datetime';
 import { extractDecisionCaptureHints } from './decisionCapture';
+import { computeFirstOccurrenceV2 } from './recurrence';
 
 const CONTEXTS: ContextType[] = ['PM', 'Esdra', 'Pessoal', 'Familia', 'CCB', 'Estudo', 'Saude'];
 
@@ -12,6 +13,16 @@ export function parseTaskInput(rawText: string, defaultContext: ContextType): Pa
   let energy = 0;
   let due_at: string | null = null;
   let recurrence_rule: string | null = null;
+
+  const monthlyRecurrenceRegex = /\btodo mes\b|\btodo mês\b/i;
+  const monthlyDayMatch = monthlyRecurrenceRegex.test(title)
+    ? title.match(/\bdia\s+(\d{1,2})\b/i)
+    : null;
+  const monthlyDay = monthlyDayMatch ? parseInt(monthlyDayMatch[1], 10) : null;
+  const validMonthlyDay = monthlyDay != null && monthlyDay >= 1 && monthlyDay <= 31 ? monthlyDay : null;
+  if (validMonthlyDay != null && monthlyDayMatch) {
+    title = title.replace(monthlyDayMatch[0], ' ');
+  }
   
   // Parse Context
   const contextRegex = /@(PM|Esdra|Pessoal|Familia|CCB|Estudo|Saude)/i;
@@ -182,7 +193,20 @@ export function parseTaskInput(rawText: string, defaultContext: ContextType): Pa
   if (!recurrence_rule) {
     for (const rec of recurrenceRegexes) {
       if (rec.regex.test(title)) {
-        recurrence_rule = rec.rule;
+        if (rec.rule === 'monthly' && validMonthlyDay != null) {
+          const rule: RecurrenceRuleV2 = {
+            freq: 'monthly',
+            interval: 1,
+            byMonthDay: validMonthlyDay,
+            end: null,
+          };
+          recurrence_rule = JSON.stringify(rule);
+          const reference = due_at ? new Date(due_at) : nextDefaultDueTime(today);
+          const firstOccurrence = computeFirstOccurrenceV2(rule, reference);
+          if (firstOccurrence) due_at = firstOccurrence;
+        } else {
+          recurrence_rule = rec.rule;
+        }
         title = title.replace(rec.regex, '');
         break;
       }
