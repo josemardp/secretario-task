@@ -1,6 +1,6 @@
 # STATUS.md — SecretárioTask
 
-Última atualização: 2026-08-03 (Hotfix exclusão de recorrência)
+Última atualização: 2026-08-03 (Captura rápida: opções de horário padrão)
 
 ---
 
@@ -23,7 +23,32 @@
 
 # Sprint atual
 
-Hotfix exclusão de recorrência — concluído (2026-08-03)
+Captura rápida: opções de horário padrão — concluído (2026-08-03)
+
+---
+
+# Captura rápida: opções de horário padrão (2026-08-03)
+
+## Objetivo
+Pedido do Josemar: quando a captura rápida não detecta data/hora no texto (ex.: "comprar pão"), o modal de confirmação deve oferecer 3 atalhos de horário em vez de assumir silenciosamente "próximo slot de 30min hoje".
+
+## Entregas
+- `parser.ts`: removido o fallback que forçava `due_at` para o próximo slot de 30 min quando nenhuma data/hora era detectada no texto. Agora `due_at` fica vazio nesse caso (mesmo comportamento já usado pela IA em `smartParser.ts`).
+- `datetime.ts`: `quickDueNow`, `quickDueInHours`, `quickDueTomorrowAt` — helpers puros e determinísticos (recebem `now` por parâmetro, seguindo o padrão do arquivo).
+- `MultiTaskConfirmModal.tsx`: quando a tarefa não tem `due_at`, mostra 3 botões — "Agora" (due_at = agora + 1 min), "Daqui 2h", "Amanhã 8h" — e um link "Escolher outro horário" para voltar ao campo de data/hora manual (comportamento antigo preservado como opção).
+- Clicar num dos 3 atalhos salva a tarefa imediatamente (1 toque), usando o contexto/prioridade/recorrência já ajustados na linha, e remove só aquela tarefa da lista de revisão — as demais (se houver mais de uma detectada na mesma captura) continuam no modal. Se a lista ficar vazia, o modal fecha sozinho.
+- `Home.tsx`: novo `handleQuickSaveTask`, reaproveita `handleConfirmMultiTasks([task], { closeModal: false })` — mesma lógica de estimativa/toast/erro do salvamento em lote, sem duplicar código.
+- Decisão de UX confirmada pelo Josemar: cada atalho salva com 1 toque (não só preenche o campo), mas contexto e prioridade continuam editáveis na mesma tela antes de tocar no atalho.
+
+## Validações
+- `npm run lint`: passou.
+- `npm run build`: passou; aviso conhecido de chunk maior que 500 kB.
+- `npm run test`: passou (nenhum teste dependia do `due_at` padrão removido).
+- Preview visual do bloco "Quando" em claro e escuro, mobile (390×844): botões com 44px de altura, contraste bom nos dois temas.
+- Não foi possível fazer smoke test dentro do app real logado (exige login do Supabase); a prévia foi feita renderizando o HTML/CSS compilado isoladamente com os dados reais da tela.
+
+## Próximo passo recomendado
+Testar no app real: digitar uma tarefa sem data (ex.: "comprar pão") e conferir que aparecem os 3 atalhos, que "Agora" cadastra e a tarefa entra na Agenda em instantes, e que "Escolher outro horário" ainda permite data manual como antes.
 
 ---
 

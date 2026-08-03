@@ -134,12 +134,8 @@ export function parseTaskInput(rawText: string, defaultContext: ContextType): Pa
     baseDate = applyDefaultTimeToDate(baseDate, today);
   }
 
-  // Se nao encontrou data NENHUMA, o padrao e HOJE no proximo slot de 30 min.
-  if (!dateFound) {
-    baseDate = nextDefaultDueTime(today);
-    dateFound = true;
-  }
-
+  // Se nao encontrou data/hora nenhuma no texto, due_at fica vazio —
+  // a captura rapida oferece as opcoes rapidas (agora/+2h/amanha 8h) em vez de assumir um horario.
   if (dateFound) {
     due_at = baseDate.toISOString();
   }
