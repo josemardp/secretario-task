@@ -336,6 +336,9 @@ export default function Home() {
     }
   };
 
+  const handleQuickSaveTask = (task: Partial<Task>) =>
+    handleConfirmMultiTasks([task], { closeModal: false });
+
   const handleSemanticSearch = async () => {
     if (!searchText.trim()) {
       setSemanticResults(null);
@@ -427,6 +430,7 @@ export default function Home() {
         <MultiTaskConfirmModal
           initialTasks={pendingSmartTasks}
           onConfirm={handleConfirmMultiTasks}
+          onQuickSave={handleQuickSaveTask}
           onCancel={() => setPendingSmartTasks(null)}
         />
       )}

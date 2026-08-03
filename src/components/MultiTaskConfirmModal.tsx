@@ -4,11 +4,13 @@ import { X, Sparkles, Repeat, Trash2, Flag } from 'lucide-react';
 import type { Task, ContextType } from '../types';
 import { CONTEXTS_LIST } from '../types';
 import { describeRecurrenceRule } from '../lib/recurrence';
+import { quickDueNow, quickDueInHours, quickDueTomorrowAt } from '../lib/datetime';
 import { RecurrenceModal } from './RecurrenceModal';
 
 interface MultiTaskConfirmModalProps {
   initialTasks: Partial<Task>[];
   onConfirm: (finalTasks: Partial<Task>[]) => void;
+  onQuickSave: (task: Partial<Task>) => Promise<void> | void;
   onCancel: () => void;
 }
 
@@ -43,10 +45,12 @@ function parseFromInput(local: string) {
 }
 
 export function MultiTaskConfirmModal({
-  initialTasks, onConfirm, onCancel,
+  initialTasks, onConfirm, onQuickSave, onCancel,
 }: MultiTaskConfirmModalProps) {
   const [tasks, setTasks] = useState<Partial<Task>[]>(initialTasks);
   const [recurrenceModalIdx, setRecurrenceModalIdx] = useState<number | null>(null);
+  const [manualDateIdx, setManualDateIdx] = useState<number | null>(null);
+  const [savingIdx, setSavingIdx] = useState<number | null>(null);
 
   const updateTask = (idx: number, updates: Partial<Task>) => {
     const next = [...tasks];
@@ -56,6 +60,21 @@ export function MultiTaskConfirmModal({
 
   const removeTask = (idx: number) => {
     setTasks(tasks.filter((_, i) => i !== idx));
+  };
+
+  const handleQuickPick = async (idx: number, dueAt: Date) => {
+    setSavingIdx(idx);
+    try {
+      await onQuickSave({ ...tasks[idx], due_at: dueAt.toISOString() });
+      const remaining = tasks.filter((_, i) => i !== idx);
+      if (remaining.length === 0) {
+        onCancel();
+      } else {
+        setTasks(remaining);
+      }
+    } finally {
+      setSavingIdx(null);
+    }
   };
 
   return createPortal(
@@ -174,28 +193,88 @@ export function MultiTaskConfirmModal({
                   )}
                 </div>
 
-                {/* row 2: date + context */}
-                <div className="grid grid-cols-2 gap-2 mt-2.5">
-                  <label className="flex flex-col gap-1">
-                    <span className="text-[12px] font-semibold uppercase tracking-wide text-ink-2">Data e hora</span>
-                    <input
-                      type="datetime-local"
-                      value={formatForInput(task.due_at)}
-                      onChange={(e) => updateTask(idx, { due_at: parseFromInput(e.target.value) })}
-                      className="bg-paper rounded-xl px-2.5 py-2 text-[12px] text-ink outline-none border-0 tnum"
-                    />
-                  </label>
-                  <label className="flex flex-col gap-1">
-                    <span className="text-[12px] font-semibold uppercase tracking-wide text-ink-2">Contexto</span>
-                    <select
-                      value={task.context}
-                      onChange={(e) => updateTask(idx, { context: e.target.value as ContextType })}
-                      className="bg-paper rounded-xl px-2.5 py-2 text-[12px] font-semibold text-ink outline-none border-0"
-                    >
-                      {CONTEXTS_LIST.map((c) => <option key={c} value={c}>{c}</option>)}
-                    </select>
-                  </label>
-                </div>
+                {/* row 2: quando (quick-pick ou data manual) + contexto */}
+                {(!task.due_at && manualDateIdx !== idx) ? (
+                  <>
+                    <div className="mt-2.5">
+                      <span className="text-[12px] font-semibold uppercase tracking-wide text-ink-2 block mb-1">Quando</span>
+                      <div className="grid grid-cols-3 gap-1.5">
+                        <button
+                          type="button"
+                          disabled={savingIdx === idx}
+                          onClick={() => handleQuickPick(idx, quickDueNow())}
+                          className="h-11 rounded-xl bg-ink text-canvas text-[11px] font-bold disabled:opacity-40"
+                        >
+                          Agora
+                        </button>
+                        <button
+                          type="button"
+                          disabled={savingIdx === idx}
+                          onClick={() => handleQuickPick(idx, quickDueInHours(2))}
+                          className="h-11 rounded-xl bg-ink text-canvas text-[11px] font-bold disabled:opacity-40"
+                        >
+                          Daqui 2h
+                        </button>
+                        <button
+                          type="button"
+                          disabled={savingIdx === idx}
+                          onClick={() => handleQuickPick(idx, quickDueTomorrowAt(8, 0))}
+                          className="h-11 rounded-xl bg-ink text-canvas text-[11px] font-bold disabled:opacity-40"
+                        >
+                          Amanhã 8h
+                        </button>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setManualDateIdx(idx)}
+                        className="mt-1.5 text-[11px] font-semibold text-ink-2 underline underline-offset-2"
+                      >
+                        Escolher outro horário
+                      </button>
+                    </div>
+                    <label className="flex flex-col gap-1 mt-2.5">
+                      <span className="text-[12px] font-semibold uppercase tracking-wide text-ink-2">Contexto</span>
+                      <select
+                        value={task.context}
+                        onChange={(e) => updateTask(idx, { context: e.target.value as ContextType })}
+                        className="bg-paper rounded-xl px-2.5 py-2 text-[12px] font-semibold text-ink outline-none border-0"
+                      >
+                        {CONTEXTS_LIST.map((c) => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                    </label>
+                  </>
+                ) : (
+                  <div className="grid grid-cols-2 gap-2 mt-2.5">
+                    <label className="flex flex-col gap-1">
+                      <span className="text-[12px] font-semibold uppercase tracking-wide text-ink-2">Data e hora</span>
+                      <input
+                        type="datetime-local"
+                        value={formatForInput(task.due_at)}
+                        onChange={(e) => updateTask(idx, { due_at: parseFromInput(e.target.value) })}
+                        className="bg-paper rounded-xl px-2.5 py-2 text-[12px] text-ink outline-none border-0 tnum"
+                      />
+                      {!task.due_at && (
+                        <button
+                          type="button"
+                          onClick={() => setManualDateIdx(null)}
+                          className="text-[10px] font-semibold text-ink-2 underline underline-offset-2 text-left"
+                        >
+                          Usar opções rápidas
+                        </button>
+                      )}
+                    </label>
+                    <label className="flex flex-col gap-1">
+                      <span className="text-[12px] font-semibold uppercase tracking-wide text-ink-2">Contexto</span>
+                      <select
+                        value={task.context}
+                        onChange={(e) => updateTask(idx, { context: e.target.value as ContextType })}
+                        className="bg-paper rounded-xl px-2.5 py-2 text-[12px] font-semibold text-ink outline-none border-0"
+                      >
+                        {CONTEXTS_LIST.map((c) => <option key={c} value={c}>{c}</option>)}
+                      </select>
+                    </label>
+                  </div>
+                )}
 
                 {/* row 3: priority segmented */}
                 <div className="mt-2.5">

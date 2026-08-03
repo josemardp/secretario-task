@@ -80,6 +80,28 @@ function applyTimeFromOriginalOrDefault(
   target.setHours(slot.getHours(), slot.getMinutes(), 0, 0);
 }
 
+/** Opções rápidas de horário para a captura sem data/hora detectada (P16). */
+export function quickDueNow(now: Date = new Date()): Date {
+  const d = new Date(now);
+  d.setSeconds(0, 0);
+  d.setMinutes(d.getMinutes() + 1);
+  return d;
+}
+
+export function quickDueInHours(hours: number, now: Date = new Date()): Date {
+  const d = new Date(now);
+  d.setSeconds(0, 0);
+  d.setHours(d.getHours() + hours);
+  return d;
+}
+
+export function quickDueTomorrowAt(hour: number, minute: number, now: Date = new Date()): Date {
+  const d = new Date(now);
+  d.setDate(d.getDate() + 1);
+  d.setHours(hour, minute, 0, 0);
+  return d;
+}
+
 export function formatDateTime(iso: string): string {
   const d = new Date(iso);
   return (
