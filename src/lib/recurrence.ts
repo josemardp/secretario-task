@@ -324,7 +324,10 @@ export function computeFirstOccurrenceV2(
     return candidate.toISOString();
   }
 
-  return getNextOccurrenceV2(reference.toISOString(), rule);
+  // Sem due_at anterior para ancorar: a primeira ocorrência é agora mesmo
+  // (hoje), não um intervalo inteiro à frente — evita que uma recorrência
+  // recém-criada sem data nasça já pulada para amanhã/semana que vem.
+  return reference.toISOString();
 }
 
 // ─── Motor legado (replica lógica do taskStore) ───────────────────

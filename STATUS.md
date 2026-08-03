@@ -1,6 +1,6 @@
 # STATUS.md — SecretárioTask
 
-Última atualização: 2026-08-03 (Captura rápida: opções de horário padrão)
+Última atualização: 2026-08-03 (Hotfix: 1a ocorrência de recorrência sem due_at pulava pro próximo intervalo)
 
 ---
 
@@ -23,7 +23,34 @@
 
 # Sprint atual
 
-Captura rápida: opções de horário padrão — concluído (2026-08-03)
+Hotfix: 1a ocorrência de recorrência sem due_at pulava pro próximo intervalo — concluído (2026-08-03)
+
+---
+
+# Hotfix: 1a ocorrência de recorrência sem due_at pulava pro próximo intervalo (2026-08-03)
+
+## Objetivo
+Josemar recriou a "lamitor" (recorrente diária) de novo e ela sumiu de novo. Investigação apontou que ele usa a captura com IA (chave da OpenAI configurada) — os 3 botões de atalho de horário só aparecem em tarefa sem recorrência porque, quando há recorrência, `computeFirstOccurrence`/`computeFirstOccurrenceV2` já preenche um `due_at` sozinho antes do modal abrir.
+
+## Causa raiz
+- Em `computeFirstOccurrenceV2` (`recurrence.ts`), quando a regra é diária/semanal/anual (ou mensal sem dia específico) e não existe `due_at` anterior para ancorar, o código caía no fallback `getNextOccurrenceV2(reference, rule)` — que **sempre soma um intervalo inteiro** a partir de agora. Resultado: a primeira ocorrência de uma recorrência nova nascia já empurrada pro dia seguinte (diária) ou semana seguinte (semanal), nunca hoje.
+- Isso é diferente do bug de exclusão corrigido antes: aqui a tarefa nunca "morre", só nasce com a data errada — some da Agenda de hoje porque, tecnicamente, o `due_at` dela é amanhã.
+- Suspeita adicional (não é bug, é comportamento existente): com chave de IA configurada, a Busca troca de "busca por texto" para "busca semântica" ao apertar Enter — e essa busca só synchronous embeddings já sincronizados. Uma tarefa criada há poucos segundos pode não aparecer ainda porque o embedding dela ainda não foi gerado/sincronizado, mesmo a tarefa existindo normalmente.
+
+## Entregas
+- `computeFirstOccurrenceV2`: quando não há `due_at` anterior para ancorar (fluxo de criação nova), a primeira ocorrência agora é "agora mesmo" (hoje), igual ao comportamento que já existia para mensal com dia específico — não soma mais um intervalo inteiro à frente.
+
+## Validações
+- `npm run lint`: passou.
+- `npm run build`: passou; aviso conhecido de chunk maior que 500 kB.
+- `npm run test`: passou (todas as suítes existentes).
+
+## Pendência / a confirmar com o Josemar
+- Confirmar se a "lamitor" recriada hoje aparece na Agenda de hoje (ou no dia certo, se ele mesmo escolheu um horário futuro na edição manual).
+- Confirmar se ele tem chave da OpenAI configurada em Configurações — isso muda o caminho de captura (IA vs. determinístico) e também a Busca (semântica vs. texto). Se tiver, ao procurar uma tarefa muito recente vale usar a Agenda/Calendário em vez da Busca, até a sincronização do embedding rodar.
+
+## Próximo passo recomendado
+Recriar a "lamitor" mais uma vez e conferir na Agenda de hoje (não só na Busca) se ela aparece corretamente.
 
 ---
 
