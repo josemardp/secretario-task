@@ -48,13 +48,34 @@ function stripReadonlyTaskFields<T extends Partial<Task>>(task: T): Omit<T, 'cre
   return rest as Omit<T, 'created_at' | 'updated_at'>;
 }
 
+// Ponto único de geração da próxima ocorrência de uma série recorrente.
+// Usado tanto ao concluir/encerrar quanto ao excluir apenas uma ocorrência.
+function buildRecurringClone(task: Task): TaskInput | null {
+  if (!task.recurrence_rule) return null;
+  const { nextDueAt, nextRule } = computeNextRuleAndDate(task.due_at, task.recurrence_rule);
+  if (!nextDueAt) return null;
+  return {
+    user_id: task.user_id,
+    title: task.title,
+    description: task.description,
+    context: task.context,
+    priority: task.priority,
+    energy: task.energy,
+    status: 'todo',
+    due_at: nextDueAt,
+    deleted_at: null,
+    recurrence_rule: nextRule,
+    recurrence_origin_id: task.recurrence_origin_id ?? task.id,
+  };
+}
+
 interface TaskState {
   tasks: Task[];
   mutations: PendingMutation[];
   viewedRecords: Record<string, string>;
   addTask: (task: TaskInput) => string;
   updateTask: (id: string, updates: Partial<Task>) => void;
-  deleteTask: (id: string) => void;
+  deleteTask: (id: string, options?: { continueSeries?: boolean }) => void;
   recordTaskEvent: (taskId: string, type: TaskEventType, payload?: Record<string, unknown>) => void;
   recordViewEvent: (taskId: string) => void;
   addMutation: (mutation: Omit<PendingMutation, 'id' | 'createdAt' | 'retryCount'>) => void;
@@ -120,25 +141,7 @@ export const useTaskStore = create<TaskState>()(
           (isFirstCompletion || isFirstNonExecutionResolution) &&
           taskToUpdate.recurrence_rule
         ) {
-          const { nextDueAt, nextRule } = computeNextRuleAndDate(
-            taskToUpdate.due_at,
-            taskToUpdate.recurrence_rule,
-          );
-          if (nextDueAt) {
-            recurringClone = {
-              user_id: taskToUpdate.user_id,
-              title: taskToUpdate.title,
-              description: taskToUpdate.description,
-              context: taskToUpdate.context,
-              priority: taskToUpdate.priority,
-              energy: taskToUpdate.energy,
-              status: 'todo',
-              due_at: nextDueAt,
-              deleted_at: null,
-              recurrence_rule: nextRule,
-              recurrence_origin_id: taskToUpdate.recurrence_origin_id ?? taskToUpdate.id,
-            };
-          }
+          recurringClone = buildRecurringClone(taskToUpdate);
         }
 
         set((state) => ({
@@ -200,12 +203,12 @@ export const useTaskStore = create<TaskState>()(
         addRecurringCloneIfMissing();
       },
 
-      deleteTask: (id) => {
+      deleteTask: (id, options) => {
         const now = new Date().toISOString();
         const taskToDelete = get().tasks.find(t => t.id === id);
         const deletePayload = { deleted_at: now };
         set((state) => ({
-          tasks: state.tasks.map((t) => 
+          tasks: state.tasks.map((t) =>
             t.id === id ? { ...t, deleted_at: now, updated_at: now } : t
           )
         }));
@@ -217,6 +220,21 @@ export const useTaskStore = create<TaskState>()(
           payload: deletePayload,
           baseUpdatedAt: taskToDelete?.updated_at ?? null
         });
+
+        // Excluir apenas esta ocorrência não deve encerrar a série recorrente.
+        if (options?.continueSeries && taskToDelete?.recurrence_rule) {
+          const clone = buildRecurringClone(taskToDelete);
+          if (clone) {
+            const originId = taskToDelete.recurrence_origin_id ?? taskToDelete.id;
+            const cloneAlreadyExists = useTaskStore.getState().tasks.some((t) =>
+              t.recurrence_origin_id === originId &&
+              isOpenTask(t)
+            );
+            if (!cloneAlreadyExists) {
+              useTaskStore.getState().addTask(clone);
+            }
+          }
+        }
       },
 
       recordTaskEvent: (taskId, type, payload = {}) => {

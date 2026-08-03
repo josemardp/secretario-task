@@ -10,6 +10,7 @@ import { useToast } from './toastContext';
 import { useAgendaPositions, type TimelineBlock } from '../hooks/useAgendaPositions';
 import { buildCompleteUpdates, buildResolutionUpdates } from '../lib/taskLifecycle';
 import { getResolvedTasksForDate, getTaskResolvedAt } from '../lib/taskFilters';
+import { describeRecurrenceRule } from '../lib/recurrence';
 
 
 interface TimelineViewProps {
@@ -533,12 +534,12 @@ export function TimelineView({
     setPendingDeleteTask(task);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = (continueSeries: boolean) => {
     if (!pendingDeleteTask) return;
-    deleteTask(pendingDeleteTask.id);
+    deleteTask(pendingDeleteTask.id, { continueSeries });
     removeTaskDecisionMetadata(pendingDeleteTask.id);
     setPendingDeleteTask(null);
-    toast('Tarefa excluída.', 'success');
+    toast(continueSeries ? 'Ocorrência excluída. A recorrência continua.' : 'Tarefa excluída.', 'success');
   };
 
   const { blocks, now } = useAgendaPositions(tasks, selectedDate, activeContext);
@@ -743,25 +744,58 @@ export function TimelineView({
             <h2 className="mt-1 text-[18px] font-bold text-ink leading-snug">
               {pendingDeleteTask.title}
             </h2>
-            <p className="mt-2 text-[13px] text-ink-2 leading-relaxed">
-              Esta tarefa será removida da agenda. A ação será sincronizada nos seus dispositivos.
-            </p>
-            <div className="mt-5 grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => setPendingDeleteTask(null)}
-                className="h-11 rounded-xl border border-border-strong bg-surface text-[13px] font-bold text-ink"
-              >
-                Cancelar
-              </button>
-              <button
-                type="button"
-                onClick={confirmDelete}
-                className="h-11 rounded-xl bg-danger text-[13px] font-bold text-white"
-              >
-                Excluir
-              </button>
-            </div>
+            {pendingDeleteTask.recurrence_rule ? (
+              <>
+                <p className="mt-2 text-[13px] text-ink-2 leading-relaxed">
+                  Essa tarefa se repete ({describeRecurrenceRule(pendingDeleteTask.recurrence_rule)}). O que você quer excluir?
+                </p>
+                <div className="mt-5 flex flex-col gap-2">
+                  <button
+                    type="button"
+                    onClick={() => confirmDelete(true)}
+                    className="h-11 rounded-xl bg-danger text-[13px] font-bold text-white"
+                  >
+                    Só esta ocorrência (recorrência continua)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => confirmDelete(false)}
+                    className="h-11 rounded-xl border border-border-strong bg-surface text-danger text-[13px] font-bold"
+                  >
+                    Esta e encerrar a recorrência
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPendingDeleteTask(null)}
+                    className="h-11 rounded-xl border border-border-strong bg-surface text-[13px] font-bold text-ink"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <p className="mt-2 text-[13px] text-ink-2 leading-relaxed">
+                  Esta tarefa será removida da agenda. A ação será sincronizada nos seus dispositivos.
+                </p>
+                <div className="mt-5 grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPendingDeleteTask(null)}
+                    className="h-11 rounded-xl border border-border-strong bg-surface text-[13px] font-bold text-ink"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => confirmDelete(false)}
+                    className="h-11 rounded-xl bg-danger text-[13px] font-bold text-white"
+                  >
+                    Excluir
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       , document.body)}

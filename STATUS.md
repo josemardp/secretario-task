@@ -1,6 +1,6 @@
 # STATUS.md — SecretárioTask
 
-Última atualização: 2026-08-01 (Hotfix recorrência mensal)
+Última atualização: 2026-08-03 (Hotfix exclusão de recorrência)
 
 ---
 
@@ -23,7 +23,38 @@
 
 # Sprint atual
 
-Hotfix recorrência mensal — concluído (2026-08-01)
+Hotfix exclusão de recorrência — concluído (2026-08-03)
+
+---
+
+# Hotfix exclusão de recorrência (2026-08-03)
+
+## Objetivo
+Corrigir bug relatado pelo Josemar: a tarefa recorrente diária "lamitor" parou de gerar novas ocorrências depois de sumir duas vezes seguidas (recriada uma vez, sumiu de novo no dia seguinte).
+
+## Causa raiz
+- `deleteTask` sempre fazia soft-delete puro e nunca gerava a próxima ocorrência da série — diferente de concluir/cancelar/delegar/obsoleto (`updateTask`), que geram.
+- Ao excluir uma ocorrência de tarefa recorrente (botão Excluir no editar, ou swipe para a esquerda na Agenda), a série inteira morria silenciosamente, sem nenhum aviso de que era recorrente.
+- Busca por "lamitor" confirmou o diagnóstico: só apareciam ocorrências antigas (já concluídas antes da série quebrar), nenhuma presente ou futura.
+
+## Entregas
+- `buildRecurringClone` extraído em `taskStore.ts` como função pura, reaproveitada por `updateTask` e `deleteTask` (antes a lógica de gerar a próxima ocorrência só existia dentro de `updateTask`).
+- `deleteTask(id, { continueSeries })`: quando `continueSeries` é `true` e a tarefa é recorrente, gera a próxima ocorrência antes de apagar a atual (mesma proteção de idempotência via `recurrence_origin_id` + `isOpenTask` já usada em `updateTask`).
+- Modal de confirmação de exclusão (`TaskEditModal.tsx` e `TimelineView.tsx`) passa a perguntar, quando a tarefa é recorrente: "Só esta ocorrência (recorrência continua)" vs. "Esta e encerrar a recorrência" vs. Cancelar. Para tarefas não recorrentes o modal continua igual a antes.
+- Decisão de UX escolhida pelo Josemar entre 3 opções: perguntar toda vez em vez de sempre continuar a série ou manter o comportamento antigo só com aviso.
+
+## Validações
+- `npm run lint`: passou.
+- `npm run build`: passou; aviso conhecido de chunk maior que 500 kB.
+- `npm run test`: passou (todas as suítes existentes).
+- Preview visual do novo modal de exclusão em claro e escuro, mobile (390×844): reaproveita os mesmos tokens de cor (`bg-danger`, `border-border-strong`, `bg-surface`, `text-ink`) já usados no restante do mesmo modal — contraste conferido nos dois temas.
+- Não foi possível fazer smoke test dentro do app real logado (exige login do Supabase); a prévia foi feita renderizando o HTML/CSS compilado isoladamente com os dados reais da tarefa.
+
+## Pendência
+- A série "lamitor" já quebrada precisa ser recriada manualmente mais uma vez pelo Josemar. A partir de agora, excluir uma ocorrência não mata mais a recorrência sem avisar — o app pergunta o que fazer.
+
+## Próximo passo recomendado
+Recriar a tarefa "lamitor" recorrente diária no app real e confirmar visualmente (claro/escuro/mobile) que o novo modal de exclusão aparece certo, e que escolher "Só esta ocorrência" mantém a série viva no dia seguinte.
 
 ---
 
