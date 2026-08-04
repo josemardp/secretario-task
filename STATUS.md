@@ -45,6 +45,15 @@ Josemar relatou que nenhuma tarefa recorrente diária apareceu no dia 04/08, e d
 ## Validações
 - `npm run lint`, `npm run build`, `npm run test`: passaram.
 - Diagnóstico e verificação feitos no app real logado (Chrome do Josemar), não em simulação.
+- Depois do deploy: contador do dia foi de **14 para 28 tarefas**, e Remédio, musculação, Aguar plantas, checar gmail esdra, lixo e "Camiseta, cueca, farda, meia" voltaram a aparecer na Agenda.
+- Paginação conferida contra o servidor: 1112 linhas trazidas, 0 ids duplicados.
+- Cadeia de recorrência testada ponta a ponta com tarefa descartável ("zztestefix", diária): concluir gerou a ocorrência de 05/08 na mesma série, sincronizada no servidor.
+- Modal de exclusão de recorrente (hotfix de 03/08) conferido no app real: as 3 opções aparecem e "Esta e encerrar a recorrência" não gerou nova ocorrência.
+
+## Achados menores (não corrigidos nesta sessão)
+- Calendário do botão "Mês" mostra o título literal `CALEND\U00E1RIO` (escape unicode não interpretado) em vez de "CALENDÁRIO".
+- Captura com IA: "zztestefix recorrencia todos os dias 9h" virou recorrência diária mas com horário 07:44 (o de agora), ignorando o "9h" do texto.
+- Tarefa concluída só oferece "Reabrir" no bloco "Resolvidas neste dia", não dá para excluir do histórico pela UI.
 
 ## Dívida técnica registrada
 - O fetch traz a tabela inteira toda vez e a base só cresce (1112 linhas hoje, quase todas ocorrências concluídas de séries recorrentes). Vale um sprint para buscar só tarefas abertas + resolvidas dos últimos N dias, em vez de tudo.
