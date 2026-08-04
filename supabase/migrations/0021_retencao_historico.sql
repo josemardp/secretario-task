@@ -24,7 +24,9 @@ CREATE OR REPLACE FUNCTION public.purge_old_history(
 )
 RETURNS TABLE (sync_log_apagados bigint, embeddings_zerados bigint)
 LANGUAGE plpgsql
-SECURITY DEFINER
+-- Sem SECURITY DEFINER: roda com os direitos de quem chama, que é sempre o
+-- dono do banco (SQL Editor ou pg_cron). Definer aqui só abriria superfície.
+SET search_path = public
 AS $$
 DECLARE
   v_logs       bigint;
