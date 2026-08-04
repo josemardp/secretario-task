@@ -1,6 +1,6 @@
 # STATUS.md — SecretárioTask
 
-Última atualização: 2026-08-03 (Hotfix: 1a ocorrência de recorrência sem due_at pulava pro próximo intervalo)
+Última atualização: 2026-08-04 (Hotfix: teto de 1000 linhas do Supabase escondia as tarefas mais novas)
 
 ---
 
@@ -23,7 +23,33 @@
 
 # Sprint atual
 
-Hotfix: 1a ocorrência de recorrência sem due_at pulava pro próximo intervalo — concluído (2026-08-03)
+Hotfix: teto de 1000 linhas do Supabase escondia as tarefas mais novas — concluído (2026-08-04)
+
+---
+
+# Hotfix: teto de 1000 linhas do Supabase (2026-08-04)
+
+## Objetivo
+Josemar relatou que nenhuma tarefa recorrente diária apareceu no dia 04/08, e desconfiou das refatorações do dia anterior.
+
+## Causa raiz (a de verdade — as anteriores eram sintoma)
+- `fetchRemoteTasks` fazia `.select(TASK_COLUMNS)` sem `range` e sem `order`. O PostgREST/Supabase corta qualquer select em **1000 linhas** (`max-rows` padrão).
+- Diagnóstico feito no app real logado, via console do navegador: **1112 tarefas no banco**, a query do app devolvia **exatamente 1000**, e **27 tarefas abertas o app nunca recebia**.
+- Como não havia `ORDER BY`, o Postgres devolvia ordem de heap: as linhas mais novas ficavam no fim e caíam fora do corte. As ocorrências recorrentes são sempre as linhas mais novas (cada ocorrência é um INSERT), então foram as primeiras a sumir.
+- Isso explica retroativamente toda a novela da "lamitor": as 3 séries recriadas estavam **vivas no banco** (due 01/08, 02/08 e 03/08), o app é que não as recebia. Os hotfixes de 01/08 e 03/08 corrigiram bugs reais, mas nenhum era a causa do sumiço.
+- O gatilho foi cruzar a marca de 1000 tarefas, não nenhum commit.
+
+## Entregas
+- `sync.ts`: `fetchAllRemoteTasks` — pagina em blocos de 1000 (`range`) até vir uma página incompleta, com `order('created_at').order('id')` para paginação estável (sem ORDER BY as páginas repetiriam/pulariam linhas). Teto de 50 páginas como trava contra loop infinito.
+
+## Validações
+- `npm run lint`, `npm run build`, `npm run test`: passaram.
+- Diagnóstico e verificação feitos no app real logado (Chrome do Josemar), não em simulação.
+
+## Dívida técnica registrada
+- O fetch traz a tabela inteira toda vez e a base só cresce (1112 linhas hoje, quase todas ocorrências concluídas de séries recorrentes). Vale um sprint para buscar só tarefas abertas + resolvidas dos últimos N dias, em vez de tudo.
+- `getNextOccurrenceV2` (motor V2, usado por `daily`/`weekly`/`monthly`) soma **um intervalo só** a partir da data base, sem alcançar o presente. O motor legado tem esse catch-up (`while (d < now)`). Uma série parada há 10 dias precisa de 10 conclusões para voltar a cair hoje.
+- Existem 3 séries "Lamitor" duplicadas vivas (das recriações manuais). Precisam ser encerradas à mão, deixando uma só.
 
 ---
 
