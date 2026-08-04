@@ -385,14 +385,9 @@ export async function processSyncQueue() {
 
         store.removeMutation(mutation.id);
 
-        void supabase.from('sync_log').insert({
-          user_id: userId,
-          entity_type: mutation.entity,
-          entity_id: mutation.entityId,
-          operation: mutation.operation,
-          status: 'synced',
-          synced_at: new Date().toISOString(),
-        }).then(() => {}, () => {});
+        // sync_log só registra falha. Gravar cada sucesso enchia a tabela de
+        // linhas que nada no app lê: 44.645 em 71 dias de uso (~19 mil/mês),
+        // contra dezenas de falhas. O que interessa depurar é o que quebrou.
       } catch (err: unknown) {
         console.error(`Mutation failed: ${mutation.id}`, err);
 
