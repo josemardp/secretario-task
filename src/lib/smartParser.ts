@@ -6,14 +6,32 @@ import { extractDecisionCaptureHints } from './decisionCapture';
 const OPENAI_API_URL = 'https://api.openai.com/v1';
 const CONTEXTS = ['PM', 'Esdra', 'Pessoal', 'Familia', 'CCB', 'Estudo', 'Saude'];
 
-// Extrai horário no formato brasileiro "09h05" ou "09:05" de um texto
+// Extrai horário no formato brasileiro de um texto: "09h05", "às 09:05",
+// "9h" e "às 9". Hora cheia sem minutos é o jeito mais comum de escrever e
+// ficava de fora, fazendo o horário do texto ser ignorado.
 function extractBrazilianTime(text: string): { hour: number; minute: number } | null {
-  // Formato "09h05", "9h5", "9h00"
-  const hMatch = text.match(/\b(\d{1,2})h(\d{2})\b/i);
-  if (hMatch) return { hour: parseInt(hMatch[1]), minute: parseInt(hMatch[2]) };
-  // Formato "às 09:05", "as 9:05"
-  const colonMatch = text.match(/\b(?:às?|as)\s+(\d{1,2}):(\d{2})\b/i);
-  if (colonMatch) return { hour: parseInt(colonMatch[1]), minute: parseInt(colonMatch[2]) };
+  const validate = (hour: number, minute: number) =>
+    hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59 ? { hour, minute } : null;
+
+  // "09h05", "9h5", "9 h 00"
+  const hMatch = text.match(/\b(\d{1,2})\s*h\s*(\d{2})\b/i);
+  if (hMatch) return validate(parseInt(hMatch[1]), parseInt(hMatch[2]));
+
+  // "às 09:05", "as 9:05". Sem `\b` antes do marcador: `à` não é caractere
+  // de palavra em ASCII, então `\bàs` nunca casa e a forma acentuada ficava
+  // de fora — só "as" sem acento funcionava.
+  const colonMatch = text.match(/(?:^|[\s,;])(?:às?|as)\s+(\d{1,2}):(\d{2})\b/i);
+  if (colonMatch) return validate(parseInt(colonMatch[1]), parseInt(colonMatch[2]));
+
+  // "9h", "21 h" — o sufixo 'h' já marca que é horário
+  const bareHourMatch = text.match(/\b(\d{1,2})\s*h\b(?!\d)/i);
+  if (bareHourMatch) return validate(parseInt(bareHourMatch[1]), 0);
+
+  // "às 9", "às 21" — só com acento: "as" sem acento é artigo
+  // ("as 3 caixas" não é horário).
+  const markerMatch = text.match(/(?:^|[\s,;])às?\s+(\d{1,2})\b(?![:.\d])/i);
+  if (markerMatch) return validate(parseInt(markerMatch[1]), 0);
+
   return null;
 }
 
@@ -234,7 +252,11 @@ Responda APENAS com JSON válido com array "tasks".`;
 
         // ── Pós-processamento determinístico de HORÁRIO ──────────────────
         // A AI erra sistematicamente o formato "09h05". Corrigimos no cliente.
-        const timeFromText = extractBrazilianTime(originalLine) ?? extractBrazilianTime(rawText);
+        // Usa o texto já limpo: `extractDecisionCaptureHints` consome duração
+        // ("leva 2h" vira estimated_minutes e sai do texto). Ler a linha crua
+        // faria "2h" de duração ser confundido com "às 2".
+        const timeFromText = extractBrazilianTime(decisionHints.cleanedText)
+          ?? extractBrazilianTime(extractDecisionCaptureHints(rawText).cleanedText);
         let finalDueAt: string | undefined = typeof t.due_at === 'string' ? t.due_at : undefined;
 
         // Normaliza formato DD/MM/YYYY retornado pela AI
