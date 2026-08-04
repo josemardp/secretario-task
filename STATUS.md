@@ -56,9 +56,11 @@ Josemar relatou que nenhuma tarefa recorrente diária apareceu no dia 04/08, e d
 - Tarefa concluída só oferece "Reabrir" no bloco "Resolvidas neste dia", não dá para excluir do histórico pela UI.
 
 ## Dívida técnica registrada
-- O fetch traz a tabela inteira toda vez e a base só cresce (1112 linhas hoje, quase todas ocorrências concluídas de séries recorrentes). Vale um sprint para buscar só tarefas abertas + resolvidas dos últimos N dias, em vez de tudo.
+- O fetch traz a tabela inteira toda vez e a base só cresce. **Números medidos em 04/08/2026:** 1114 linhas, sendo **apenas 87 abertas**; base começou em 25/05/2026; 382 tarefas criadas nos últimos 30 dias (~380/mês); 793 bytes por tarefa, **774 KB por página** de 1000 (~0,86 MB por sync completo). O ciclo roda a cada 120s com o app aberto, mais a cada volta ao foreground. Ou seja: ~26 MB/hora de app aberto hoje, e crescendo ~0,3 MB por mês de uso. O free tier do Supabase dá 5 GB de egress/mês.
+- **Correção certa (próximo sprint):** buscar só o que o app usa — abertas + resolvidas dos últimos ~90 dias — e fazer fetch incremental por `updated_at` em vez de baixar tudo. Derruba o payload de 0,86 MB para dezenas de KB e para de crescer. Apagar histórico não resolve isso, só adia.
+- Janela mínima de histórico exigida pelas telas: `DashboardView` usa 7 dias para os gráficos e totais acumulados só para contadores de diagnóstico; `getResolvedTasksForDate` só olha o dia selecionado.
 - `getNextOccurrenceV2` (motor V2, usado por `daily`/`weekly`/`monthly`) soma **um intervalo só** a partir da data base, sem alcançar o presente. O motor legado tem esse catch-up (`while (d < now)`). Uma série parada há 10 dias precisa de 10 conclusões para voltar a cair hoje.
-- Existem 3 séries "Lamitor" duplicadas vivas (das recriações manuais). Precisam ser encerradas à mão, deixando uma só.
+- ~~Séries "Lamitor" duplicadas~~ resolvido em 04/08: eram **4** séries vivas (01/08 21:00, 02/08 20:00, 03/08 20:00 e 04/08 20:11). Mantida a original (`b7062774`, 54 ocorrências de histórico) com a data reposicionada para 04/08 21:00; as outras três encerradas pelo modal "Esta e encerrar a recorrência". Tarefa de teste "zztestefix" também removida.
 
 ---
 
