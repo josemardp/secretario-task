@@ -37,18 +37,44 @@ function stripReadonlyEventFields<T extends Record<string, unknown>>(payload: T)
   return rest as Omit<T, 'created_at'>;
 }
 
+// PostgREST corta qualquer select em 1000 linhas (max-rows padrão do Supabase).
+// Sem paginação, as tarefas mais novas — justamente as ocorrências recorrentes
+// recém-inseridas — ficavam fora do corte e o app nunca as recebia.
+const FETCH_PAGE_SIZE = 1000;
+const FETCH_MAX_PAGES = 50;
+
+async function fetchAllRemoteTasks(): Promise<Task[]> {
+  const all: Task[] = [];
+
+  for (let page = 0; page < FETCH_MAX_PAGES; page++) {
+    const from = page * FETCH_PAGE_SIZE;
+    const { data, error } = await supabase
+      .from('tasks')
+      .select(TASK_COLUMNS) // tombstones incluídos — sem embedding para reduzir egress
+      // ordem estável: sem ORDER BY o Postgres devolve ordem de heap e a
+      // paginação repetiria/pularia linhas entre as páginas.
+      .order('created_at', { ascending: true })
+      .order('id', { ascending: true })
+      .range(from, from + FETCH_PAGE_SIZE - 1);
+
+    if (error) throw error;
+    if (!data || data.length === 0) break;
+
+    all.push(...(data as Task[]));
+    if (data.length < FETCH_PAGE_SIZE) return all;
+  }
+
+  console.warn(`[sync] fetchRemoteTasks parou no teto de ${FETCH_MAX_PAGES} páginas`);
+  return all;
+}
+
 export async function fetchRemoteTasks() {
   // Bug 2: guard para evitar merges paralelos.
   if (isFetchingRemote) return;
   isFetchingRemote = true;
 
   try {
-    const { data: remoteTasks, error } = await supabase
-      .from('tasks')
-      .select(TASK_COLUMNS); // tombstones incluídos — sem embedding para reduzir egress
-
-    if (error) throw error;
-    if (!remoteTasks) return;
+    const remoteTasks = await fetchAllRemoteTasks();
 
     const { tasks: localTasks, mutations, setTasks } = useTaskStore.getState();
 
