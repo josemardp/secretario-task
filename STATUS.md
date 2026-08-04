@@ -25,8 +25,11 @@
 
 Sync incremental + retenção de histórico — concluído (2026-08-04)
 
-## Próximo passo (ação manual do Josemar)
-Rodar `supabase/migrations/0021_retencao_historico.sql` no SQL Editor do Supabase. Ela cria `purge_old_history()` e já executa a primeira limpeza (44.645 linhas de `sync_log`). O agendamento mensal via `pg_cron` está comentado no fim do arquivo, para ligar quando quiser.
+## Migration 0021 aplicada (04/08/2026)
+Rodada pelo Josemar no SQL Editor: **40.632 linhas de `sync_log` apagadas**, 0 embeddings zerados (esperado — o app tem 71 dias, nada resolvido há 12 meses). A tarefa recorrente anual "Limpeza anual do banco do SecretarioTask" ficou cadastrada no próprio app, com o passo a passo nas observações. Agendamento via `pg_cron` **não** foi ligado, por decisão: uma execução por ano à mão é suficiente e não deixa rotina destrutiva rodando sozinha.
+
+## Correção importante de escala
+O projeto está no **plano Pro do Supabase (8 GB)**, não no free. As projeções desta sessão foram feitas assumindo 500 MB e superestimavam a urgência: no ritmo medido (~40 MB/ano sem limpeza nenhuma), espaço nunca será o limite. A retenção continua valendo como higiene. **Conferir o plano antes de projetar custo de storage.**
 
 ---
 

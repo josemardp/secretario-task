@@ -5,6 +5,11 @@
 --   task_events  5.993 linhas  (~2.500/mês)
 --   sync_log    44.645 linhas  (~19.000/mês) — nada no app lê essa tabela
 --
+-- Escala: o projeto está no plano Pro (8 GB). No ritmo medido, ~40 MB/ano sem
+-- limpeza nenhuma, então espaço nunca vai ser o limite. Esta migration é
+-- higiene, não emergência: mantém o banco enxuto e cobre um eventual retorno
+-- ao plano free (500 MB).
+--
 -- Regra adotada:
 --   • tarefa NUNCA é apagada. O histórico é o ativo do app (alimenta Painel e
 --     coach) e custa ~1 KB por linha: 10 anos dariam ~46 MB, irrelevante.

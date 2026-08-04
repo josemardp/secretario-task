@@ -22,8 +22,10 @@ Contexto: migration `0021_retencao_historico.sql`.
 ## 2026-08-04 — Tarefa nunca é apagada; embedding envelhece
 Decisão: a política de retenção (`purge_old_history()`, migration 0021) apaga `sync_log` com mais de 30 dias e zera `embedding` de tarefas resolvidas há mais de 12 meses. Não apaga nenhuma tarefa nem `task_events`.
 Motivo: uma tarefa custa ~1 KB e é o ativo do app (Painel e coach vivem dela) — 10 anos dariam ~46 MB. O `embedding` `vector(1536)` custa ~6 KB, seis vezes a tarefa inteira, e só serve para busca semântica, que ninguém faz em tarefa fechada há um ano. Zerar é reversível: dá para regerar.
-Alternativas descartadas: apagar tarefas antigas — destrói histórico para economizar o que não pesa; não ter política nenhuma — no ritmo atual o banco encostaria no teto de 500 MB do plano free por volta de 10 anos, quase tudo em embedding morto.
+Alternativas descartadas: apagar tarefas antigas — destrói histórico para economizar o que não pesa.
 Contexto: o agendamento via `pg_cron` ficou comentado na migration, para ser ligado quando o Josemar decidir.
+
+**Correção de 04/08/2026 (mesmo dia):** a projeção original dizia que o banco encostaria no teto de **500 MB do plano free** por volta de 10 anos. O projeto está no **plano Pro, com 8 GB**. No ritmo medido (~40 MB/ano sem limpeza nenhuma), espaço nunca será o limite. A política continua valendo como higiene — a primeira execução apagou 40.632 linhas de `sync_log` — e cobre um eventual retorno ao free, mas o argumento de urgência estava errado para o plano real. Ao projetar custo de storage, conferir o plano antes de assumir free tier.
 
 ---
 
