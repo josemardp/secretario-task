@@ -134,7 +134,9 @@ export function CalendarWidget({
         </button>
         <div className="text-center">
           <div className="text-[11px] font-bold uppercase tracking-[0.06em] text-ink-2">
-            Calend\u00E1rio
+            {/* Acento vai dentro de string: como texto JSX cru, o escape \u00E1
+                nao e interpretado e a tela mostra "CALEND\u00E1RIO" literal. */}
+            {'Calend\u00E1rio'}
           </div>
           <div className="text-[14px] font-extrabold text-ink leading-tight">
             {MONTHS[currentMonth.getMonth()]} {currentMonth.getFullYear()}

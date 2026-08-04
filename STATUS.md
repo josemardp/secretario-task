@@ -30,6 +30,21 @@ Rodar `supabase/migrations/0021_retencao_historico.sql` no SQL Editor do Supabas
 
 ---
 
+# Correções de UI e parser (2026-08-04)
+
+## Entregas
+- `CalendarWidget.tsx`: `Calendário` estava como **texto JSX cru**, onde escape unicode não é interpretado, e a tela mostrava o literal. Movido para dentro de string. A linha 15 do mesmo arquivo (`MONTHS`) sempre funcionou porque já estava em string. Atenção: este repo grava acentos como escape, então acento em texto JSX cru quebra sempre — usar `{'...'}`.
+- `smartParser.ts` — `extractBrazilianTime` só reconhecia hora **com** minutos (`9h05`, `às 9:05`). "9h" e "às 9", que é como se escreve na maior parte das vezes, eram ignorados e o horário do texto se perdia. Agora aceita hora cheia.
+- `smartParser.ts` — bug pré-existente encontrado no caminho: `\b(?:às?|as)` **nunca casava a forma acentuada**, porque `à` não é caractere de palavra em ASCII e `\b` não vê fronteira ali. Só "as" sem acento funcionava. Trocado por `(?:^|[\s,;])`.
+- `smartParser.ts` — validação de faixa (0-23 / 0-59): antes "99h99" virava horário inválido.
+- `smartParser.ts` — o horário passa a ser lido do texto **já limpo** por `extractDecisionCaptureHints`, que consome duração. Sem isso, aceitar hora cheia faria "leva 2h" (duração) virar "às 2h" (horário), porque `decisionCapture` trata `[1-4]h` como duração.
+
+## Validações
+- 16 casos rodados fora do repo cobrindo "9h", "às 9", "às 21", "09h05", "às 09:05", "14h30", e os que **não** podem virar horário ("as 3 caixas", "25h", "99h99", "estudar 2h"). Todos passaram.
+- `npm run lint`, `npm run build`, `npm run test`: passaram.
+
+---
+
 # Sprint: sync incremental + retenção (2026-08-04)
 
 ## Objetivo
@@ -79,10 +94,11 @@ Josemar relatou que nenhuma tarefa recorrente diária apareceu no dia 04/08, e d
 - Cadeia de recorrência testada ponta a ponta com tarefa descartável ("zztestefix", diária): concluir gerou a ocorrência de 05/08 na mesma série, sincronizada no servidor.
 - Modal de exclusão de recorrente (hotfix de 03/08) conferido no app real: as 3 opções aparecem e "Esta e encerrar a recorrência" não gerou nova ocorrência.
 
-## Achados menores (não corrigidos nesta sessão)
-- Calendário do botão "Mês" mostra o título literal `CALEND\U00E1RIO` (escape unicode não interpretado) em vez de "CALENDÁRIO".
-- Captura com IA: "zztestefix recorrencia todos os dias 9h" virou recorrência diária mas com horário 07:44 (o de agora), ignorando o "9h" do texto.
-- Tarefa concluída só oferece "Reabrir" no bloco "Resolvidas neste dia", não dá para excluir do histórico pela UI.
+## Achados menores
+- ~~Calendário mostrava `CALEND\U00E1RIO`~~ corrigido em 04/08: o escape estava como texto JSX cru em `CalendarWidget.tsx`, onde não é interpretado. Passou para dentro de string.
+- ~~Captura com IA ignorava "9h"~~ corrigido em 04/08: `extractBrazilianTime` só aceitava hora com minutos ("9h05"). Ver seção abaixo.
+- Tarefa concluída só oferece "Reabrir" no bloco "Resolvidas neste dia", não dá para excluir do histórico pela UI. O caminho existe pelo modal de edição (botão Excluir), então é questão de descoberta, não de função faltando.
+- **Não era bug:** o campo "Duração (min)" não aceitar valor definido por automação é comportamento normal de input controlado do React. Digitando funciona.
 
 ## Dívida técnica registrada
 - O fetch traz a tabela inteira toda vez e a base só cresce. **Números medidos em 04/08/2026:** 1114 linhas, sendo **apenas 87 abertas**; base começou em 25/05/2026; 382 tarefas criadas nos últimos 30 dias (~380/mês); 793 bytes por tarefa, **774 KB por página** de 1000 (~0,86 MB por sync completo). O ciclo roda a cada 120s com o app aberto, mais a cada volta ao foreground. Ou seja: ~26 MB/hora de app aberto hoje, e crescendo ~0,3 MB por mês de uso. O free tier do Supabase dá 5 GB de egress/mês.
