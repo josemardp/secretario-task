@@ -1,7 +1,29 @@
 # DECISIONS.md — SecretárioTask
 
-Última atualização: 2026-08-01 (Hotfix recorrência mensal)
+Última atualização: 2026-08-04 (Sync incremental e retenção de histórico)
 Status: registro vivo de decisões técnicas e operacionais
+
+---
+
+# Decisões — Sync incremental e retenção (2026-08-04)
+
+## 2026-08-04 — O app baixa uma janela, não a tabela; e só o delta a cada ciclo
+Decisão: `fetchRemoteTasks` (`src/lib/sync.ts`) passa a ter dois modos. `full` carrega a janela (tarefas em aberto de qualquer idade + tudo mexido nos últimos 90 dias) e trata o servidor como verdade, descartando local ausente. `delta` baixa só o que mudou desde o maior `updated_at` já recebido e nunca descarta, porque o resultado é parcial por definição. Cold start e volta do foreground usam `full`; o ciclo de 120s e o realtime usam `delta`. A marca d'água não é persistida, então toda sessão começa com um `full`.
+Motivo: o ciclo rodava a cada 120s baixando a tabela inteira — 1114 linhas, 774 KB, ~26 MB por hora de app aberto, para usar 87 tarefas em aberto. Medido no app real: o ciclo caiu para 803 bytes.
+Alternativas descartadas: apagar histórico antigo para encolher a tabela — trata o sintoma, joga fora o ativo do app e volta a doer em alguns meses; só a janela sem delta — não ajudaria hoje, porque todo o histórico dele ainda cabe em 90 dias; persistir a marca d'água — o `partialize` só guarda 100 tarefas, então retomar em delta deixaria o store incompleto.
+Contexto: investigação de 04/08 que começou com "nenhuma tarefa recorrente apareceu hoje" e terminou no teto de 1000 linhas do PostgREST (commit 570aefd).
+
+## 2026-08-04 — `sync_log` só registra falha
+Decisão: `processSyncQueue` não grava mais uma linha de `sync_log` por mutation bem-sucedida; só o caminho de erro escreve.
+Motivo: 44.645 linhas em 71 dias (~19 mil/mês) de uma tabela que nada no app lê. Era, disparado, o que mais crescia no banco — muito mais que as tarefas.
+Alternativas descartadas: manter o log e só podar por retenção — continuaria escrevendo 19 mil linhas/mês para nada; apagar a tabela — o log de falha é útil quando o sync quebra.
+Contexto: migration `0021_retencao_historico.sql`.
+
+## 2026-08-04 — Tarefa nunca é apagada; embedding envelhece
+Decisão: a política de retenção (`purge_old_history()`, migration 0021) apaga `sync_log` com mais de 30 dias e zera `embedding` de tarefas resolvidas há mais de 12 meses. Não apaga nenhuma tarefa nem `task_events`.
+Motivo: uma tarefa custa ~1 KB e é o ativo do app (Painel e coach vivem dela) — 10 anos dariam ~46 MB. O `embedding` `vector(1536)` custa ~6 KB, seis vezes a tarefa inteira, e só serve para busca semântica, que ninguém faz em tarefa fechada há um ano. Zerar é reversível: dá para regerar.
+Alternativas descartadas: apagar tarefas antigas — destrói histórico para economizar o que não pesa; não ter política nenhuma — no ritmo atual o banco encostaria no teto de 500 MB do plano free por volta de 10 anos, quase tudo em embedding morto.
+Contexto: o agendamento via `pg_cron` ficou comentado na migration, para ser ligado quando o Josemar decidir.
 
 ---
 

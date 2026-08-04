@@ -23,7 +23,36 @@
 
 # Sprint atual
 
-Hotfix: teto de 1000 linhas do Supabase escondia as tarefas mais novas — concluído (2026-08-04)
+Sync incremental + retenção de histórico — concluído (2026-08-04)
+
+## Próximo passo (ação manual do Josemar)
+Rodar `supabase/migrations/0021_retencao_historico.sql` no SQL Editor do Supabase. Ela cria `purge_old_history()` e já executa a primeira limpeza (44.645 linhas de `sync_log`). O agendamento mensal via `pg_cron` está comentado no fim do arquivo, para ligar quando quiser.
+
+---
+
+# Sprint: sync incremental + retenção (2026-08-04)
+
+## Objetivo
+Parar de baixar a tabela inteira a cada 120s e definir o que envelhece no banco.
+
+## Causa
+O ciclo de sync baixava 1114 linhas (774 KB) a cada 120s com o app aberto, ~26 MB por hora, para usar 87 tarefas em aberto. E `sync_log` acumulava ~19 mil linhas/mês sem nada no app ler.
+
+## Entregas
+- `sync.ts`: `fetchRemoteTasks('full' | 'delta')`. `full` = janela de 90 dias + abertas de qualquer idade, servidor autoritativo. `delta` = só o que mudou desde a marca d'água (`updated_at` do servidor, não `Date.now()`), sem descartar nada. Marca d'água não persistida, então toda sessão abre com um `full`.
+- `App.tsx`: cold start e volta do foreground em `full`; ciclo de 120s e realtime em `delta`.
+- `taskStore.ts`: `lastSyncedAt` + `setLastSyncedAt`, fora do `partialize`.
+- `sync.ts`: `sync_log` só grava falha.
+- `supabase/migrations/0021_retencao_historico.sql`: `purge_old_history(sync_log_days=30, embedding_months=12)`. Não apaga tarefa nem `task_events`.
+
+## Validações
+- `npm run lint`, `npm run build`, `npm run test`: passaram.
+- Filtro da janela testado direto no banco antes do deploy: 90 dias devolve 1114 (todo o histórico dele tem 71 dias); simulando janela curta, isola 101 linhas (87 abertas + 14 mexidas no dia). Sintaxe `or=(and(...),...)` do PostgREST validada.
+- Depois do deploy, medido no app real: primeiro ciclo `FULL`, ciclo de 120s em `DELTA` transferindo **803 bytes** contra os 863 KB de antes.
+
+## O que ainda vale fazer
+- A janela de 90 dias só começa a encolher o `full` quando o histórico passar de 90 dias (novembro/2026). Até lá o ganho está todo no delta.
+- Navegar no calendário para um dia anterior à janela vai mostrar o dia vazio. Hoje é impossível (app tem 71 dias); quando o histórico passar de 90 dias, vale um carregamento sob demanda ao navegar para trás.
 
 ---
 
