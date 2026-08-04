@@ -71,17 +71,18 @@ function App() {
   useEffect(() => {
     if (!session || !isOnline) return;
 
-    const runSync = () => {
+    const runSync = (mode: 'full' | 'delta') => {
       void fetchProfileFromCloud()
         .catch((err) => console.error('[sync] fetchProfileFromCloud falhou:', err));
 
-      return fetchRemoteTasks()
+      return fetchRemoteTasks(mode)
         .then(() => processSyncQueue())
         .catch((err) => console.error('[sync] ciclo de tasks falhou:', err));
     };
 
-    runSync();
-    const interval = setInterval(runSync, 120_000);
+    // Primeiro ciclo carrega a janela inteira; os seguintes só o que mudou.
+    runSync('full');
+    const interval = setInterval(() => runSync('delta'), 120_000);
     return () => clearInterval(interval);
   }, [session, isOnline]);
 
@@ -121,7 +122,7 @@ function App() {
       'postgres_changes',
       { event: '*', schema: 'public', table: 'tasks', filter: `user_id=eq.${userId}` },
       () => {
-        fetchRemoteTasks().catch((err) => console.error('[sync] realtime falhou:', err));
+        fetchRemoteTasks('delta').catch((err) => console.error('[sync] realtime falhou:', err));
       }
     )
     // Bug 3 (ajuste): a API correta do Supabase JS v2 para detectar quedas de canal
@@ -167,8 +168,10 @@ function App() {
     const handleVisibilityChange = () => {
       if (document.visibilityState !== 'visible') return;
 
-      // Pull imediato ao voltar ao foreground
-      fetchRemoteTasks()
+      // Pull imediato ao voltar ao foreground. Completo, não delta: enquanto o
+      // app esteve em background outro device pode ter excluído tarefas, e
+      // delta nunca remove nada do store.
+      fetchRemoteTasks('full')
         .then(() => processSyncQueue())
         .catch((err) => console.error('[sync] visibilitychange falhou:', err));
 

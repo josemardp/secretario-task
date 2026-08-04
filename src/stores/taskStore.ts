@@ -73,6 +73,10 @@ interface TaskState {
   tasks: Task[];
   mutations: PendingMutation[];
   viewedRecords: Record<string, string>;
+  /** Maior `updated_at` já recebido do servidor. Marca d'água do sync
+   * incremental — ver `fetchRemoteTasks` em `lib/sync.ts`. */
+  lastSyncedAt: string | null;
+  setLastSyncedAt: (value: string | null) => void;
   addTask: (task: TaskInput) => string;
   updateTask: (id: string, updates: Partial<Task>) => void;
   deleteTask: (id: string, options?: { continueSeries?: boolean }) => void;
@@ -90,7 +94,12 @@ export const useTaskStore = create<TaskState>()(
       tasks: [],
       mutations: [],
       viewedRecords: {},
-      
+      lastSyncedAt: null,
+
+      setLastSyncedAt: (value) => {
+        set({ lastSyncedAt: value });
+      },
+
       addTask: (taskData) => {
         const id = crypto.randomUUID();
         const now = new Date().toISOString();
@@ -348,6 +357,9 @@ export const useTaskStore = create<TaskState>()(
         tasks: state.tasks.slice(-100),
         mutations: state.mutations,
         viewedRecords: state.viewedRecords,
+        // Não persiste `lastSyncedAt`: como só 100 tarefas sobrevivem ao
+        // reload, retomar a sessão em modo delta deixaria o store incompleto.
+        // Sem marca d'água, o primeiro sync da sessão é sempre completo.
       }),
     }
   )

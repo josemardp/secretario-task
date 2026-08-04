@@ -43,17 +43,35 @@ function stripReadonlyEventFields<T extends Record<string, unknown>>(payload: T)
 const FETCH_PAGE_SIZE = 1000;
 const FETCH_MAX_PAGES = 50;
 
-async function fetchAllRemoteTasks(): Promise<Task[]> {
+// Janela de histórico carregada pelo app. O banco guarda tudo; o que passa
+// dessa janela simplesmente não é baixado. O Painel usa 7 dias nos gráficos e
+// a Agenda mostra o histórico do dia selecionado, então 90 dias sobra.
+export const SYNC_WINDOW_DAYS = 90;
+
+// Filtro do carregamento completo: tarefas em aberto de qualquer idade
+// (uma tarefa parada há 2 anos continua sendo trabalho pendente) + tudo que
+// foi mexido dentro da janela (resoluções, exclusões e edições recentes).
+function buildWindowFilter(): string {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - SYNC_WINDOW_DAYS);
+
+  return [
+    'and(status.neq.done,resolution_type.is.null,deleted_at.is.null)',
+    `updated_at.gte.${cutoff.toISOString()}`,
+  ].join(',');
+}
+
+/** Busca páginas de 1000 aplicando `narrow` à query. Ordem estável obrigatória:
+ * sem ORDER BY o Postgres devolve ordem de heap e a paginação repete/pula linhas. */
+async function fetchTaskPages(
+  narrow: (q: ReturnType<typeof buildTaskQuery>) => ReturnType<typeof buildTaskQuery>,
+): Promise<Task[]> {
   const all: Task[] = [];
 
   for (let page = 0; page < FETCH_MAX_PAGES; page++) {
     const from = page * FETCH_PAGE_SIZE;
-    const { data, error } = await supabase
-      .from('tasks')
-      .select(TASK_COLUMNS) // tombstones incluídos — sem embedding para reduzir egress
-      // ordem estável: sem ORDER BY o Postgres devolve ordem de heap e a
-      // paginação repetiria/pularia linhas entre as páginas.
-      .order('created_at', { ascending: true })
+    const { data, error } = await narrow(buildTaskQuery())
+      .order('updated_at', { ascending: true })
       .order('id', { ascending: true })
       .range(from, from + FETCH_PAGE_SIZE - 1);
 
@@ -68,15 +86,49 @@ async function fetchAllRemoteTasks(): Promise<Task[]> {
   return all;
 }
 
-export async function fetchRemoteTasks() {
+// tombstones incluídos — sem embedding para reduzir egress
+function buildTaskQuery() {
+  return supabase.from('tasks').select(TASK_COLUMNS);
+}
+
+/** Maior `updated_at` do lote. É o relógio do servidor, não o do cliente:
+ * usar Date.now() aqui perderia mudanças por causa de clock skew. */
+function maxUpdatedAt(tasks: Task[]): string | null {
+  let max: string | null = null;
+
+  for (const task of tasks) {
+    if (task.updated_at && (!max || task.updated_at > max)) max = task.updated_at;
+  }
+
+  return max;
+}
+
+/** Sincroniza o store com o servidor.
+ *
+ * - `full`: recarrega a janela inteira. O servidor é a verdade — tarefa local
+ *   ausente no resultado é descartada (foi excluída em outro device ou envelheceu
+ *   para fora da janela). Usado no cold start e ao voltar para o foreground.
+ * - `delta`: baixa só o que mudou desde o último sync (`updated_at`). Nunca
+ *   descarta nada, porque o resultado não é a lista completa. É o modo do ciclo
+ *   de 120s: em regime normal transfere zero linha em vez da tabela toda.
+ */
+export async function fetchRemoteTasks(mode: 'full' | 'delta' = 'full') {
   // Bug 2: guard para evitar merges paralelos.
   if (isFetchingRemote) return;
   isFetchingRemote = true;
 
   try {
-    const remoteTasks = await fetchAllRemoteTasks();
+    const store = useTaskStore.getState();
+    const since = store.lastSyncedAt;
+    // Sem marca d'água ainda (primeiro uso, ou store limpo) não dá para fazer
+    // delta: cairia num fetch sem filtro. Degrada para full.
+    const effectiveMode = mode === 'delta' && since ? 'delta' : 'full';
 
-    const { tasks: localTasks, mutations, setTasks } = useTaskStore.getState();
+    const remoteTasks = effectiveMode === 'delta'
+      ? await fetchTaskPages((q) => q.gte('updated_at', since as string))
+      : await fetchTaskPages((q) => q.or(buildWindowFilter()));
+
+    const { tasks: localTasks, mutations, setTasks, setLastSyncedAt } = useTaskStore.getState();
 
     // IDs com mutation pendente: a versão local é autoritativa enquanto
     // a mutation não subiu — o servidor reconcilia após o push.
@@ -92,6 +144,12 @@ export async function fetchRemoteTasks() {
     remoteTasks.forEach((r) => remoteMap.set(r.id, r as Task));
 
     const taskMap = new Map<string, Task>();
+
+    // No delta o resultado é parcial: parte-se do que já existe localmente e
+    // só se sobrepõe o que veio. No full o servidor manda e o que não veio sai.
+    if (effectiveMode === 'delta') {
+      localTasks.forEach((local) => taskMap.set(local.id, local));
+    }
 
     // Tarefas remotas: servidor é a verdade reconciliada, exceto quando
     // há mutation pendente (nesse caso a versão local prevalece).
@@ -114,6 +172,10 @@ export async function fetchRemoteTasks() {
     });
 
     setTasks(Array.from(taskMap.values()).filter((t) => !t.deleted_at));
+
+    // Marca d'água só avança; lote vazio mantém a anterior.
+    const watermark = maxUpdatedAt(remoteTasks);
+    if (watermark && (!since || watermark > since)) setLastSyncedAt(watermark);
   } finally {
     isFetchingRemote = false;
   }
