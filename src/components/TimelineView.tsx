@@ -437,6 +437,88 @@ function TimelineSlot({
   );
 }
 
+// ─── Resolved tasks (collapsible footer) ──────────────────────────
+
+function ResolvedTasksSection({
+  resolvedTasks,
+  openEdit,
+  formatTime,
+}: {
+  resolvedTasks: Task[];
+  openEdit: (task: Task) => void;
+  formatTime: (date: Date) => string;
+}) {
+  const [resolvedExpanded, setResolvedExpanded] = useState(false);
+
+  return (
+    <section className="bg-paper border border-line rounded-[20px] overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setResolvedExpanded((v) => !v)}
+        aria-expanded={resolvedExpanded}
+        className="w-full flex items-center justify-between gap-3 px-4 py-4 text-left"
+      >
+        <div className="min-w-0">
+          <h2 className="text-[15px] font-bold text-ink">Resolvidas neste dia</h2>
+          {!resolvedExpanded && (
+            <p className="mt-0.5 text-[11px] text-ink-2">
+              Concluídas e encerradas ficam fora da timeline ativa. Toque para ver.
+            </p>
+          )}
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="text-[13px] font-bold text-ink-2 tnum">{resolvedTasks.length}</span>
+          <ChevronDown
+            size={16}
+            strokeWidth={2.4}
+            className={`text-ink-tertiary transition-transform ${resolvedExpanded ? 'rotate-180' : ''}`}
+          />
+        </div>
+      </button>
+      {resolvedExpanded && (
+        <div>
+          {resolvedTasks.map((task) => {
+            const resolvedAt = getTaskResolvedAt(task);
+            const resolvedDate = resolvedAt ? new Date(resolvedAt) : null;
+            return (
+              <button
+                key={task.id}
+                type="button"
+                onClick={() => openEdit(task)}
+                className="w-full text-left border-t border-line px-4 py-3 hover:bg-surface-sunken transition-colors"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[11px] font-bold uppercase tracking-[0.06em] text-ink-2">
+                        {resolvedTaskLabel(task)}
+                      </span>
+                      {resolvedDate && (
+                        <>
+                          <span className="text-[11px] font-bold text-ink-2">{'\u00B7'}</span>
+                          <span className="text-[11px] font-bold text-ink-2 tnum">
+                            {formatTime(resolvedDate)}
+                          </span>
+                        </>
+                      )}
+                    </div>
+                    <div className="mt-0.5 text-[14px] font-bold text-ink truncate">
+                      {task.title}
+                    </div>
+                  </div>
+                  <span className="shrink-0 text-[13px] font-bold text-accent">
+                    Reabrir
+                  </span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
+}
+
 // ─── Main view ──────────────────────────────────────────────────
 
 export function TimelineView({
@@ -670,55 +752,12 @@ export function TimelineView({
       </div>
 
       {resolvedTasks.length > 0 && (
-        <section className="bg-paper border border-line rounded-[20px] overflow-hidden">
-          <div className="flex items-baseline justify-between gap-3 px-4 pt-4 pb-3">
-            <div className="min-w-0">
-              <h2 className="text-[15px] font-bold text-ink">Resolvidas neste dia</h2>
-              <p className="mt-0.5 text-[11px] text-ink-2">
-                Concluídas e encerradas ficam fora da timeline ativa.
-              </p>
-            </div>
-            <span className="text-[13px] font-bold text-ink-2 tnum">{resolvedTasks.length}</span>
-          </div>
-          <div>
-            {resolvedTasks.map((task) => {
-              const resolvedAt = getTaskResolvedAt(task);
-              const resolvedDate = resolvedAt ? new Date(resolvedAt) : null;
-              return (
-                <button
-                  key={task.id}
-                  type="button"
-                  onClick={() => openEdit(task)}
-                  className="w-full text-left border-t border-line px-4 py-3 hover:bg-surface-sunken transition-colors"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-[11px] font-bold uppercase tracking-[0.06em] text-ink-2">
-                          {resolvedTaskLabel(task)}
-                        </span>
-                        {resolvedDate && (
-                          <>
-                            <span className="text-[11px] font-bold text-ink-2">{'\u00B7'}</span>
-                            <span className="text-[11px] font-bold text-ink-2 tnum">
-                              {formatTime(resolvedDate)}
-                            </span>
-                          </>
-                        )}
-                      </div>
-                      <div className="mt-0.5 text-[14px] font-bold text-ink truncate">
-                        {task.title}
-                      </div>
-                    </div>
-                    <span className="shrink-0 text-[13px] font-bold text-accent">
-                      Reabrir
-                    </span>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </section>
+        <ResolvedTasksSection
+          key={selectedDate.toDateString()}
+          resolvedTasks={resolvedTasks}
+          openEdit={openEdit}
+          formatTime={formatTime}
+        />
       )}
 
       {editingTask && (
