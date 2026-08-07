@@ -5,6 +5,7 @@ import { useAuthStore } from './stores/authStore';
 import { NetworkStatus } from './components/NetworkStatus';
 import { fetchRemoteTasks, processSyncQueue, fetchProfileFromCloud, pushContextToCloud } from './lib/sync';
 import { useContextStore } from './stores/contextStore';
+import { useTaskStore } from './stores/taskStore';
 import { useNetwork } from './hooks/useNetwork';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import Login from './pages/Login';
@@ -84,6 +85,41 @@ function App() {
     runSync('full');
     const interval = setInterval(() => runSync('delta'), 120_000);
     return () => clearInterval(interval);
+  }, [session, isOnline]);
+
+  // Push imediato ao enfileirar mutation.
+  //
+  // Antes disso, a fila só subia em três momentos: cold start, tick de 120s e
+  // volta ao foreground. No celular o uso real é "abrir o app, cadastrar a
+  // tarefa, bloquear a tela em poucos segundos" — e o tick de 120s nunca chega,
+  // porque o sistema congela os timers da aba assim que ela vai para o
+  // background. A tarefa ficava viva só no localStorage, invisível para os
+  // outros devices, e sem nenhum sinal na tela: `fetchRemoteTasks` mantém a
+  // tarefa com mutation pendente no store, então ela parece salva e
+  // sincronizada. No PC o mesmo código funcionava porque a aba fica aberta e em
+  // foco por minutos, e o tick roda várias vezes — daí a sincronização parecer
+  // funcionar num sentido e não no outro.
+  useEffect(() => {
+    if (!session || !isOnline) return;
+
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const unsubscribe = useTaskStore.subscribe((state, prev) => {
+      // Só quando a fila cresce. Remoção e incremento de retryCount são efeitos
+      // do próprio processSyncQueue; reagir a eles criaria laço de sync.
+      if (state.mutations.length <= prev.mutations.length) return;
+      if (debounceTimer) clearTimeout(debounceTimer);
+      // Debounce curto coalesce a captura de várias tarefas de uma vez só
+      // (o modal salva em loop) num único push.
+      debounceTimer = setTimeout(() => {
+        processSyncQueue().catch((err) => console.error('[sync] push imediato falhou:', err));
+      }, 800);
+    });
+
+    return () => {
+      unsubscribe();
+      if (debounceTimer) clearTimeout(debounceTimer);
+    };
   }, [session, isOnline]);
 
   useEffect(() => {
@@ -166,7 +202,14 @@ function App() {
     if (!session || !isOnline) return;
 
     const handleVisibilityChange = () => {
-      if (document.visibilityState !== 'visible') return;
+      if (document.visibilityState !== 'visible') {
+        // Saindo para o background: última janela de execução antes de o
+        // sistema congelar a aba. Tenta subir o que ainda estiver na fila —
+        // best-effort, porque a aba pode morrer no meio. Se morrer, a mutation
+        // continua no localStorage e sobe na próxima abertura.
+        processSyncQueue().catch((err) => console.error('[sync] flush ao sair falhou:', err));
+        return;
+      }
 
       // Pull imediato ao voltar ao foreground. Completo, não delta: enquanto o
       // app esteve em background outro device pode ter excluído tarefas, e
