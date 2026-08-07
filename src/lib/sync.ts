@@ -62,7 +62,13 @@ function buildWindowFilter(): string {
 }
 
 /** Busca páginas de 1000 aplicando `narrow` à query. Ordem estável obrigatória:
- * sem ORDER BY o Postgres devolve ordem de heap e a paginação repete/pula linhas. */
+ * sem ORDER BY o Postgres devolve ordem de heap e a paginação repete/pula linhas.
+ *
+ * A ordenação é por `created_at`, que é imutável (gerado no BEFORE INSERT e
+ * nunca reescrito). Ordenar por `updated_at` — que é exatamente a coluna que
+ * muda — desestabiliza a paginação: se qualquer linha da página 0 for tocada
+ * entre as duas requisições, ela salta para o fim, todas as seguintes andam uma
+ * posição para trás e a linha que estava no offset 1000 nunca é lida. */
 async function fetchTaskPages(
   narrow: (q: ReturnType<typeof buildTaskQuery>) => ReturnType<typeof buildTaskQuery>,
 ): Promise<Task[]> {
@@ -71,7 +77,7 @@ async function fetchTaskPages(
   for (let page = 0; page < FETCH_MAX_PAGES; page++) {
     const from = page * FETCH_PAGE_SIZE;
     const { data, error } = await narrow(buildTaskQuery())
-      .order('updated_at', { ascending: true })
+      .order('created_at', { ascending: true })
       .order('id', { ascending: true })
       .range(from, from + FETCH_PAGE_SIZE - 1);
 

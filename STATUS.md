@@ -1,6 +1,6 @@
 # STATUS.md — SecretárioTask
 
-Última atualização: 2026-08-04 (Hotfix: teto de 1000 linhas do Supabase escondia as tarefas mais novas)
+Última atualização: 2026-08-07 (Hotfix: tarefa criada no celular não subia para o servidor)
 
 ---
 
@@ -30,6 +30,33 @@ Rodada pelo Josemar no SQL Editor: **40.632 linhas de `sync_log` apagadas**, 0 e
 
 ## Correção importante de escala
 O projeto está no **plano Pro do Supabase (8 GB)**, não no free. As projeções desta sessão foram feitas assumindo 500 MB e superestimavam a urgência: no ritmo medido (~40 MB/ano sem limpeza nenhuma), espaço nunca será o limite. A retenção continua valendo como higiene. **Conferir o plano antes de projetar custo de storage.**
+
+---
+
+# Hotfix: tarefa criada no celular não subia para o servidor (2026-08-07)
+
+## Objetivo
+Josemar cadastrou "Ver com seguradora condutor adicional" pelo celular à tarde. Depois foi ao PC, concluiu e adiou várias tarefas do dia, e a tarefa do celular **não estava lá**. Voltando ao celular, as conclusões feitas no PC tinham chegado normalmente — e a tarefa criada no celular continuava aparecendo só ali.
+
+## Causa raiz
+- **Nada empurrava a fila de mutations no momento da criação.** `processSyncQueue` só era chamado em três pontos, todos no `App.tsx`: cold start, tick de 120s e volta ao foreground (`visibilitychange` → `visible`).
+- O uso real no celular é "abrir o app, cadastrar, bloquear a tela em poucos segundos". O tick de 120s **nunca chega**, porque Android/iOS congelam os timers da aba assim que ela vai para background. A mutation `insert` ficava parada no `localStorage` até a próxima vez que ele abrisse o app.
+- O bug era invisível na tela: `fetchRemoteTasks` mantém no store toda tarefa com mutation pendente (`pendingTaskIds`), então a tarefa continuava listada na Agenda como se estivesse salva e sincronizada. Nenhum toast, nenhum aviso, nenhum registro — `sync_log` só grava falha, e aqui não houve falha nenhuma: a requisição simplesmente nunca saiu.
+- **É isso que explica a assimetria.** No PC a aba fica aberta e em foco por vários minutos enquanto ele trabalha na lista, então o tick de 120s roda várias vezes e sobe tudo. No celular o app é aberto e fechado em segundos. Mesmo código, resultado oposto por causa do tempo de permanência em foreground.
+
+## Entregas
+- `App.tsx`: assinatura do `taskStore` que dispara `processSyncQueue()` sempre que a fila de mutations **cresce**, com debounce de 800 ms (coalesce a captura de várias tarefas de uma vez, que salva em loop). O guard é "cresceu", não "mudou": remoção de mutation e incremento de `retryCount` são efeitos do próprio `processSyncQueue`, e reagir a eles criaria laço de sync.
+- `App.tsx`: `visibilitychange` passa a dar flush da fila **também na saída** (`hidden`), não só na volta. É a última janela de execução antes de o sistema congelar a aba. Best-effort — se a aba morrer no meio, a mutation continua no `localStorage` e sobe na próxima abertura, como antes.
+- `sync.ts` (defeito secundário, mesmo caminho): a paginação do fetch ordenava por `updated_at`, que é exatamente a coluna que muda. Se qualquer linha da página 0 fosse tocada entre as duas requisições, ela saltava para o fim, todas as seguintes andavam uma posição para trás e a linha do offset 1000 nunca era lida. Voltou para `created_at`, que é imutável (gerado no BEFORE INSERT pela migration 0009 e nunca reescrito) — que era a ordem original do hotfix de 04/08, trocada sem necessidade no commit de sync incremental.
+
+## Validações
+- `npm run lint`, `npm run build`, `npm run test`: passaram.
+- Semântica do `subscribe` do zustand v5 verificada fora do repo com a versão instalada: `prev` chega preenchido; o guard dispara em `add` e **não** dispara em remoção nem em update de mesmo tamanho (confirma que não há laço de sync).
+- Nenhuma migration criada ou aplicada. Nenhum comando Supabase executado.
+- Sem alteração visual — nada a conferir em tema escuro nesta entrega.
+
+## Próximo passo recomendado
+Testar no app real: cadastrar uma tarefa pelo celular, **bloquear a tela em seguida** e conferir no PC (sem tocar mais no celular) que ela aparece em segundos. Esse era exatamente o caminho que falhava.
 
 ---
 
