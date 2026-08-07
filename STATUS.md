@@ -49,14 +49,25 @@ Josemar cadastrou "Ver com seguradora condutor adicional" pelo celular à tarde.
 - `App.tsx`: `visibilitychange` passa a dar flush da fila **também na saída** (`hidden`), não só na volta. É a última janela de execução antes de o sistema congelar a aba. Best-effort — se a aba morrer no meio, a mutation continua no `localStorage` e sobe na próxima abertura, como antes.
 - `sync.ts` (defeito secundário, mesmo caminho): a paginação do fetch ordenava por `updated_at`, que é exatamente a coluna que muda. Se qualquer linha da página 0 fosse tocada entre as duas requisições, ela saltava para o fim, todas as seguintes andavam uma posição para trás e a linha do offset 1000 nunca era lida. Voltou para `created_at`, que é imutável (gerado no BEFORE INSERT pela migration 0009 e nunca reescrito) — que era a ordem original do hotfix de 04/08, trocada sem necessidade no commit de sync incremental.
 
+## Marcador de "não sincronizada" (pedido do Josemar na mesma sessão)
+O bug era invisível porque a tarefa pendente aparece na Agenda como qualquer outra. Agora existe um sinal na tela.
+
+- `taskFilters.ts`: `hasStalePendingMutation(mutations, taskId, now)` — puro, recebe `now` por parâmetro como o resto do arquivo. Marca quando a mutation da tarefa já falhou (`retryCount > 0`) **ou** está na fila há mais de `UNSYNCED_GRACE_MS` (60s).
+- **O limiar é o ponto do design.** Ter mutation pendente é normal por instantes — com o push imediato ela sai em menos de 1s. Marcar de imediato faria o ícone piscar a cada toque em concluir/adiar, virando ruído. O que interessa sinalizar é a fila **parada**: sem rede, erro no servidor, ou enfileirada com o app já congelado em segundo plano.
+- `TimelineView.tsx`: ícone `CloudOff` de 13px em `text-warning`, na linha de badges do card, à esquerda do `ATRASADA`. Sem texto e sem fundo — discreto. `title` e `sr-only` com "Ainda não sincronizada".
+- Sem timer novo: o `now` do `useAgendaPositions` já é reavaliado a cada 30s, então o marcador aparece sozinho quando a mutation passa do limiar.
+
 ## Validações
 - `npm run lint`, `npm run build`, `npm run test`: passaram.
 - Semântica do `subscribe` do zustand v5 verificada fora do repo com a versão instalada: `prev` chega preenchido; o guard dispara em `add` e **não** dispara em remoção nem em update de mesmo tamanho (confirma que não há laço de sync).
 - Nenhuma migration criada ou aplicada. Nenhum comando Supabase executado.
-- Sem alteração visual — nada a conferir em tema escuro nesta entrega.
+- 6 casos novos de fixture para `hasStalePendingMutation`: mutation recente não marca, parada além do limiar marca, `retryCount > 0` marca sem esperar, mutation de outra tarefa não vaza, `task_event` pendente não marca, `createdAt` corrompido não marca.
+- Preview visual do card renderizado com o CSS compilado, mobile 390px, **claro e escuro**, com quatro combinações (com/sem `ATRASADA`, com/sem prioridade, recorrente). O `--warning` já troca de tom por tema (`#D97706` no claro, `#F59E0B` no escuro) e ficou legível nos dois, sem competir com o `ATRASADA`.
 
 ## Próximo passo recomendado
 Testar no app real: cadastrar uma tarefa pelo celular, **bloquear a tela em seguida** e conferir no PC (sem tocar mais no celular) que ela aparece em segundos. Esse era exatamente o caminho que falhava.
+
+Para ver o marcador de propósito: ligar o modo avião, cadastrar uma tarefa e esperar um minuto — o ícone deve aparecer; ao voltar a rede, some sozinho assim que a fila sobe.
 
 ---
 

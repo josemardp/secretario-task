@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { rescheduleToDate, postponeToTomorrow } from '../lib/datetime';
-import { Repeat, X, Edit3, Trash2, XCircle, ChevronDown, FileText } from 'lucide-react';
+import { Repeat, X, Edit3, Trash2, XCircle, ChevronDown, FileText, CloudOff } from 'lucide-react';
 import type { Task, ResolutionType, BlockerType } from '../types';
 import { useContextStore } from '../stores/contextStore';
 import { useTaskStore } from '../stores/taskStore';
@@ -9,7 +9,7 @@ import { TaskEditModal } from './TaskEditModal';
 import { useToast } from './toastContext';
 import { useAgendaPositions, type TimelineBlock } from '../hooks/useAgendaPositions';
 import { buildCompleteUpdates, buildResolutionUpdates } from '../lib/taskLifecycle';
-import { getResolvedTasksForDate, getTaskResolvedAt } from '../lib/taskFilters';
+import { getResolvedTasksForDate, getTaskResolvedAt, hasStalePendingMutation } from '../lib/taskFilters';
 import { describeRecurrenceRule } from '../lib/recurrence';
 
 
@@ -167,6 +167,10 @@ function TimelineTaskCard({
       new Date(t.created_at).getTime() < now.getTime() - 3 * 60 * 60 * 1000 &&
       new Date(t.created_at).getDate() === now.getDate());
 
+  // `now` já é reavaliado a cada 30s pelo useAgendaPositions, então o marcador
+  // aparece sozinho quando a mutation passa do limiar — sem timer novo.
+  const isUnsynced = useTaskStore((s) => hasStalePendingMutation(s.mutations, t.id, now));
+
   const style: React.CSSProperties = {
     touchAction: 'pan-y',
   };
@@ -278,6 +282,15 @@ function TimelineTaskCard({
               </span>
               <div className="flex-1" />
               <div className="flex items-center gap-1.5 shrink-0">
+                {isUnsynced && (
+                  <span
+                    className="inline-flex items-center text-warning"
+                    title="Ainda não sincronizada — só existe neste aparelho"
+                  >
+                    <CloudOff size={13} aria-hidden="true" />
+                    <span className="sr-only">Ainda não sincronizada</span>
+                  </span>
+                )}
                 {isLate && (
                   <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-danger-light text-danger tracking-[0.05em]">
                     ATRASADA

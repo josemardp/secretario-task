@@ -1,4 +1,4 @@
-import type { ResolutionType, Task } from '../types';
+import type { PendingMutation, ResolutionType, Task } from '../types';
 
 const CLOSED_WITHOUT_EXECUTION: ResolutionType[] = ['cancelled', 'delegated', 'obsolete'];
 
@@ -12,6 +12,36 @@ export function isActiveTask(task: Task): boolean {
 
 export function isOpenTask(task: Task): boolean {
   return isActiveTask(task) && task.status !== 'done';
+}
+
+/** Tempo que uma mutation pode ficar na fila antes de virar sinal de problema.
+ *
+ * Ter mutation pendente é normal por alguns instantes: o push imediato sai em
+ * menos de um segundo. O que interessa marcar na tela é a fila **parada** — sem
+ * rede, com erro no servidor, ou enfileirada com o app já congelado em segundo
+ * plano. Com um limiar menor o marcador piscaria a cada toque e viraria ruído
+ * em vez de sinal. */
+export const UNSYNCED_GRACE_MS = 60_000;
+
+/** A tarefa tem alteração presa na fila de sync há tempo demais?
+ *
+ * Puro e determinístico: recebe `now` por parâmetro, seguindo o padrão do
+ * arquivo. Usado pela Agenda para marcar a tarefa que ainda não subiu. */
+export function hasStalePendingMutation(
+  mutations: PendingMutation[],
+  taskId: string,
+  now: Date,
+): boolean {
+  return mutations.some((mutation) => {
+    if (mutation.entity !== 'task' || mutation.entityId !== taskId) return false;
+    // Já falhou pelo menos uma vez: não há o que esperar, sinaliza na hora.
+    if (mutation.retryCount > 0) return true;
+
+    const queuedAt = new Date(mutation.createdAt).getTime();
+    if (!Number.isFinite(queuedAt)) return false;
+
+    return now.getTime() - queuedAt >= UNSYNCED_GRACE_MS;
+  });
 }
 
 export function isActionableBriefingTask(task: Task, now: Date): boolean {

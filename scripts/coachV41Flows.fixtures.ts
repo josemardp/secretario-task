@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import type { BlockerType, ResolutionType, Task } from '../src/types/index.js';
+import type { BlockerType, PendingMutation, ResolutionType, Task } from '../src/types/index.js';
 import {
   buildCoachAIInputHash,
   clearCoachAICacheForTests,
@@ -15,9 +15,11 @@ import { estimateTaskTime } from '../src/lib/ai.js';
 import { parseTaskInput } from '../src/lib/parser.js';
 import { computeNextRuleAndDate } from '../src/lib/recurrence.js';
 import {
+  UNSYNCED_GRACE_MS,
   filterTasksByText,
   getResolvedTasksForDate,
   getReviewEligibleTasks,
+  hasStalePendingMutation,
   isActiveTask,
   isOpenTask,
 } from '../src/lib/taskFilters.js';
@@ -681,6 +683,64 @@ await runFlow('busca. tarefa deletada pode ser excluida antes de filtrar', 'sim'
   const result = filterTasksByText(active, 'reunião');
   assertEqual(result.length, 1, 'apos filtrar deletadas, busca retorna somente a ativa');
   assertEqual(result[0].id, 'b11', 'id correto');
+});
+
+await runFlow('sync. marcador de nao sincronizada so aparece com a fila parada', 'sim', () => {
+  const mutation = (over: Partial<PendingMutation> = {}): PendingMutation => ({
+    id: 'mut-1',
+    entity: 'task',
+    operation: 'insert',
+    entityId: 'u1',
+    payload: {},
+    createdAt: new Date(NOW.getTime() - 5_000).toISOString(),
+    retryCount: 0,
+    ...over,
+  });
+
+  // Recem-enfileirada: o push imediato ainda vai sair. Marcar aqui faria o
+  // icone piscar a cada toque, virando ruido em vez de sinal.
+  assertEqual(
+    hasStalePendingMutation([mutation()], 'u1', NOW),
+    false,
+    'mutation recente nao marca a tarefa',
+  );
+
+  // Parada alem do limiar: sem rede, erro no servidor ou app congelado.
+  assertEqual(
+    hasStalePendingMutation(
+      [mutation({ createdAt: new Date(NOW.getTime() - UNSYNCED_GRACE_MS).toISOString() })],
+      'u1',
+      NOW,
+    ),
+    true,
+    'mutation parada alem do limiar marca a tarefa',
+  );
+
+  // Ja falhou pelo menos uma vez: nao ha o que esperar.
+  assertEqual(
+    hasStalePendingMutation([mutation({ retryCount: 1 })], 'u1', NOW),
+    true,
+    'mutation com retry marca sem esperar o limiar',
+  );
+
+  // Nao vaza para outra tarefa nem reage a evento best-effort.
+  assertEqual(
+    hasStalePendingMutation([mutation({ retryCount: 3 })], 'outra-tarefa', NOW),
+    false,
+    'mutation de outra tarefa nao marca',
+  );
+  assertEqual(
+    hasStalePendingMutation([mutation({ entity: 'task_event', retryCount: 3 })], 'u1', NOW),
+    false,
+    'task_event pendente nao marca a tarefa',
+  );
+
+  // createdAt corrompido no localStorage nao pode marcar tudo.
+  assertEqual(
+    hasStalePendingMutation([mutation({ createdAt: 'lixo' })], 'u1', NOW),
+    false,
+    'createdAt invalido nao marca a tarefa',
+  );
 });
 
 console.log('[coachV41Flows] cobertura');
