@@ -12,8 +12,8 @@ Se você é uma IA ou um novo colaborador chegando ao projeto:
 
 1. Leia `STATUS.md` PRIMEIRO — diz onde o projeto parou
 2. Leia o protocolo no topo do `STATUS.md` — diz o que fazer nesta sessão
-3. Em sessão normal de desenvolvimento, leia também a seção do sprint atual em `SPRINT_LOG.md`
-4. Para o contrato completo de trabalho, consulte `AGENTS.md`
+3. Para correção pontual, leia só o código afetado além do `STATUS.md`
+4. Para sprint, migration ou decisão técnica, consulte o roteamento em `AGENTS.md`
 5. Os demais documentos são consultados sob demanda
 
 ---
@@ -44,12 +44,12 @@ Se você é uma IA ou um novo colaborador chegando ao projeto:
 
 # Protocolo de trabalho resumido
 
-Detalhes completos no `AGENTS.md`, seção "Protocolo de Trabalho".
+Detalhes completos no `AGENTS.md`, em "Roteamento de leitura" e nos Modos 2/3.
 
 ## Modo 1 — Sessão normal (90% dos casos)
-- Início: ler `STATUS.md` + sprint atual em `SPRINT_LOG.md`
+- Início: ler `STATUS.md`
 - Trabalhar
-- Fim: marcar `[x]` no `STATUS.md`, atualizar próximo passo, commit
+- Fim: atualizar próximo passo/data no `STATUS.md` quando o estado mudar, validar e commitar
 - Overhead: ~3 minutos por sessão
 
 ## Modo 2 — Início de sprint (6 vezes no projeto)
@@ -57,7 +57,7 @@ Detalhes completos no `AGENTS.md`, seção "Protocolo de Trabalho".
 - Tempo: 15–20 minutos
 
 ## Modo 3 — Encerramento de sprint (6 vezes no projeto)
-- Validação + consolidação de decisões
+- Ritual completo no `AGENTS.md`
 - Tempo: 20–30 minutos
 
 ---

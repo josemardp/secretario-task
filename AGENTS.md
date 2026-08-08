@@ -1,5 +1,25 @@
 # AGENTS.md — SecretárioTask
 
+## Entrada obrigatória
+
+Leia sempre `STATUS.md` primeiro. Ele é o marcador de página do projeto: estado atual,
+próximo passo, protocolo de início/fim de sessão e quando registrar decisão.
+
+Depois disso, leia somente o que a tarefa pedir. Não carregue todos os documentos por
+padrão.
+
+## Roteamento de leitura
+
+| Tipo de tarefa | Ler além do `STATUS.md` |
+|---|---|
+| Correção pontual de UI, bug localizado, texto ou CSS | Apenas os arquivos diretamente afetados |
+| Escolher, abrir ou executar sprint do Coach de Produtividade | Os 3 arquivos de `docs/coach/` listados abaixo |
+| Início de sprint | Modo 2 deste arquivo + plano oficial do Coach quando a sprint for do Coach |
+| Encerramento de sprint | Modo 3 deste arquivo + `SPRINT_LOG.md`/`ROADMAP.md` quando houver progresso de sprint a registrar |
+| Schema, migration, RLS, enum, constraint ou Supabase remoto | `ARCHITECTURE.md` + seção "Supabase remoto" deste arquivo |
+| Decisão técnica não-trivial | Consultar `DECISIONS.md` antes se houver precedente; registrar depois |
+| Mudança perceptível de produto/escopo | `PRD.md`, com ressalva: `STATUS.md`, `DECISIONS.md` e `ARCHITECTURE.md` prevalecem quando houver conflito |
+
 ## Fonte oficial da evolução Coach de Produtividade
 
 A fonte única de verdade para a evolução do Coach de Produtividade é:
@@ -30,32 +50,13 @@ docs/coach/_historico
 
 são apenas histórico. Não devem ser usados como fonte principal de implementação.
 
-Nunca executar o arquivo:
-
-```text
-docs/coach/_historico/_NAO_USAR_SecretarioTask_Prompt_Execucao_Autonoma_Codex.md
-```
-
-Esse arquivo é histórico e pode induzir execução autônoma ampla demais.
-
 ## Regra principal
 
 Executar apenas um sprint por vez.
 
-Antes de qualquer alteração, ler:
-
-1. `docs/coach/SecretarioTask_Plano_Executor_Completo_v2_OFICIAL.md`
-2. `docs/coach/Prompt_Codex_Executar_Sprints_SecretarioTask_SEGURO.md`
-3. `docs/coach/SecretarioTask_Plano_Coach_Produtividade_v4.md`
-4. `STATUS.md`, se existir
-5. `ROADMAP.md`, se existir
-6. `SPRINT_LOG.md`, se existir
-7. `DECISIONS.md`, se existir
-8. `ARCHITECTURE.md`, se existir
-9. `PRD.md`, se existir
-
 ## Regras inegociáveis
 
+- Nunca executar `docs/coach/_historico/_NAO_USAR_SecretarioTask_Prompt_Execucao_Autonoma_Codex.md`. É histórico e induz execução autônoma ampla demais.
 - Não usar `updated_at` como data de conclusão.
 - Não usar `deleted_at` para cancelada, delegada ou obsoleta.
 - Não alterar `TaskStatus` sem autorização humana explícita.
@@ -107,7 +108,9 @@ Nunca salvar tokens, senhas, connection strings ou segredos no repositório.
 
 ## Rotina de execução
 
-Quando o usuário pedir “vamos evoluir o coach” ou “qual o próximo passo”, identificar o próximo sprint pendente pelo plano oficial e pelos documentos de status.
+Quando o usuário pedir “vamos evoluir o coach”, “abrir sprint”, “executar sprint” ou
+equivalente, identificar o próximo sprint pendente pelo plano oficial do Coach e pelos
+documentos de status aplicáveis.
 
 Antes de implementar, informar:
 
@@ -160,3 +163,28 @@ No relatório final, informar:
 9. pendências;
 10. riscos remanescentes;
 11. próximo sprint recomendado.
+
+## Modo 2 — Início de sprint
+
+Use somente quando a tarefa for abrir ou executar uma sprint.
+
+1. Ler `STATUS.md`.
+2. Identificar se a sprint é do Coach de Produtividade. Se for, ler os 3 arquivos de
+   `docs/coach/` listados no topo deste arquivo.
+3. Conferir `ROADMAP.md` e `SPRINT_LOG.md` apenas para localizar a sprint e evitar
+   duplicidade de execução.
+4. Informar sprint identificado, objetivo, arquivos prováveis, validações e documentação
+   que será atualizada.
+5. Executar apenas uma sprint.
+
+## Modo 3 — Encerramento de sprint
+
+Use somente ao fechar sprint.
+
+1. Rodar validações aplicáveis, no mínimo `npm run lint` e `npm run build`.
+2. Se houve migration, seguir a ordem da seção "Supabase remoto".
+3. Atualizar `STATUS.md`.
+4. Atualizar `SPRINT_LOG.md` e `ROADMAP.md` quando houver progresso de sprint.
+5. Atualizar `DECISIONS.md` quando houver decisão técnica não-trivial.
+6. Atualizar `ARCHITECTURE.md` quando houver mudança de schema, RLS, sync ou infraestrutura.
+7. Conferir `git status` antes de commitar.
