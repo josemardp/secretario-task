@@ -25,3 +25,17 @@ O Codex (VS Code) costuma ser o executor; o Claude gera prompts autocontidos (mo
 
 ## Decisões registradas importantes
 - Funcionalidade "energia" foi removida; o estado de remoção está registrado para eventual reversão (ver `DECISIONS.md`).
+
+## Estado em 12/08/2026 (registro pré-CAO)
+
+Josemar entra em CAO de 17/08/2026 a 22/01/2027; este registro existe para retomar o projeto depois.
+
+- Último commit do repositório: 2026-08-08 19:32:07 -0300 `b682bee` `docs: torna leitura de contexto condicional`.
+- Commits desde a última atualização deste documento: 20.
+- Resumo dos commits, agrupado pelo que as mensagens do Git registram:
+  - Tarefas e recorrência: observações em tarefas, V5 Decision Engine, correção de recorrência mensal com dia específico, exclusão de ocorrência recorrente sem encerrar a série, primeira ocorrência sem `due_at` e captura sem data/hora com atalhos rápidos.
+  - Sincronização e histórico: busca de todas as tarefas do servidor, sincronização incremental por `updated_at`, política de retenção para `sync_log`, `purge_old_history`, fila de mutações no momento da alteração e marcador de tarefa não sincronizada na Agenda.
+  - Interface mobile/agenda: recolhimento padrão de tarefas resolvidas do dia na agenda mobile e correção de calendário com escape literal/horário `9h`.
+  - Documentação e configuração: validação no app real, números de volume do banco, limpeza de séries duplicadas, migration 0021, plano Pro, histórico movido para `docs/HISTORICO.md`, leitura de contexto condicional e correção do nome do `package.json`.
+
+PRÓXIMO PASSO: [VERIFICAR: a confirmar pelo Josemar]
