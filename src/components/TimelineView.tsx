@@ -116,7 +116,7 @@ function AgendaQuickActions({
           className="h-8 min-w-0 px-2 rounded-lg border border-border-strong bg-surface text-ink text-[12px] font-bold inline-flex items-center justify-center gap-1"
           title="Editar"
         >
-          <Edit3 size={12} /> Editar
+          <Edit3 size={12} /> <span className="lg:hidden">Editar</span>
         </button>
         <button
           type="button"
@@ -127,7 +127,7 @@ function AgendaQuickActions({
           className="h-8 min-w-0 px-2 rounded-lg border border-border-strong bg-surface text-danger text-[12px] font-bold inline-flex items-center justify-center gap-1"
           title="Excluir"
         >
-          <Trash2 size={12} /> Excluir
+          <Trash2 size={12} /> <span className="lg:hidden">Excluir</span>
         </button>
         <button
           type="button"
@@ -138,7 +138,7 @@ function AgendaQuickActions({
           className="h-8 min-w-0 px-2 rounded-lg border border-border-strong bg-surface text-ink text-[12px] font-bold inline-flex items-center justify-center gap-1"
           title="Cancelar sem concluir"
         >
-          <XCircle size={12} /> Cancelar
+          <XCircle size={12} /> <span className="lg:hidden">Cancelar</span>
         </button>
       </div>
     </div>
@@ -275,7 +275,10 @@ function TimelineTaskCard({
         style={{ transform: `translateX(${dragX}px)` }}
       >
       <div className="relative px-[14px] py-[9px] sm:px-4 sm:py-3 lg:flex lg:flex-wrap lg:items-center lg:gap-x-4 lg:gap-y-2 lg:py-2.5">
-        <div className="flex items-start gap-2 lg:min-w-0 lg:flex-1">
+        {/* min-w impede que as ações do hover espremam o título: sem ele o
+            flex encolhia esta coluna a ~60px e o título quebrava letra a
+            letra ("Comp / rar / exten / são"). */}
+        <div className="flex items-start gap-2 lg:min-w-[240px] lg:flex-1">
           <button
             type="button"
             onClick={(e) => {
@@ -730,13 +733,21 @@ export function TimelineView({
         'flex flex-col gap-3',
         // Só abre a coluna auxiliar quando há o que colocar nela; senão a
         // timeline usaria 1fr e sobrariam 340px vazios à direita.
-        rail ? 'lg:grid lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-5' : '',
+        //
+        // A altura fixa é o que impede o scroll duplo: sem ela a coluna
+        // auxiliar crescia além da janela, a página inteira passava a rolar
+        // e a timeline (que tem rolagem própria) saía de vista por cima.
+        // Com altura de janela, cada coluna rola por dentro e as duas ficam
+        // sempre visíveis.
+        rail
+          ? 'lg:grid lg:h-[calc(100dvh-150px)] lg:grid-cols-[minmax(0,1fr)_340px] lg:items-stretch lg:gap-5'
+          : '',
       ].join(' ')}
     >
       {/* Timeline grid */}
       <div
         ref={timelineScrollRef}
-        className="bg-paper rounded-[20px] border border-line overflow-y-auto overflow-x-hidden flex flex-col max-h-[calc(100dvh-238px)] py-2 scroll-py-3 lg:max-h-[calc(100dvh-176px)]"
+        className="bg-paper rounded-[20px] border border-line overflow-y-auto overflow-x-hidden flex flex-col max-h-[calc(100dvh-238px)] py-2 scroll-py-3 lg:h-full lg:max-h-none lg:min-h-0"
       >
         {timeGrid.map((slot, idx) => {
           const slotBlocks = blocks.filter(b => {
@@ -812,7 +823,7 @@ export function TimelineView({
       </div>
 
       {rail && (
-        <div className="hidden lg:sticky lg:top-3 lg:block">
+        <div className="hidden lg:block lg:h-full lg:min-h-0 lg:overflow-y-auto lg:pr-0.5">
           {rail}
         </div>
       )}
