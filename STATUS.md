@@ -16,13 +16,13 @@
 
 App em produção e em uso diário. Último trabalho: **checklist dentro da tarefa** (14/08) — itens marcáveis no modal de edição e direto no card expandido da Agenda, badge `2/5` no card, faixa "Concluir tarefa" quando tudo é marcado, e ocorrência recorrente herdando os passos desmarcados. Código pronto, build e lint limpos, 80 asserções da suíte passando (8 novas para a checklist), visual conferido em claro, escuro, mobile e desktop.
 
-Migration `0022_task_checklist.sql` aplicada e conferida no Supabase em 14/08 (coluna `checklist` jsonb nullable, os dois CHECKs no lugar, 1.304 tarefas intactas). Commit `dcac67d` na main. **A ordem importava:** `checklist` entrou no `TASK_COLUMNS` do `sync.ts`, então o app não carregaria tarefa nenhuma se o deploy tivesse ido antes da coluna existir.
+Migration `0022_task_checklist.sql` aplicada e conferida no Supabase em 14/08 (coluna `checklist` jsonb nullable, os dois CHECKs no lugar, 1.304 tarefas intactas). Commit `dcac67d` na main, deploy da Vercel READY. **A ordem importava:** `checklist` entrou no `TASK_COLUMNS` do `sync.ts`, então o app não carregaria tarefa nenhuma se o deploy tivesse ido antes da coluna existir. **Smoke no app real aprovado pelo Josemar em 14/08** — a entrega está fechada.
 
 ## Próximo passo
 
-**Smoke da checklist no app real:** abrir uma tarefa, criar 2 itens, marcar 1, fechar o modal, conferir o badge `1/2` no card da Agenda, e conferir no celular que os itens chegaram. Depois abrir o card na Agenda (toque no card expande) e marcar o item por lá, sem entrar no modal.
+**A definir.** A checklist está entregue e validada; não há trabalho em aberto no projeto.
 
-Testar também a recorrência: numa tarefa que se repete, concluir uma ocorrência e conferir que a próxima nasceu com os mesmos itens, todos por marcar.
+Se for retomar a evolução da checklist, o que ficou deliberadamente de fora: reordenar item arrastando, parser transformando texto em itens ("comprar pão, leite e ovos"), IA sugerindo subtarefas, e checklist na Home/Foco.
 
 Pendente de antes: **validar o hotfix de sync do celular** (cadastrar tarefa no celular, bloquear a tela, conferir no PC que ela aparece em segundos).
 
