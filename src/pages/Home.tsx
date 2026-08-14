@@ -9,6 +9,7 @@ import { useAudioRecorder } from '../hooks/useAudioRecorder';
 import {
   Plus, Mic, Search,
   ArrowRight, X, ClipboardCheck, Target,
+  CalendarDays, BarChart3, Settings as SettingsIcon,
 } from 'lucide-react';
 import { TimelineView } from '../components/TimelineView';
 import { TaskEditModal } from '../components/TaskEditModal';
@@ -42,6 +43,38 @@ function formatLongDate(): string {
   const day = now.getDate();
   const month = now.toLocaleDateString('pt-BR', { month: 'long' });
   return `${weekday[0].toUpperCase()}${weekday.slice(1)}, ${day} de ${month[0].toUpperCase()}${month.slice(1)}`;
+}
+
+/** Item da navegação lateral, exclusiva do desktop (≥1024px). A navegação do
+ * celular continua sendo a barra inferior, intocada. */
+function DesktopNavItem({
+  icon,
+  label,
+  active,
+  badge,
+  onClick,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  active: boolean;
+  badge?: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-current={active ? 'page' : undefined}
+      className={[
+        'flex h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-[13px] font-bold transition-colors',
+        active ? 'bg-amber-soft text-accent' : 'text-ink-2 hover:bg-paper2 hover:text-ink',
+      ].join(' ')}
+    >
+      <span className="shrink-0">{icon}</span>
+      <span className="min-w-0 truncate">{label}</span>
+      {badge && <span className="ml-auto h-2 w-2 shrink-0 rounded-full bg-accent" />}
+    </button>
+  );
 }
 
 export default function Home() {
@@ -423,7 +456,7 @@ export default function Home() {
 
   return (
     <div
-      className="min-h-screen bg-canvas font-sans text-ink"
+      className="min-h-screen bg-canvas font-sans text-ink lg:pl-[220px]"
       style={{ width: '100%', maxWidth: '100vw', overflowX: 'clip' }}
     >
       {pendingSmartTasks && (
@@ -475,23 +508,84 @@ export default function Home() {
         }}
       />
 
+      {/* ── Navegação lateral (só ≥1024px) ──────────────────────── */}
+      <aside className="fixed left-0 top-0 bottom-0 z-40 hidden w-[220px] flex-col border-r border-line bg-paper px-3 py-4 lg:flex">
+        <button
+          type="button"
+          onClick={() => setCaptureBarExpanded((v) => !v)}
+          className="mb-5 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-accent text-[13px] font-bold text-white transition-colors hover:bg-accent-hover"
+        >
+          <Plus size={17} strokeWidth={2.4} /> Nova tarefa
+        </button>
+
+        <nav className="flex flex-col gap-1">
+          <DesktopNavItem
+            icon={<CalendarDays size={17} strokeWidth={2} />}
+            label="Agenda"
+            active={viewMode === 'timeline' && !focoOpen && !searchOpen}
+            onClick={() => {
+              setViewMode('timeline');
+              setCaptureBarExpanded(false);
+            }}
+          />
+          <DesktopNavItem
+            icon={<Target size={17} strokeWidth={2} />}
+            label="Foco"
+            active={focoOpen}
+            badge={briefingTasks.length > 0}
+            onClick={() => {
+              setDecisionNow(new Date());
+              setFocoOpen(true);
+              setCaptureBarExpanded(false);
+            }}
+          />
+          <DesktopNavItem
+            icon={<Search size={17} strokeWidth={2} />}
+            label="Busca"
+            active={searchOpen}
+            onClick={() => {
+              setSearchOpen((v) => !v);
+              setCaptureBarExpanded(false);
+            }}
+          />
+          <DesktopNavItem
+            icon={<BarChart3 size={17} strokeWidth={2} />}
+            label="Painel"
+            active={viewMode === 'dashboard' && !focoOpen && !searchOpen}
+            onClick={() => {
+              setViewMode('dashboard');
+              setCaptureBarExpanded(false);
+            }}
+          />
+        </nav>
+
+        <div className="mt-auto">
+          <DesktopNavItem
+            icon={<SettingsIcon size={17} strokeWidth={2} />}
+            label="Configurações"
+            active={isSettingsOpen}
+            onClick={() => setIsSettingsOpen(true)}
+          />
+        </div>
+      </aside>
+
       {/* ── Header ──────────────────────────────────────────────── */}
       <header
         className="bg-canvas sticky top-0 z-30 safe-top"
         style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}
       >
-        <div className="px-4 pt-3 pb-3">
+        <div className="px-4 pt-3 pb-3 lg:mx-auto lg:max-w-[1180px] lg:px-6 lg:pb-4 lg:pt-6">
           <div className="flex items-end gap-3">
-            <div className="min-w-0 flex-1 flex flex-col gap-2">
-              <h1 className="truncate text-center font-display text-[29px] leading-[1.05] text-ink">
+            <div className="min-w-0 flex-1 flex flex-col gap-2 lg:gap-1">
+              <h1 className="truncate text-center font-display text-[29px] leading-[1.05] text-ink lg:text-left">
                 {getGreeting()}
               </h1>
-              <p className="min-w-0 truncate text-center text-[13px] text-ink-2 tnum leading-snug">
+              <p className="min-w-0 truncate text-center text-[13px] text-ink-2 tnum leading-snug lg:text-left">
                 {formatLongDate()}
               </p>
             </div>
 
-            <div className="shrink-0 flex flex-col items-center gap-2">
+            <div className="shrink-0 flex flex-col items-center gap-2 lg:flex-row-reverse lg:items-center lg:gap-3">
               <div className="flex items-center gap-1.5">
                 <InstallPWA />
                 <button
@@ -510,7 +604,7 @@ export default function Home() {
           </div>
 
           {searchOpen && (
-            <div className="mt-3 animate-fade-in">
+            <div className="mt-3 animate-fade-in lg:max-w-[900px]">
               <div className="flex h-10 items-center gap-2 rounded-[13px] border border-line bg-paper px-3">
                 <Search size={15} className="text-ink-2 shrink-0" />
                 <input
@@ -553,7 +647,7 @@ export default function Home() {
       </header>
 
       <main
-        className="px-4 pt-3"
+        className="px-4 pt-3 lg:mx-auto lg:!max-w-[1180px] lg:px-6 lg:!pb-10"
         style={{
           width: '100%',
           maxWidth: '100%',
@@ -565,7 +659,7 @@ export default function Home() {
         }}
       >
         {searchOpen && searchText.trim() ? (
-          <div className="flex flex-col gap-2 pb-4">
+          <div className="flex flex-col gap-2 pb-4 lg:max-w-[900px]">
             {isSearching ? (
               <p className="text-center py-8 text-ink-2 text-[14px]">Buscando…</p>
             ) : baseVisibleTasks.length === 0 ? (
@@ -666,7 +760,7 @@ export default function Home() {
         <form
           ref={setCaptureElementRef}
           onSubmit={handleTaskSubmit}
-          className="fixed left-0 right-0 z-40 bg-paper border-t border-line rounded-t-[22px] px-4 py-3 flex items-end gap-2.5 select-none shadow-[0_-16px_32px_-8px_rgba(0,0,0,0.28)]"
+          className="fixed left-0 right-0 z-40 bg-paper border-t border-line rounded-t-[22px] px-4 py-3 flex items-end gap-2.5 select-none shadow-[0_-16px_32px_-8px_rgba(0,0,0,0.28)] lg:left-[220px] lg:mx-auto lg:w-[640px] lg:!bottom-auto lg:!top-[104px] lg:rounded-2xl lg:border lg:shadow-soft"
           style={{
             bottom: 'calc(var(--kb, 0px) + 70px + env(safe-area-inset-bottom))',
           }}
@@ -716,7 +810,7 @@ export default function Home() {
 
       {/* ── Tab bar ───────────────────────────────────────────────── */}
       <nav
-        className="fixed bottom-0 left-0 right-0 bg-paper border-t border-line z-50 flex select-none safe-bottom"
+        className="fixed bottom-0 left-0 right-0 bg-paper border-t border-line z-50 flex select-none safe-bottom lg:hidden"
         style={{ height: 'calc(70px + env(safe-area-inset-bottom))' }}
       >
         <button

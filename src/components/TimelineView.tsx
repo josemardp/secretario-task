@@ -259,14 +259,14 @@ function TimelineTaskCard({
       <div
         onClick={handleCardClick}
         className={[
-          'relative min-w-0 h-auto flex flex-col bg-surface border border-border rounded-[18px] sm:min-h-[104px]',
+          'relative min-w-0 h-auto flex flex-col bg-surface border border-border rounded-[18px] sm:min-h-[104px] lg:min-h-0',
           'transition-transform',
           isDragging ? 'duration-0' : 'duration-200',
         ].join(' ')}
         style={{ transform: `translateX(${dragX}px)` }}
       >
-      <div className="relative px-[14px] py-[9px] sm:px-4 sm:py-3">
-        <div className="flex items-start gap-2">
+      <div className="relative px-[14px] py-[9px] sm:px-4 sm:py-3 lg:flex lg:flex-wrap lg:items-center lg:gap-x-4 lg:gap-y-2 lg:py-2.5">
+        <div className="flex items-start gap-2 lg:min-w-0 lg:flex-1">
           <button
             type="button"
             onClick={(e) => {
@@ -283,7 +283,7 @@ function TimelineTaskCard({
               <span className="text-[12px] font-bold tnum text-ink-secondary tracking-wide shrink-0">
                 {formatTime(block.startTime)} – {formatTime(block.endTime)}
               </span>
-              <div className="flex-1" />
+              <div className="flex-1 lg:hidden" />
               <div className="flex items-center gap-1.5 shrink-0">
                 {isUnsynced && (
                   <span
@@ -310,7 +310,7 @@ function TimelineTaskCard({
               </div>
             </div>
 
-            <div className="relative min-h-[42px] mt-[4px]">
+            <div className="relative min-h-[42px] mt-[4px] lg:min-h-0 lg:mt-[2px]">
               <h3 className="text-[15px] font-bold text-ink leading-snug tracking-tight break-words flex items-start gap-1.5 sm:text-[14px] sm:leading-tight">
                 {t.recurrence_rule && <Repeat size={13} className="mt-0.5 shrink-0 text-ink-tertiary" />}
                 <span ref={titleRef} className={['min-w-0', !expanded ? 'line-clamp-2 sm:line-clamp-none' : ''].join(' ')}>
@@ -380,7 +380,7 @@ function TimelineTaskCard({
         </div>
 
         {expanded && checklistCount.total > 0 && (
-          <div className="mt-2 border-t border-line2 pt-1.5">
+          <div className="mt-2 border-t border-line2 pt-1.5 lg:order-last lg:basis-full">
             <TaskChecklist
               task={t}
               variant="card"
@@ -390,7 +390,7 @@ function TimelineTaskCard({
         )}
 
         <div
-          className="hidden sm:block sm:mt-2"
+          className="hidden sm:block sm:mt-2 lg:mt-0 lg:shrink-0"
           onMouseDown={(e) => e.stopPropagation()}
         >
           <AgendaQuickActions
@@ -486,17 +486,19 @@ function ResolvedTasksSection({
   const [resolvedExpanded, setResolvedExpanded] = useState(false);
 
   return (
-    <section className="bg-paper border border-line rounded-[20px] overflow-hidden">
+    <section className="bg-paper border border-line rounded-[20px] overflow-hidden lg:sticky lg:top-3 lg:flex lg:max-h-[calc(100dvh-176px)] lg:flex-col">
+      {/* No desktop a lista fica sempre aberta: a coluna existe para isso.
+          O acordeão continua valendo no celular, onde o espaço é disputado. */}
       <button
         type="button"
         onClick={() => setResolvedExpanded((v) => !v)}
         aria-expanded={resolvedExpanded}
-        className="w-full flex items-center justify-between gap-3 px-4 py-4 text-left"
+        className="w-full flex items-center justify-between gap-3 px-4 py-4 text-left lg:shrink-0 lg:cursor-default lg:py-3"
       >
         <div className="min-w-0">
           <h2 className="text-[15px] font-bold text-ink">Resolvidas neste dia</h2>
           {!resolvedExpanded && (
-            <p className="mt-0.5 text-[11px] text-ink-2">
+            <p className="mt-0.5 text-[11px] text-ink-2 lg:hidden">
               Concluídas e encerradas ficam fora da timeline ativa. Toque para ver.
             </p>
           )}
@@ -506,11 +508,11 @@ function ResolvedTasksSection({
           <ChevronDown
             size={16}
             strokeWidth={2.4}
-            className={`text-ink-tertiary transition-transform ${resolvedExpanded ? 'rotate-180' : ''}`}
+            className={`text-ink-tertiary transition-transform lg:hidden ${resolvedExpanded ? 'rotate-180' : ''}`}
           />
         </div>
       </button>
-      {resolvedExpanded && (
+      <div className={resolvedExpanded ? 'lg:overflow-y-auto' : 'hidden lg:block lg:overflow-y-auto'}>
         <div>
           {resolvedTasks.map((task) => {
             const resolvedAt = getTaskResolvedAt(task);
@@ -549,7 +551,7 @@ function ResolvedTasksSection({
             );
           })}
         </div>
-      )}
+      </div>
     </section>
   );
 }
@@ -707,11 +709,20 @@ export function TimelineView({
   const formatTime = (date: Date) => date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
   return (
-    <div className="flex flex-col gap-3">
+    <div
+      className={[
+        'flex flex-col gap-3',
+        // Só abre a coluna auxiliar quando há o que colocar nela; senão a
+        // timeline usaria 1fr e sobrariam 320px vazios à direita.
+        resolvedTasks.length > 0
+          ? 'lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start lg:gap-5'
+          : '',
+      ].join(' ')}
+    >
       {/* Timeline grid */}
       <div
         ref={timelineScrollRef}
-        className="bg-paper rounded-[20px] border border-line overflow-y-auto overflow-x-hidden flex flex-col max-h-[calc(100dvh-238px)] py-2 scroll-py-3"
+        className="bg-paper rounded-[20px] border border-line overflow-y-auto overflow-x-hidden flex flex-col max-h-[calc(100dvh-238px)] py-2 scroll-py-3 lg:max-h-[calc(100dvh-176px)]"
       >
         {timeGrid.map((slot, idx) => {
           const slotBlocks = blocks.filter(b => {

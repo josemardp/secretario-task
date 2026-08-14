@@ -146,15 +146,17 @@ export function FocoSheet({
   return createPortal(
     <div className="fixed inset-0 z-[9999] animate-fade-in" onClick={onClose}>
       <div className="absolute inset-0 bg-[rgba(26,24,20,0.45)]" />
+      {/* No desktop deixa de ser folha do rodapé e vira diálogo centralizado:
+          a folha de largura total esticava os botões de ação pela tela toda. */}
       <div
-        className="absolute left-0 right-0 bottom-0 bg-paper rounded-t-3xl shadow-soft animate-sheet-up flex flex-col max-h-[94dvh]"
+        className="absolute left-0 right-0 bottom-0 bg-paper rounded-t-3xl shadow-soft animate-sheet-up flex flex-col max-h-[94dvh] lg:left-1/2 lg:right-auto lg:bottom-auto lg:top-1/2 lg:w-[760px] lg:max-h-[88dvh] lg:-translate-x-1/2 lg:-translate-y-1/2 lg:rounded-3xl"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="flex justify-center pt-2 pb-2 flex-shrink-0">
+        <div className="flex justify-center pt-2 pb-2 flex-shrink-0 lg:hidden">
           <div className="w-10 h-1 rounded-full bg-paper3" />
         </div>
 
-        <div className="px-5 flex items-start justify-between gap-3 flex-shrink-0">
+        <div className="px-5 flex items-start justify-between gap-3 flex-shrink-0 lg:pt-5">
           <div className="min-w-0">
             <div className="text-[12px] font-bold tracking-[0.06em] uppercase text-ink-2">
               Decision Engine · V5

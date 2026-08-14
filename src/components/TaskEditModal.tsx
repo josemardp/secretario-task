@@ -248,7 +248,7 @@ export function TaskEditModal({ task, onClose }: TaskEditModalProps) {
           onClick={onClose}
         >
           <div
-            className="bg-paper w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl shadow-soft flex flex-col animate-sheet-up max-h-[90dvh]"
+            className="bg-paper w-full sm:max-w-md sm:rounded-3xl rounded-t-3xl shadow-soft flex flex-col animate-sheet-up max-h-[90dvh] lg:max-w-xl"
             style={{
               paddingTop: 'calc(12px + env(safe-area-inset-top))',
             }}

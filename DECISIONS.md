@@ -1,7 +1,34 @@
 # DECISIONS.md — SecretárioTask
 
-Última atualização: 2026-08-14 (Checklist dentro da tarefa)
+Última atualização: 2026-08-14 (Layout de desktop)
 Status: registro vivo de decisões técnicas e operacionais
+
+---
+
+# Decisões — Layout de desktop (2026-08-14)
+
+## 2026-08-14 — Adaptação de desktop é só `lg:`, o celular não é tocado
+Decisão: todo o trabalho de desktop entra como classe com prefixo `lg:` (≥1024px). O `sm:` existente no `TimelineView` não foi alterado. Nenhuma função, store, hook ou consulta mudou.
+Motivo: o celular é a superfície principal e está resolvida; o pedido era estética de notebook. Classe `lg:` é ignorada pelo navegador abaixo do breakpoint, então a garantia de "o mobile não muda" é estrutural, não uma promessa.
+Alternativas descartadas: media query em JavaScript (`matchMedia`) para trocar componentes — criaria dois caminhos de render e risco real de regressão no celular; reescrever os componentes com layout fluido — mexeria no que já funciona.
+Contexto: causa raiz era `Home.tsx` sem nenhum breakpoint e sem nenhum container com largura máxima em todo o app. O layout de celular era esticado até 1500px.
+
+## 2026-08-14 — Navegação de desktop é coluna à esquerda, não rodapé
+Decisão: a partir de 1024px a navegação vira uma coluna fixa de 220px (Agenda, Foco, Busca, Painel, Nova tarefa, Configurações). A barra inferior e o botão `+` flutuante ganham `lg:hidden`. Os dois blocos chamam exatamente os mesmos handlers.
+Motivo: barra de rodapé com botão flutuante é gramática de telefone. No notebook ela gastava 70px de altura, que é o recurso escasso, e era o que mais dava ao app cara de "celular esticado".
+Alternativas descartadas: abas no topo — gasta a mesma altura escassa; manter o rodapé — não resolvia a queixa.
+Consequência: no desktop, Configurações passa a ter dois caminhos possíveis, então a engrenagem do Painel ganhou `lg:hidden` para não repetir o atalho.
+
+## 2026-08-14 — No desktop o card da Agenda é horizontal
+Decisão: a partir de 1024px o card deixa de empilhar (título em cima, ações embaixo) e vira linha: horário e badges à esquerda, título no meio, as seis ações à direita. `sm:min-h-[104px]` é zerado com `lg:min-h-0`.
+Motivo: o card foi desenhado para uma coluna de 400px. A 1500px sobrava uma faixa vazia enorme entre o título e a borda, que foi exatamente a queixa. As ações preenchem esse espaço em vez de ocupar uma linha própria.
+Alternativas descartadas: duas colunas de horário (manhã/tarde) — quebra a leitura cronológica, o olho pula do pé de uma coluna para o topo da outra; só estreitar a timeline — deixaria faixas mortas nas laterais.
+Contexto: as fontes e alturas de toque não encolheram, por decisão do Josemar. A compactação veio só do giro de eixo.
+
+## 2026-08-14 — "Resolvidas neste dia" existe sempre no DOM
+Decisão: a lista deixou de ser `{resolvedExpanded && ...}` e passa a ser renderizada sempre, com `hidden lg:block` quando recolhida. No celular o acordeão continua idêntico; no desktop a lista fica sempre aberta na coluna auxiliar.
+Motivo: era o jeito de abrir a lista no desktop sem criar lógica de breakpoint em JavaScript, que introduziria um segundo caminho de render.
+Consequência aceita: os botões das tarefas resolvidas existem no DOM mesmo escondidos no celular. Com a janela de tarefas do dia, é um punhado de nós.
 
 ---
 

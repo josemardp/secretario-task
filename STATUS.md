@@ -14,15 +14,19 @@
 
 ## Onde estamos
 
-App em produção e em uso diário. Último trabalho: **checklist dentro da tarefa** (14/08) — itens marcáveis no modal de edição e direto no card expandido da Agenda, badge `2/5` no card, faixa "Concluir tarefa" quando tudo é marcado, e ocorrência recorrente herdando os passos desmarcados. Código pronto, build e lint limpos, 80 asserções da suíte passando (8 novas para a checklist), visual conferido em claro, escuro, mobile e desktop.
+App em produção e em uso diário. Último trabalho: **layout de desktop** (14/08) — navegação lateral de 220px no lugar do rodapé, conteúdo contido em 1180px, card da Agenda horizontal com as ações à direita, coluna auxiliar com as resolvidas do dia, Painel em duas colunas, Foco como diálogo centralizado e Busca contida em 900px. Tudo entrou como classe `lg:` (≥1024px): o celular é byte por byte o mesmo, conferido em 400px. Contexto de design gravado em `PRODUCT.md`.
+
+Antes disso: **checklist dentro da tarefa** (14/08) — itens marcáveis no modal de edição e direto no card expandido da Agenda, badge `2/5` no card, faixa "Concluir tarefa" quando tudo é marcado, e ocorrência recorrente herdando os passos desmarcados. Código pronto, build e lint limpos, 80 asserções da suíte passando (8 novas para a checklist), visual conferido em claro, escuro, mobile e desktop.
 
 Migration `0022_task_checklist.sql` aplicada e conferida no Supabase em 14/08 (coluna `checklist` jsonb nullable, os dois CHECKs no lugar, 1.304 tarefas intactas). Commit `dcac67d` na main, deploy da Vercel READY. **A ordem importava:** `checklist` entrou no `TASK_COLUMNS` do `sync.ts`, então o app não carregaria tarefa nenhuma se o deploy tivesse ido antes da coluna existir. **Smoke no app real aprovado pelo Josemar em 14/08** — a entrega está fechada.
 
 ## Próximo passo
 
-**A definir.** A checklist está entregue e validada; não há trabalho em aberto no projeto.
+**Usar o app no notebook e dizer o que incomoda.** O layout de desktop foi conferido em preview (claro, escuro, 1512px e 400px), mas ainda não em uso real com a base de tarefas cheia.
 
-Se for retomar a evolução da checklist, o que ficou deliberadamente de fora: reordenar item arrastando, parser transformando texto em itens ("comprar pão, leite e ovos"), IA sugerindo subtarefas, e checklist na Home/Foco.
+Ficou deliberadamente de fora do trabalho de desktop: modal de tarefa em duas colunas de formulário (hoje só ficou mais largo), e a Busca com metadados alinhados à direita.
+
+Da checklist, ficou de fora: reordenar item arrastando, parser transformando texto em itens ("comprar pão, leite e ovos"), IA sugerindo subtarefas, e checklist na Home/Foco.
 
 Pendente de antes: **validar o hotfix de sync do celular** (cadastrar tarefa no celular, bloquear a tela, conferir no PC que ela aparece em segundos).
 

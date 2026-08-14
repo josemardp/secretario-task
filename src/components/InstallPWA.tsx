@@ -34,12 +34,12 @@ export function InstallPWA() {
   return (
     <button
       onClick={onClick}
-      className="inline-flex h-11 w-11 shrink-0 flex-col items-center justify-center gap-0.5 rounded-[13px] bg-ink text-canvas"
+      className="inline-flex h-11 w-11 shrink-0 flex-col items-center justify-center gap-0.5 rounded-[13px] bg-ink text-canvas lg:h-10 lg:w-auto lg:flex-row lg:gap-1.5 lg:px-3.5"
       title="Instalar aplicativo"
       aria-label="Instalar aplicativo"
     >
       <Download size={14} strokeWidth={2.4} />
-      <span className="text-[8px] font-bold leading-none">Instalar</span>
+      <span className="text-[8px] font-bold leading-none lg:text-[13px]">Instalar</span>
     </button>
   );
 }

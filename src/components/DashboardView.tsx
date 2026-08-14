@@ -356,14 +356,22 @@ export function DashboardView({ tasks, onOpenSettings }: DashboardViewProps) {
   }
 
   return (
-    <div className="flex flex-col gap-3">
-      <DashboardHeader onOpenSettings={onOpenSettings} />
+    // No desktop os cartões se acomodam em duas colunas; os que são largos por
+    // natureza (herói, insights) atravessam as duas com lg:col-span-2.
+    <div className="flex flex-col gap-3 lg:grid lg:grid-cols-2 lg:items-start lg:gap-4">
+      {/* No desktop, Configurações mora na navegação lateral: esta engrenagem
+          ocuparia uma linha inteira da grade para repetir o mesmo atalho. */}
+      <div className="lg:hidden">
+        <DashboardHeader onOpenSettings={onOpenSettings} />
+      </div>
 
-      <DecisionInsightsCard tasks={liveTasks} />
+      <div className="lg:col-span-2">
+        <DecisionInsightsCard tasks={liveTasks} />
+      </div>
 
       {/* Top hero */}
-      <div className="bg-surface border border-border rounded-2xl p-4">
-        <div className="flex items-start justify-between gap-3">
+      <div className="bg-surface border border-border rounded-2xl p-4 lg:col-span-2 lg:flex lg:items-center lg:justify-between lg:gap-10 lg:p-5">
+        <div className="flex items-start justify-between gap-3 lg:min-w-0 lg:max-w-[560px] lg:flex-1">
           <div className="flex-1 min-w-0">
             <div className="text-[12px] font-bold uppercase tracking-[0.06em] text-ink-secondary">
               Esta semana
@@ -404,7 +412,7 @@ export function DashboardView({ tasks, onOpenSettings }: DashboardViewProps) {
         </div>
 
         {/* week bars */}
-        <div className="h-20 mt-3 flex items-end gap-1.5">
+        <div className="h-20 mt-3 flex items-end gap-1.5 lg:mt-0 lg:h-24 lg:w-[480px] lg:shrink-0">
           {dailyData.map((d, i) => {
             const max = Math.max(...dailyData.map(x => x.tarefas), 1);
             const h = (d.tarefas / max) * 100;
@@ -429,7 +437,7 @@ export function DashboardView({ tasks, onOpenSettings }: DashboardViewProps) {
       </div>
 
       {/* Mini cards */}
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 gap-3 lg:col-span-2 lg:grid-cols-5">
         <StatCard label="Concluídas confirmadas" value={confirmedCompletedTasks.length} sub="pós-saneamento" />
         <StatCard label="Histórico aproximado" value={legacyCompletedTasks.length} sub="legado, horário frágil" />
         <StatCard
