@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { rescheduleToDate, postponeToTomorrow } from '../lib/datetime';
-import { Repeat, X, Edit3, Trash2, XCircle, ChevronDown, FileText, CloudOff } from 'lucide-react';
+import { Repeat, X, Edit3, Trash2, XCircle, ChevronDown, FileText, CloudOff, ListChecks } from 'lucide-react';
 import type { Task, ResolutionType, BlockerType } from '../types';
 import { useContextStore } from '../stores/contextStore';
 import { useTaskStore } from '../stores/taskStore';
+import { TaskChecklist } from './TaskChecklist';
 import { TaskEditModal } from './TaskEditModal';
+import { countChecklist, normalizeChecklist } from '../lib/checklist';
 import { useToast } from './toastContext';
 import { useAgendaPositions, type TimelineBlock } from '../hooks/useAgendaPositions';
 import { buildCompleteUpdates, buildResolutionUpdates } from '../lib/taskLifecycle';
@@ -170,6 +172,7 @@ function TimelineTaskCard({
   // `now` já é reavaliado a cada 30s pelo useAgendaPositions, então o marcador
   // aparece sozinho quando a mutation passa do limiar — sem timer novo.
   const isUnsynced = useTaskStore((s) => hasStalePendingMutation(s.mutations, t.id, now));
+  const checklistCount = countChecklist(normalizeChecklist(t.checklist));
 
   const style: React.CSSProperties = {
     touchAction: 'pan-y',
@@ -350,6 +353,15 @@ function TimelineTaskCard({
                   <FileText size={13} strokeWidth={2.2} />
                 </span>
               )}
+              {checklistCount.total > 0 && (
+                <span
+                  className="inline-flex items-center gap-1 ml-1.5 text-[11px] font-bold tnum text-ink-tertiary"
+                  title={`Checklist: ${checklistCount.done} de ${checklistCount.total} feitos`}
+                >
+                  <ListChecks size={13} strokeWidth={2.2} aria-hidden="true" />
+                  {checklistCount.done}/{checklistCount.total}
+                </span>
+              )}
             </div>
           </div>
 
@@ -366,6 +378,16 @@ function TimelineTaskCard({
             <Edit3 size={15} strokeWidth={2.2} />
           </button>
         </div>
+
+        {expanded && checklistCount.total > 0 && (
+          <div className="mt-2 border-t border-line2 pt-1.5">
+            <TaskChecklist
+              task={t}
+              variant="card"
+              onCompleteTask={() => handleComplete(t.id)}
+            />
+          </div>
+        )}
 
         <div
           className="hidden sm:block sm:mt-2"

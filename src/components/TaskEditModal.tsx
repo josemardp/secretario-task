@@ -18,6 +18,7 @@ import type {
   TaskDecisionMetadata,
 } from '../types';
 import { RecurrenceModal } from './RecurrenceModal';
+import { TaskChecklist } from './TaskChecklist';
 import { useToast } from './toastContext';
 
 interface TaskEditModalProps {
@@ -379,6 +380,18 @@ export function TaskEditModal({ task, onClose }: TaskEditModalProps) {
                   className="bg-paper2 rounded-xl px-3 py-2.5 text-base text-ink outline-none border-0 resize-y"
                 />
               </label>
+
+              {/* A checklist grava sozinha, sem esperar o Salvar: é o mesmo
+                  comportamento do card da Agenda, onde não existe Salvar.
+                  Ver DECISIONS.md (2026-08-14). */}
+              <TaskChecklist
+                task={task}
+                variant="modal"
+                onCompleteTask={taskIsResolved ? undefined : () => {
+                  handleComplete(task.id);
+                  onClose();
+                }}
+              />
 
               <div className="grid grid-cols-2 gap-2">
                 <label className="flex flex-col gap-1">

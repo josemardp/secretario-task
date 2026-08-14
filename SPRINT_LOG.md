@@ -1,8 +1,35 @@
 # SPRINT_LOG.md — SecretárioTask
 
-Última revisão: 2026-07-17
+Última revisão: 2026-08-14
 Status: alinhado ao ROADMAP oficial
 Duração sugerida por sprint: 1–2 semanas
+
+---
+
+# Checklist dentro da tarefa
+Data: 2026-08-14
+
+## Objetivo
+Permitir cadastrar itens de checklist dentro de cada tarefa, marcáveis tanto no modal de edição quanto direto no card expandido da Agenda, sincronizados entre os aparelhos.
+
+## Entregáveis
+- `supabase/migrations/0022_task_checklist.sql`: coluna `checklist jsonb` com CHECK de array e teto de 30 itens.
+- `src/lib/checklist.ts`: normalização defensiva do jsonb, adicionar/marcar/remover, contagem, reset para recorrência e forma de persistência.
+- `src/components/TaskChecklist.tsx`: componente único das duas telas (`variant: 'modal' | 'card'`), com gravação imediata e faixa "Concluir tarefa".
+- `src/components/TaskEditModal.tsx`: seção Checklist abaixo de Observações.
+- `src/components/TimelineView.tsx`: badge `2/5` no card e checklist marcável quando o card está expandido.
+- `src/stores/taskStore.ts`: `buildRecurringClone` herda os passos desmarcados.
+- `src/lib/sync.ts` e `src/types/index.ts`: coluna no `TASK_COLUMNS` e tipo `ChecklistItem`.
+- `scripts/checklist.fixtures.ts`: 8 cenários determinísticos.
+
+## Decisões registradas
+Quatro entradas em `DECISIONS.md` (14/08): jsonb em vez de tabela nova; gravação imediata fora do Salvar; checklist completa oferece concluir em vez de concluir sozinha; ocorrência recorrente herda os passos desmarcados.
+
+## Smoke visual executado
+Preview isolado (arquivo temporário, removido depois) em mobile 400px e desktop 1280px, tema claro e escuro. Conferido: contraste dos itens marcados/desmarcados nos dois temas, alvos de toque de 44px, e a sincronização entre modal e card — marcar no modal atualizou o card atrás na mesma hora.
+
+## Fora do escopo desta entrega
+Reordenar item arrastando, parser transformando texto em itens, IA sugerindo subtarefas, checklist na Home/Foco.
 
 ---
 

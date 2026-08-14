@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import type { Task, TaskEventType, TaskInput, PendingMutation } from '../types';
+import { normalizeChecklist, resetChecklistForRecurrence } from '../lib/checklist';
 import { computeNextRuleAndDate } from '../lib/recurrence';
 import { isOpenTask } from '../lib/taskFilters';
 
@@ -66,6 +67,7 @@ function buildRecurringClone(task: Task): TaskInput | null {
     deleted_at: null,
     recurrence_rule: nextRule,
     recurrence_origin_id: task.recurrence_origin_id ?? task.id,
+    checklist: resetChecklistForRecurrence(normalizeChecklist(task.checklist)),
   };
 }
 

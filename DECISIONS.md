@@ -1,7 +1,34 @@
 # DECISIONS.md — SecretárioTask
 
-Última atualização: 2026-08-04 (Sync incremental e retenção de histórico)
+Última atualização: 2026-08-14 (Checklist dentro da tarefa)
 Status: registro vivo de decisões técnicas e operacionais
+
+---
+
+# Decisões — Checklist dentro da tarefa (2026-08-14)
+
+## 2026-08-14 — Checklist é coluna `jsonb` em `tasks`, não tabela nova
+Decisão: os itens vivem em `tasks.checklist` (`jsonb`, migration 0022), no formato `[{id, text, done, done_at}]`, com CHECK de array e teto de 30 itens. O array é gravado inteiro a cada mudança; não há resolução de conflito item a item.
+Motivo: a checklist entra de graça em tudo que já funciona — fila de mutations offline, optimistic lock por `version`, janela de 90 dias, paginação. Uma tabela nova exigiria entidade nova na fila de sync, RLS, fetch paginado e retenção próprios.
+Alternativas descartadas: tabela `task_checklist_items` — tecnicamente mais correta para conflito item a item, custo desproporcional para um usuário só; guardar no `contextStore` local como os metadados V5 — checklist é fato durável da tarefa e ele trabalha de três aparelhos, ficaria presa em um; codificar dentro de `description` — contaminaria as observações do usuário.
+Consequência aceita: marcar o mesmo item em dois aparelhos ao mesmo tempo faz uma das gravações ser descartada em silêncio pelo guard de `version` (`sync.ts`). Com um usuário só, é raro.
+Contexto: teto de 30 itens não é conceitual — é a quota do `localStorage` no celular, que já tem tratamento de estouro no `safeStorage` do `taskStore`.
+
+## 2026-08-14 — Checklist grava na hora, fora do botão Salvar
+Decisão: marcar, adicionar e remover item gravam imediatamente via `updateTask`, tanto no `TaskEditModal` quanto no card da Agenda. O botão Salvar do modal continua responsável pelos demais campos. `TaskChecklist` lê a tarefa viva do store, não a prop recebida.
+Motivo: o card da Agenda não tem botão Salvar. Se o checkbox do card gravasse na hora e o do modal só no Salvar, marcar um item no card e depois abrir o modal e salvar desfaria a marcação — o retrato antigo sobrescreveria o novo.
+Alternativas descartadas: checklist só no modal, gravando no Salvar — decisão do usuário foi poder marcar direto na Agenda; card gravando e modal não — a divergência descrita acima.
+Contexto: é ação reversível (degrau 3 da escada do secretário), não pede confirmação.
+
+## 2026-08-14 — Checklist completa oferece concluir, não conclui sozinha
+Decisão: com todos os itens marcados aparece uma faixa "Todos os itens feitos · Concluir tarefa". A tarefa só fecha se o botão for tocado.
+Motivo: coerente com "replanejamento não altera a agenda silenciosamente" (17/07). Uma checklist pode estar toda marcada e a tarefa ainda não estar encerrada.
+Alternativas descartadas: concluir automático — automação silenciosa sobre a agenda; toast com botão — o `ToastProvider` não tem ação e o container é `pointer-events-none`; daria para mudar, mas mexeria num componente compartilhado por todo o app e a mensagem sumiria em 3 segundos.
+
+## 2026-08-14 — Ocorrência recorrente herda os passos desmarcados
+Decisão: `buildRecurringClone` (`taskStore.ts`) copia a checklist com todos os itens por fazer e IDs novos.
+Motivo: a checklist descreve o rito da tarefa, não o histórico de uma ocorrência. Conferência semanal que se repete precisa dos mesmos passos limpos.
+Alternativas descartadas: não copiar — obrigaria redigitar os passos toda semana; copiar preservando o estado — a ocorrência nova nasceria concluída.
 
 ---
 

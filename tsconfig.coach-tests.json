@@ -16,10 +16,12 @@
     "noFallthroughCasesInSwitch": true
   },
   "include": [
+    "scripts/checklist.fixtures.ts",
     "scripts/coachSignals.fixtures.ts",
     "scripts/coachAIGuardrails.fixtures.ts",
     "scripts/coachV41Flows.fixtures.ts",
     "scripts/decisionEngine.fixtures.ts",
+    "src/lib/checklist.ts",
     "src/lib/coachAICache.ts",
     "src/lib/coachAIGuardrails.ts",
     "src/lib/coachSignals.ts",

@@ -1,6 +1,6 @@
 # STATUS.md — SecretárioTask
 
-Última atualização: 2026-08-08
+Última atualização: 2026-08-14
 
 > Estado atual e próximo passo. Nada mais entra aqui.
 > Histórico completo (hotfixes, sprints, causas-raiz, validações): [`docs/HISTORICO.md`](docs/HISTORICO.md)
@@ -14,13 +14,20 @@
 
 ## Onde estamos
 
-App em produção e em uso diário. Último trabalho: **hotfix do sync de tarefas criadas no celular** (07/08) — tarefa cadastrada no celular não subia ao servidor; a fila de mutations agora sobe na hora, não só no tick de 120s. Adicionado marcador discreto de tarefa ainda não sincronizada na Agenda.
+App em produção e em uso diário. Último trabalho: **checklist dentro da tarefa** (14/08) — itens marcáveis no modal de edição e direto no card expandido da Agenda, badge `2/5` no card, faixa "Concluir tarefa" quando tudo é marcado, e ocorrência recorrente herdando os passos desmarcados. Código pronto, build e lint limpos, 80 asserções da suíte passando (8 novas para a checklist), visual conferido em claro, escuro, mobile e desktop.
+
+**Bloqueio de ordem:** a migration `0022_task_checklist.sql` **ainda não foi aplicada** no Supabase. Como `checklist` entrou no `TASK_COLUMNS` do `sync.ts`, o app só volta a carregar tarefas depois que a coluna existir. Por isso o commit **não foi enviado** — push antes da migration derruba o app em produção via deploy da Vercel.
 
 ## Próximo passo
 
-**Validar o hotfix no app real:** cadastrar uma tarefa pelo celular, **bloquear a tela em seguida** e conferir no PC (sem tocar mais no celular) que ela aparece em segundos. Esse era exatamente o caminho que falhava.
+**Aplicar a migration 0022 e só então dar push.** Nessa ordem, sem exceção:
 
-Para ver o marcador de não-sincronizada: ligar o modo avião, cadastrar uma tarefa, esperar um minuto — o ícone aparece; ao voltar a rede, some sozinho quando a fila sobe.
+1. Aplicar `supabase/migrations/0022_task_checklist.sql` no projeto `Secretario Task` (`uwqupggkfjqbkfdshzef`). `ADD COLUMN` nullable não reescreve a tabela — instantâneo, sem downtime, sem backfill.
+2. Conferir a coluna: `select column_name from information_schema.columns where table_name='tasks' and column_name='checklist'`.
+3. `git push` na main.
+4. Smoke no app real: abrir uma tarefa, criar 2 itens, marcar 1, fechar o modal, conferir o badge na Agenda, e conferir no celular que os itens chegaram.
+
+Pendente de antes: **validar o hotfix de sync do celular** (cadastrar tarefa no celular, bloquear a tela, conferir no PC que ela aparece em segundos).
 
 ## Pendências conhecidas (sem urgência)
 

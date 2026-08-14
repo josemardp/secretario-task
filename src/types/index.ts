@@ -45,6 +45,16 @@ export type TaskDecisionMetadata = {
   dependency_ids?: string[];
   dependency_titles?: string[];
 };
+/** Item da checklist embutida na tarefa. Persistido como array JSON na coluna
+ * `tasks.checklist` (jsonb) — ver migration 0022 e DECISIONS.md. O array inteiro
+ * é gravado de uma vez; não há resolução de conflito item a item. */
+export type ChecklistItem = {
+  id: string;
+  text: string;
+  done: boolean;
+  done_at: string | null;
+};
+
 export type TaskEventType =
   | 'created'
   | 'updated'
@@ -78,6 +88,7 @@ export interface Task {
   actual_minutes_source?: ActualMinutesSource | null;
   blocker_type?: BlockerType | null;
   decision_metadata?: TaskDecisionMetadata | null;
+  checklist?: ChecklistItem[] | null;
   started_at?: string | null;
   recurrence_rule?: string | null;
   recurrence_origin_id?: string | null;
