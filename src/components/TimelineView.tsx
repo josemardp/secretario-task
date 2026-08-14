@@ -18,12 +18,21 @@ import { describeRecurrenceRule } from '../lib/recurrence';
 interface TimelineViewProps {
   tasks: Task[];
   selectedDate: Date;
+  /** Coluna auxiliar mostrada só a partir de 1024px. O conteúdo vem do `Home`,
+   * que é quem tem o plano de decisão. */
+  rail?: React.ReactNode;
 }
 
 function priorityTone(priority: number): string {
   if (priority >= 8) return 'text-danger';
   if (priority >= 6) return 'text-warning';
   return 'text-ink-tertiary';
+}
+
+function contextLabel(context: Task['context']): string {
+  if (context === 'Saude') return 'Saúde';
+  if (context === 'Familia') return 'Família';
+  return context;
 }
 
 function resolvedTaskLabel(task: Task): string {
@@ -259,7 +268,7 @@ function TimelineTaskCard({
       <div
         onClick={handleCardClick}
         className={[
-          'relative min-w-0 h-auto flex flex-col bg-surface border border-border rounded-[18px] sm:min-h-[104px] lg:min-h-0',
+          'group relative min-w-0 h-auto flex flex-col bg-surface border border-border rounded-[18px] sm:min-h-[104px] lg:min-h-0',
           'transition-transform',
           isDragging ? 'duration-0' : 'duration-200',
         ].join(' ')}
@@ -273,7 +282,7 @@ function TimelineTaskCard({
               e.stopPropagation();
               handleComplete(t.id);
             }}
-            className="w-9 h-9 mt-0.5 shrink-0 inline-flex items-center justify-center rounded-full border-2 border-border-strong sm:hidden"
+            className="w-9 h-9 mt-0.5 shrink-0 inline-flex items-center justify-center rounded-full border-2 border-border-strong transition-colors sm:hidden lg:inline-flex lg:hover:border-accent lg:hover:bg-accent-subtle"
             aria-label="Concluir tarefa"
             title="Concluir"
           />
@@ -389,8 +398,16 @@ function TimelineTaskCard({
           </div>
         )}
 
+        {/* Em repouso, a direita da linha mostra informação; as ações só
+            aparecem na linha sob o cursor. Seis botões repetidos em toda
+            linha viravam uma parede e engoliam 64% da largura do card. */}
+        <div className="hidden shrink-0 text-[12px] font-semibold text-ink-tertiary tnum lg:block lg:group-hover:hidden">
+          {contextLabel(t.context)}
+          {t.estimated_minutes ? ` · ${t.estimated_minutes} min` : ''}
+        </div>
+
         <div
-          className="hidden sm:block sm:mt-2 lg:mt-0 lg:shrink-0"
+          className="hidden sm:block sm:mt-2 lg:mt-0 lg:shrink-0 lg:hidden lg:group-hover:block"
           onMouseDown={(e) => e.stopPropagation()}
         >
           <AgendaQuickActions
@@ -486,19 +503,17 @@ function ResolvedTasksSection({
   const [resolvedExpanded, setResolvedExpanded] = useState(false);
 
   return (
-    <section className="bg-paper border border-line rounded-[20px] overflow-hidden lg:sticky lg:top-3 lg:flex lg:max-h-[calc(100dvh-176px)] lg:flex-col">
-      {/* No desktop a lista fica sempre aberta: a coluna existe para isso.
-          O acordeão continua valendo no celular, onde o espaço é disputado. */}
+    <section className="bg-paper border border-line rounded-[20px] overflow-hidden">
       <button
         type="button"
         onClick={() => setResolvedExpanded((v) => !v)}
         aria-expanded={resolvedExpanded}
-        className="w-full flex items-center justify-between gap-3 px-4 py-4 text-left lg:shrink-0 lg:cursor-default lg:py-3"
+        className="w-full flex items-center justify-between gap-3 px-4 py-4 text-left"
       >
         <div className="min-w-0">
           <h2 className="text-[15px] font-bold text-ink">Resolvidas neste dia</h2>
           {!resolvedExpanded && (
-            <p className="mt-0.5 text-[11px] text-ink-2 lg:hidden">
+            <p className="mt-0.5 text-[11px] text-ink-2">
               Concluídas e encerradas ficam fora da timeline ativa. Toque para ver.
             </p>
           )}
@@ -508,11 +523,11 @@ function ResolvedTasksSection({
           <ChevronDown
             size={16}
             strokeWidth={2.4}
-            className={`text-ink-tertiary transition-transform lg:hidden ${resolvedExpanded ? 'rotate-180' : ''}`}
+            className={`text-ink-tertiary transition-transform ${resolvedExpanded ? 'rotate-180' : ''}`}
           />
         </div>
       </button>
-      <div className={resolvedExpanded ? 'lg:overflow-y-auto' : 'hidden lg:block lg:overflow-y-auto'}>
+      {resolvedExpanded && (
         <div>
           {resolvedTasks.map((task) => {
             const resolvedAt = getTaskResolvedAt(task);
@@ -551,7 +566,7 @@ function ResolvedTasksSection({
             );
           })}
         </div>
-      </div>
+      )}
     </section>
   );
 }
@@ -561,6 +576,7 @@ function ResolvedTasksSection({
 export function TimelineView({
   tasks,
   selectedDate,
+  rail,
 }: TimelineViewProps) {
   const { activeContext, removeTaskDecisionMetadata } = useContextStore();
   const { updateTask, deleteTask, recordTaskEvent } = useTaskStore();
@@ -713,10 +729,8 @@ export function TimelineView({
       className={[
         'flex flex-col gap-3',
         // Só abre a coluna auxiliar quando há o que colocar nela; senão a
-        // timeline usaria 1fr e sobrariam 320px vazios à direita.
-        resolvedTasks.length > 0
-          ? 'lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start lg:gap-5'
-          : '',
+        // timeline usaria 1fr e sobrariam 340px vazios à direita.
+        rail ? 'lg:grid lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-5' : '',
       ].join(' ')}
     >
       {/* Timeline grid */}
@@ -797,13 +811,23 @@ export function TimelineView({
         })}
       </div>
 
+      {rail && (
+        <div className="hidden lg:sticky lg:top-3 lg:block">
+          {rail}
+        </div>
+      )}
+
+      {/* No desktop as resolvidas saem de cena: são registro do que já foi
+          feito, não decisão. A coluna passou a valer mais com o Foco. */}
       {resolvedTasks.length > 0 && (
-        <ResolvedTasksSection
-          key={selectedDate.toDateString()}
-          resolvedTasks={resolvedTasks}
-          openEdit={openEdit}
-          formatTime={formatTime}
-        />
+        <div className="lg:hidden">
+          <ResolvedTasksSection
+            key={selectedDate.toDateString()}
+            resolvedTasks={resolvedTasks}
+            openEdit={openEdit}
+            formatTime={formatTime}
+          />
+        </div>
       )}
 
       {editingTask && (

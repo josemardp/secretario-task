@@ -11,6 +11,7 @@ import {
   ArrowRight, X, ClipboardCheck, Target,
   CalendarDays, BarChart3, Settings as SettingsIcon,
 } from 'lucide-react';
+import { AgendaRail } from '../components/AgendaRail';
 import { TimelineView } from '../components/TimelineView';
 import { TaskEditModal } from '../components/TaskEditModal';
 import { DashboardView } from '../components/DashboardView';
@@ -724,6 +725,15 @@ export default function Home() {
           <TimelineView
             tasks={baseVisibleTasks}
             selectedDate={selectedDate}
+            rail={
+              <AgendaRail
+                plan={decisionPlan}
+                tasks={tasks}
+                onCompleteTask={handleDecisionComplete}
+                onPostponeTask={handleDecisionPostpone}
+                onOpenTask={setEditingTask}
+              />
+            }
           />
         ) : (
           <div className="flex flex-col gap-3">

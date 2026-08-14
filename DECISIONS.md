@@ -7,6 +7,18 @@ Status: registro vivo de decisões técnicas e operacionais
 
 # Decisões — Layout de desktop (2026-08-14)
 
+## 2026-08-14 — No desktop a linha mostra informação; ação só sob o cursor
+Decisão: a partir de 1024px a linha da Agenda mostra `contexto · duração` à direita e o círculo de concluir à esquerda. As seis ações aparecem apenas na linha sob o cursor (`lg:hidden lg:group-hover:block`). Entre 640px e 1023px nada muda: as ações continuam sempre visíveis como antes.
+Motivo: com as seis ações fixas, os botões ocupavam ~640px de uma linha de ~1000px, 64% da largura, repetidos em toda linha. Viravam uma parede que o olho tinha que atravessar para ler o título. Concluir e adiar são de uso diário; editar, excluir e cancelar são raros, e davam o mesmo peso visual.
+Alternativas descartadas: só trocar por ícones — reduz a largura mas mantém seis elementos repetidos em cada linha; dois botões visíveis e o resto num menu — resolve a largura mas mantém peso visual fixo em toda linha.
+Contexto: funciona por especificidade de CSS (`.group:hover .lg\:group-hover\:block` tem 0,2,0 contra 0,1,0 de `.lg\:hidden`), não por ordem de declaração.
+
+## 2026-08-14 — A coluna auxiliar mostra o Foco e os próximos dias
+Decisão: a coluna de 340px passa a ter a próxima melhor ação com a missão do dia, e abaixo as tarefas com data marcada para **depois de hoje**. As resolvidas saíram do desktop (`lg:hidden`); no celular o acordeão continua igual.
+Motivo: a primeira versão colocou as resolvidas do dia na coluna, e não serviam para nada: eram "checar gmail", "checar hotmail" já feitos às 7h50. Uma coluna fixa na tela precisa responder "o que faço agora", não "o que já fiz".
+Alternativas descartadas: listar atrasadas e tarefas sem horário, que foi o pedido inicial — `calculateAgendaBlocks` já injeta as duas categorias na timeline quando o dia selecionado é hoje (`useAgendaPositions.ts`, linhas 34 e 68), então a coluna repetiria lado a lado o que já está na timeline; com 83 tarefas abertas, seria a lista inteira duplicada.
+Contexto: `AgendaRail` não calcula nada — recebe o `DecisionPlan` que o `Home` já monta para o Foco e filtra a lista com o mesmo `isOpenTask` da Agenda.
+
 ## 2026-08-14 — Adaptação de desktop é só `lg:`, o celular não é tocado
 Decisão: todo o trabalho de desktop entra como classe com prefixo `lg:` (≥1024px). O `sm:` existente no `TimelineView` não foi alterado. Nenhuma função, store, hook ou consulta mudou.
 Motivo: o celular é a superfície principal e está resolvida; o pedido era estética de notebook. Classe `lg:` é ignorada pelo navegador abaixo do breakpoint, então a garantia de "o mobile não muda" é estrutural, não uma promessa.

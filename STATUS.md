@@ -14,7 +14,9 @@
 
 ## Onde estamos
 
-App em produção e em uso diário. Último trabalho: **layout de desktop** (14/08) — navegação lateral de 220px no lugar do rodapé, conteúdo contido em 1180px, card da Agenda horizontal com as ações à direita, coluna auxiliar com as resolvidas do dia, Painel em duas colunas, Foco como diálogo centralizado e Busca contida em 900px. Tudo entrou como classe `lg:` (≥1024px): o celular é byte por byte o mesmo, conferido em 400px. Contexto de design gravado em `PRODUCT.md`.
+App em produção e em uso diário. Último trabalho: **layout de desktop** (14/08) — navegação lateral de 220px no lugar do rodapé, conteúdo contido em 1180px, Painel em duas colunas, Foco como diálogo centralizado e Busca contida em 900px. Na Agenda, a linha mostra contexto e duração à direita e as seis ações só aparecem sob o cursor; a coluna auxiliar traz a próxima melhor ação, a missão do dia e os próximos dias. Tudo entrou como classe `lg:` (≥1024px): o celular é byte por byte o mesmo, conferido em 400px. Contexto de design gravado em `PRODUCT.md`.
+
+Duas correções feitas depois do uso real: os seis botões fixos ocupavam 64% da largura da linha, e a coluna de resolvidas não servia para nada. Ver `DECISIONS.md` (14/08).
 
 Antes disso: **checklist dentro da tarefa** (14/08) — itens marcáveis no modal de edição e direto no card expandido da Agenda, badge `2/5` no card, faixa "Concluir tarefa" quando tudo é marcado, e ocorrência recorrente herdando os passos desmarcados. Código pronto, build e lint limpos, 80 asserções da suíte passando (8 novas para a checklist), visual conferido em claro, escuro, mobile e desktop.
 
