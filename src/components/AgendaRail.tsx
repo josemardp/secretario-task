@@ -41,10 +41,24 @@ function Eyebrow({ label, count }: { label: string; count?: string }) {
   );
 }
 
-function shortDay(iso: string): string {
+function dayKey(iso: string): string {
   const date = new Date(iso);
+  return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+}
+
+function dayLabel(iso: string): string {
+  const date = new Date(iso);
+  const amanha = new Date();
+  amanha.setDate(amanha.getDate() + 1);
+
+  if (dayKey(iso) === dayKey(amanha.toISOString())) return 'Amanhã';
+
   const weekday = date.toLocaleDateString('pt-BR', { weekday: 'short' }).replace('.', '');
   return `${weekday} ${date.getDate()}/${String(date.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function hourLabel(iso: string): string {
+  return new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 }
 
 function TaskLine({ task, onOpen }: { task: Task; onOpen: (task: Task) => void }) {
@@ -56,7 +70,7 @@ function TaskLine({ task, onOpen }: { task: Task; onOpen: (task: Task) => void }
     >
       <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-ink">{task.title}</span>
       <span className="shrink-0 text-[11px] font-semibold tnum text-ink-tertiary">
-        {task.due_at ? shortDay(task.due_at) : contextLabel(task.context)}
+        {task.due_at ? hourLabel(task.due_at) : contextLabel(task.context)}
       </span>
     </button>
   );
@@ -76,14 +90,26 @@ export function AgendaRail({
   // dentro da timeline (useAgendaPositions.ts, linhas 34 e 68). Listá-las aqui
   // mostraria a mesma tarefa duas vezes na mesma tela. O que a timeline de hoje
   // não mostra é o que vem depois de hoje.
-  const proximos = useMemo(() => {
+  const { proximos, proximosPorDia } = useMemo(() => {
     const endOfToday = new Date();
     endOfToday.setHours(23, 59, 59, 999);
 
-    return tasks
+    const lista = tasks
       .filter(isOpenTask)
       .filter((task) => task.due_at && new Date(task.due_at) > endOfToday)
       .sort((a, b) => (a.due_at ?? '').localeCompare(b.due_at ?? ''));
+
+    // Agrupado por dia: uma lista corrida de dezenas de tarefas não se lê.
+    // A coluna rola por dentro, então nada fica escondido atrás de um "e mais".
+    const porDia: Array<{ key: string; label: string; tarefas: Task[] }> = [];
+    for (const task of lista) {
+      const key = dayKey(task.due_at!);
+      const ultimo = porDia[porDia.length - 1];
+      if (ultimo && ultimo.key === key) ultimo.tarefas.push(task);
+      else porDia.push({ key, label: dayLabel(task.due_at!), tarefas: [task] });
+    }
+
+    return { proximos: lista, proximosPorDia: porDia };
   }, [tasks]);
 
   return (
@@ -162,14 +188,17 @@ export function AgendaRail({
       {proximos.length > 0 && (
         <Panel>
           <Eyebrow label="Próximos dias" count={String(proximos.length)} />
-          {proximos.slice(0, 6).map((task) => (
-            <TaskLine key={task.id} task={task} onOpen={onOpenTask} />
+          {proximosPorDia.map((dia) => (
+            <div key={dia.key}>
+              <div className="flex items-baseline justify-between gap-2 border-t border-line bg-surface-sunken px-4 py-1.5">
+                <span className="text-[11px] font-bold text-ink-2">{dia.label}</span>
+                <span className="text-[11px] font-bold tnum text-ink-tertiary">{dia.tarefas.length}</span>
+              </div>
+              {dia.tarefas.map((task) => (
+                <TaskLine key={task.id} task={task} onOpen={onOpenTask} />
+              ))}
+            </div>
           ))}
-          {proximos.length > 6 && (
-            <p className="border-t border-line px-4 py-2 text-[11px] text-ink-tertiary">
-              e mais {proximos.length - 6}
-            </p>
-          )}
         </Panel>
       )}
     </div>
