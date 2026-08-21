@@ -1,6 +1,6 @@
 # STATUS.md — SecretárioTask
 
-Última atualização: 2026-08-14
+Última atualização: 2026-08-21
 
 > Estado atual e próximo passo. Nada mais entra aqui.
 > Histórico completo (hotfixes, sprints, causas-raiz, validações): [`docs/HISTORICO.md`](docs/HISTORICO.md)
@@ -13,6 +13,8 @@
 - **Início/fim de sprint:** rituais no `AGENTS.md` (Modos 2 e 3).
 
 ## Onde estamos
+
+Ajuste vindo do uso real no notebook (21/08): o botão **Nova tarefa** saiu do topo da barra lateral e foi para o centro do cabeçalho, na mesma linha do "Bom dia". A barra de captura já abria centralizada em `lg:top-[104px]`, então agora ela nasce logo abaixo do próprio botão que a abriu. Só classes `lg:` (o cabeçalho vira grid de três colunas a partir de 1024px); o celular continua idêntico, com o botão redondo na barra inferior. Conferido no app real em 1440px, 1024px, 390px e tema escuro.
 
 App em produção e em uso diário. Último trabalho: **layout de desktop** (14/08) — navegação lateral de 220px no lugar do rodapé, conteúdo contido em 1180px, Painel em duas colunas, Foco como diálogo centralizado e Busca contida em 900px. Na Agenda, a linha mostra contexto e duração à direita e as seis ações só aparecem sob o cursor; a coluna auxiliar traz a próxima melhor ação, a missão do dia e os próximos dias. Tudo entrou como classe `lg:` (≥1024px): o celular é byte por byte o mesmo, conferido em 400px. Contexto de design gravado em `PRODUCT.md`.
 

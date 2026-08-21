@@ -511,15 +511,7 @@ export default function Home() {
 
       {/* ── Navegação lateral (só ≥1024px) ──────────────────────── */}
       <aside className="fixed left-0 top-0 bottom-0 z-40 hidden w-[220px] flex-col border-r border-line bg-paper px-3 py-4 lg:flex">
-        <button
-          type="button"
-          onClick={() => setCaptureBarExpanded((v) => !v)}
-          className="mb-5 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-accent text-[13px] font-bold text-white transition-colors hover:bg-accent-hover"
-        >
-          <Plus size={17} strokeWidth={2.4} /> Nova tarefa
-        </button>
-
-        <nav className="flex flex-col gap-1">
+        <nav className="mt-[76px] flex flex-col gap-1">
           <DesktopNavItem
             icon={<CalendarDays size={17} strokeWidth={2} />}
             label="Agenda"
@@ -576,7 +568,7 @@ export default function Home() {
         style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}
       >
         <div className="px-4 pt-3 pb-3 lg:mx-auto lg:max-w-[1180px] lg:px-6 lg:pb-4 lg:pt-6">
-          <div className="flex items-end gap-3">
+          <div className="flex items-end gap-3 lg:grid lg:grid-cols-[1fr_auto_1fr] lg:items-center">
             <div className="min-w-0 flex-1 flex flex-col gap-2 lg:gap-1">
               <h1 className="truncate text-center font-display text-[29px] leading-[1.05] text-ink lg:text-left">
                 {getGreeting()}
@@ -586,7 +578,16 @@ export default function Home() {
               </p>
             </div>
 
-            <div className="shrink-0 flex flex-col items-center gap-2 lg:flex-row-reverse lg:items-center lg:gap-3">
+            <button
+              type="button"
+              onClick={() => setCaptureBarExpanded((v) => !v)}
+              aria-expanded={captureBarExpanded}
+              className="hidden h-11 items-center justify-center gap-2 rounded-xl bg-accent px-5 text-[13px] font-bold text-white transition-colors hover:bg-accent-hover lg:inline-flex"
+            >
+              <Plus size={17} strokeWidth={2.4} /> Nova tarefa
+            </button>
+
+            <div className="shrink-0 flex flex-col items-center gap-2 lg:flex-row-reverse lg:items-center lg:gap-3 lg:justify-self-end">
               <div className="flex items-center gap-1.5">
                 <InstallPWA />
                 <button
