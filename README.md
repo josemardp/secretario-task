@@ -1,8 +1,30 @@
-# SecretárioTask — Documentação do Projeto
+# SecretárioTask
 
-Conjunto de 10 arquivos de documentação para o desenvolvimento do MVP.
+Gerenciador de tarefas com busca semântica, construído para uso diário real em três
+superfícies (Android, notebook e desktop), com contextos de vida que não se misturam.
 
-Última consolidação: 2026-05-12
+| Camada | Tecnologia |
+|---|---|
+| Frontend | React, TypeScript, Vite, Zustand, Recharts |
+| Banco | Supabase Postgres com **pgvector** para busca semântica sobre as tarefas |
+| Dados | 30+ migrations versionadas, RLS por usuário, triggers de reconciliação LWW |
+| Domínio | Recorrência de tarefas, time tracking, perfil de energia, adiamento com contagem |
+
+## O que este repositório demonstra
+
+- **Postgres além do CRUD:** pgvector para recuperação semântica, triggers de
+  last-write-wins para reconciliar edições concorrentes, e unicidade de séries
+  recorrentes resolvida no banco em vez de na aplicação.
+- **Migrations como registro de decisão:** cada mudança de schema é um arquivo
+  numerado e reversível, não um `ALTER TABLE` improvisado.
+- **Documentação como infraestrutura:** o repositório é escrito para ser retomado por
+  um agente de IA ou por um colaborador novo sem contexto prévio. `STATUS.md` diz onde
+  o trabalho parou, `AGENTS.md` roteia quem lê o quê, `DECISIONS.md` guarda o porquê
+  de cada escolha que não é óbvia no código.
+
+Esse último ponto é deliberado. O projeto foi construído em sessões com agentes de
+código, e a documentação existe para que cada sessão comece sabendo o estado real em
+vez de reconstruir contexto por tentativa.
 
 ---
 
