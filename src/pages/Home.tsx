@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useTaskStore } from '../stores/taskStore';
 import { useContextStore } from '../stores/contextStore';
+import { isDemoMode, exitDemoMode } from '../lib/demoData';
 
 import { supabase } from '../lib/supabase';
 import { parseMultipleTasks } from '../lib/smartParser';
@@ -460,6 +461,18 @@ export default function Home() {
       className="min-h-screen bg-canvas font-sans text-ink lg:pl-[220px]"
       style={{ width: '100%', maxWidth: '100vw', overflowX: 'clip' }}
     >
+      {isDemoMode() && (
+        <div className="bg-amber-500/15 border-b border-amber-500/30 text-ink px-4 py-2 text-xs flex justify-between items-center z-50 sticky top-0 backdrop-blur-sm">
+          <span>💡 <strong>Modo Demonstração Ativo:</strong> Dados fictícios para avaliação por recrutadores. Sinta-se à vontade para criar, editar, concluir e buscar tarefas.</span>
+          <button
+            onClick={() => { exitDemoMode(); window.location.href = '/login'; }}
+            className="ml-3 px-2 py-1 bg-ink text-canvas rounded text-[11px] font-bold hover:opacity-90 shrink-0"
+          >
+            Sair da Demo
+          </button>
+        </div>
+      )}
+
       {pendingSmartTasks && (
         <MultiTaskConfirmModal
           initialTasks={pendingSmartTasks}

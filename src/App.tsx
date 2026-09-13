@@ -7,6 +7,7 @@ import { fetchRemoteTasks, processSyncQueue, fetchProfileFromCloud, pushContextT
 import { useContextStore } from './stores/contextStore';
 import { useTaskStore } from './stores/taskStore';
 import { useNetwork } from './hooks/useNetwork';
+import { isDemoMode, activateDemoMode, DEMO_USER_ID } from './lib/demoData';
 import type { RealtimeChannel } from '@supabase/supabase-js';
 import Login from './pages/Login';
 import Home from './pages/Home';
@@ -36,6 +37,10 @@ function App() {
   const realtimeChannelRef = useRef<RealtimeChannel | null>(null);
 
   useEffect(() => {
+    if (isDemoMode()) {
+      activateDemoMode();
+      return;
+    }
     // Timeout de segurança: se getSession demorar mais de 8s (rede lenta/celular),
     // libera a tela para evitar tela branca infinita.
     const timeout = setTimeout(() => {
@@ -70,7 +75,7 @@ function App() {
   }, [setSession, setUser, setIsLoading]);
 
   useEffect(() => {
-    if (!session || !isOnline) return;
+    if (!session || !isOnline || isDemoMode() || session.user?.id === DEMO_USER_ID) return;
 
     const runSync = (mode: 'full' | 'delta') => {
       void fetchProfileFromCloud()
@@ -87,20 +92,8 @@ function App() {
     return () => clearInterval(interval);
   }, [session, isOnline]);
 
-  // Push imediato ao enfileirar mutation.
-  //
-  // Antes disso, a fila só subia em três momentos: cold start, tick de 120s e
-  // volta ao foreground. No celular o uso real é "abrir o app, cadastrar a
-  // tarefa, bloquear a tela em poucos segundos" — e o tick de 120s nunca chega,
-  // porque o sistema congela os timers da aba assim que ela vai para o
-  // background. A tarefa ficava viva só no localStorage, invisível para os
-  // outros devices, e sem nenhum sinal na tela: `fetchRemoteTasks` mantém a
-  // tarefa com mutation pendente no store, então ela parece salva e
-  // sincronizada. No PC o mesmo código funcionava porque a aba fica aberta e em
-  // foco por minutos, e o tick roda várias vezes — daí a sincronização parecer
-  // funcionar num sentido e não no outro.
   useEffect(() => {
-    if (!session || !isOnline) return;
+    if (!session || !isOnline || isDemoMode() || session.user?.id === DEMO_USER_ID) return;
 
     let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -199,7 +192,7 @@ function App() {
   // dos dados, verifica se o canal Realtime ainda está ativo. Se estiver
   // 'closed' ou 'errored', recria a subscrição.
   useEffect(() => {
-    if (!session || !isOnline) return;
+    if (!session || !isOnline || isDemoMode() || session.user?.id === DEMO_USER_ID) return;
 
     const handleVisibilityChange = () => {
       if (document.visibilityState !== 'visible') {
@@ -237,6 +230,7 @@ function App() {
       <NetworkStatus />
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/demo" element={<Navigate to="/login?demo=true" replace />} />
         <Route path="/clear-cache" element={<ClearCache />} />
         <Route
           path="/"

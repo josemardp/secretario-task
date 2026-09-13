@@ -1,6 +1,7 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { activateDemoMode } from '../lib/demoData';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -9,6 +10,19 @@ export default function Login() {
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    if (searchParams.get('demo') === 'true' || window.location.hash.includes('demo')) {
+      activateDemoMode();
+      navigate('/');
+    }
+  }, [searchParams, navigate]);
+
+  const handleEnterDemo = () => {
+    activateDemoMode();
+    navigate('/');
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -108,6 +122,23 @@ export default function Login() {
             className="h-12 rounded-xl bg-paper2 text-ink text-[14px] font-bold disabled:opacity-50"
           >
             Criar conta
+          </button>
+
+          <div className="relative my-3 flex items-center justify-center">
+            <div className="absolute inset-0 flex items-center">
+              <div className="w-full border-t border-line" />
+            </div>
+            <span className="relative bg-canvas px-3 text-[11px] uppercase tracking-wider text-ink-2 font-medium">
+              Avaliadores & Recrutadores
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleEnterDemo}
+            className="h-12 rounded-xl border border-line bg-paper text-ink text-[14px] font-bold hover:bg-paper2 transition-colors flex items-center justify-center gap-2 shadow-sm"
+          >
+            ✨ Acessar Modo Demonstração (Sem Cadastro)
           </button>
         </form>
       </div>
