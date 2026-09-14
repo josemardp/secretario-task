@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { activateDemoMode } from '../lib/demoData';
+import { activateDemoMode, isDemoMode } from '../lib/demoData';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -13,15 +13,15 @@ export default function Login() {
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
-    if (searchParams.get('demo') === 'true' || window.location.hash.includes('demo')) {
+    if (searchParams.get('demo') === 'true' || window.location.hash.includes('demo') || isDemoMode()) {
       activateDemoMode();
-      navigate('/');
+      navigate('/', { replace: true });
     }
   }, [searchParams, navigate]);
 
   const handleEnterDemo = () => {
     activateDemoMode();
-    navigate('/');
+    navigate('/', { replace: true });
   };
 
   const handleLogin = async (e: React.FormEvent) => {

@@ -21,8 +21,9 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     return <div className="flex min-h-screen items-center justify-center px-4">Carregando...</div>;
   }
 
-  if (!session) {
-    return <Navigate to="/login" replace />;
+  if (!session && !isDemoMode()) {
+    const search = typeof window !== 'undefined' ? window.location.search : '';
+    return <Navigate to={`/login${search}`} replace />;
   }
 
   return <>{children}</>;
@@ -37,7 +38,9 @@ function App() {
   const realtimeChannelRef = useRef<RealtimeChannel | null>(null);
 
   useEffect(() => {
-    if (isDemoMode()) {
+    const search = typeof window !== 'undefined' ? window.location.search : '';
+    const hash = typeof window !== 'undefined' ? window.location.hash : '';
+    if (isDemoMode() || search.includes('demo=true') || hash.includes('demo')) {
       activateDemoMode();
       return;
     }
@@ -50,12 +53,14 @@ function App() {
 
     supabase.auth.getSession()
       .then(({ data: { session } }) => {
+        if (isDemoMode()) return;
         clearTimeout(timeout);
         setSession(session);
         setUser(session?.user ?? null);
         setIsLoading(false);
       })
       .catch((err) => {
+        if (isDemoMode()) return;
         clearTimeout(timeout);
         console.error('[auth] getSession falhou:', err);
         setIsLoading(false);
@@ -64,6 +69,7 @@ function App() {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (isDemoMode()) return;
       setSession(session);
       setUser(session?.user ?? null);
     });
@@ -230,7 +236,7 @@ function App() {
       <NetworkStatus />
       <Routes>
         <Route path="/login" element={<Login />} />
-        <Route path="/demo" element={<Navigate to="/login?demo=true" replace />} />
+        <Route path="/demo" element={<Navigate to="/?demo=true" replace />} />
         <Route path="/clear-cache" element={<ClearCache />} />
         <Route
           path="/"
