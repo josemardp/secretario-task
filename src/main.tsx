@@ -11,7 +11,7 @@ import { activateDemoMode } from './lib/demoData'
 if (typeof window !== 'undefined') {
   const search = window.location.search;
   const hash = window.location.hash;
-  if (search.includes('demo=true') || hash.includes('demo')) {
+  if (search.includes('demo=true') || hash.includes('demo=true')) {
     activateDemoMode();
   }
 }
