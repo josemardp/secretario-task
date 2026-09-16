@@ -18,8 +18,8 @@ status:
   lifecycle: evolving
   health: unknown
   phase: Producao e refinamento continuo
-  priority: null
-  updated_at: 2026-09-16T09:16:26-03:00
+  priority: 4
+  updated_at: 2026-09-16T09:40:18-03:00
   last_session_at: 2026-09-16T09:16:22-03:00
   confidence: inferred
 focus:
