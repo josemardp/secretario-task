@@ -16,21 +16,21 @@ project:
     - docs/
 status:
   lifecycle: evolving
-  health: healthy
+  health: unknown
   phase: Producao e refinamento continuo
   priority: null
-  updated_at: 2026-09-16T08:16:43-03:00
-  last_session_at: 2026-09-16T08:16:43-03:00
+  updated_at: 2026-09-16T09:16:26-03:00
+  last_session_at: 2026-09-16T09:16:22-03:00
   confidence: inferred
 focus:
   objective: Sistema de gerenciamento de tarefas, rotinas e compromissos com assistente contextual
-  current: Validar hotfix de sincronizacao em tempo real no celular
-  last_completed: Mapeamento de estado, foco e próximas ações
-  recommended_next_action: act-002
+  current: Últimos commits (13/09/2026) ativaram o modo demo seguro com mock data e restringiram a ativação via URL.
+  last_completed: Implementação e restrição do modo de demonstração seguro em 13/09/2026.
+  recommended_next_action: act-003
 next_actions:
   - id: act-001
     title: Avaliar melhorias de usabilidade no modal de tarefas no desktop
-    status: pending
+    status: dropped
     impact: null
     urgency: null
     effort: null
@@ -42,7 +42,7 @@ next_actions:
     note: null
   - id: act-002
     title: Validar hotfix de sincronizacao em tempo real no celular
-    status: pending
+    status: dropped
     impact: null
     urgency: null
     effort: null
@@ -52,10 +52,24 @@ next_actions:
     created_at: 2026-09-16T08:16:43-03:00
     done_at: null
     note: null
+  - id: act-003
+    title: Revisar com o usuário as próximas funcionalidades da tela de tarefas
+    status: pending
+    impact: null
+    urgency: null
+    effort: null
+    due_date: null
+    unblocks: []
+    blocked_by: []
+    created_at: 2026-09-16T09:16:20-03:00
+    done_at: null
+    note: null
 blockers: []
 decisions_recent:
   - date: 2026-09-16
     text: Estado preenchido com base em STATUS.md e histórico recente
+  - date: 2026-09-16
+    text: 'Alinhar focus.current e próxima ação com evidência real: STATUS.md e commits 13/09/2026 ("fix(demo): restringe ativacao...")'
 milestones: []
 review:
   stale_after_days: null
