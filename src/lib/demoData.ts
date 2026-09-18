@@ -1,5 +1,5 @@
 import type { User, Session } from '@supabase/supabase-js';
-import type { Task } from '../types';
+import type { Task, PendingMutation } from '../types';
 import { useAuthStore } from '../stores/authStore';
 import { useTaskStore } from '../stores/taskStore';
 
@@ -134,6 +134,9 @@ export function getMockDemoTasks(): Task[] {
 
 export const MOCK_DEMO_TASKS: Task[] = getMockDemoTasks();
 
+const TASK_STORE_KEY = 'secretario-task:task-store';
+const TASK_STORE_BACKUP_KEY = 'secretario-task:task-store:pre-demo-backup';
+
 export function isDemoMode(): boolean {
   if (typeof window === 'undefined') return false;
   return localStorage.getItem('secretario_demo_mode') === 'true';
@@ -141,8 +144,27 @@ export function isDemoMode(): boolean {
 
 export function activateDemoMode(): void {
   if (typeof window === 'undefined') return;
+
+  // Guarda os dados reais (tasks + mutations pendentes) antes de sobrescrever
+  // o mesmo store usado pelo app normal, mas só na transição real para a
+  // demo. main.tsx (antes do render) e o efeito de montagem do App.tsx
+  // chamam esta função nos MESMOS carregamentos com "?demo=true"; sem checar
+  // isDemoMode() aqui, a segunda chamada faria backup do dado fictício que a
+  // primeira chamada acabou de gravar, em vez do dado real (ou de nada, se
+  // não havia dado real).
+  if (!isDemoMode()) {
+    try {
+      const atual = localStorage.getItem(TASK_STORE_KEY);
+      if (atual) {
+        localStorage.setItem(TASK_STORE_BACKUP_KEY, atual);
+      }
+    } catch {
+      // localStorage indisponível: segue sem backup, sem piorar o que já estava
+    }
+  }
+
   localStorage.setItem('secretario_demo_mode', 'true');
-  
+
   // Atualiza auth store com sessão demo fictícia
   useAuthStore.getState().setUser({
     id: DEMO_USER_ID,
@@ -182,5 +204,39 @@ export function exitDemoMode(): void {
   localStorage.removeItem('secretario_demo_mode');
   useAuthStore.getState().setUser(null);
   useAuthStore.getState().setSession(null);
-  useTaskStore.setState({ tasks: [], mutations: [] });
+
+  // Restaura os dados reais guardados antes de entrar na demo. Só limpa para
+  // vazio quando não havia backup (navegador que nunca teve dado real).
+  let restored: { tasks: Task[]; mutations: PendingMutation[]; viewedRecords: Record<string, string> } = {
+    tasks: [],
+    mutations: [],
+    viewedRecords: {},
+  };
+
+  try {
+    const backup = localStorage.getItem(TASK_STORE_BACKUP_KEY);
+    if (backup) {
+      const parsed = JSON.parse(backup) as { state?: { tasks?: Task[]; mutations?: PendingMutation[]; viewedRecords?: Record<string, string> } };
+      const state = parsed.state ?? {};
+      restored = {
+        tasks: Array.isArray(state.tasks) ? state.tasks : [],
+        mutations: Array.isArray(state.mutations) ? state.mutations : [],
+        viewedRecords: state.viewedRecords ?? {},
+      };
+    }
+  } catch {
+    // backup corrompido/indisponível: segue com o estado vazio padrão
+  }
+
+  useTaskStore.setState(restored);
+  localStorage.removeItem(TASK_STORE_BACKUP_KEY);
+
+  // Grava o localStorage diretamente, sem depender só do efeito colateral do
+  // `persist` do Zustand: a navegação de saída (window.location.href) que
+  // segue esta chamada pode descarregar a página antes desse efeito rodar.
+  try {
+    localStorage.setItem(TASK_STORE_KEY, JSON.stringify({ state: restored, version: 2 }));
+  } catch {
+    // localStorage indisponível: o setState acima já é a melhor tentativa
+  }
 }
