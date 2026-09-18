@@ -1,7 +1,7 @@
 # Product
 
 > Contexto estratégico para trabalho de design. Sintetizado de `PHILOSOPHY.md`,
-> `CLAUDE.md` e `RELATORIO_AUDITORIA_DESIGN_2026-06-25.md`. Não substitui nenhum
+> `CLAUDE.md` e `docs/historico/RELATORIO_AUDITORIA_DESIGN_2026-06-25.md`. Não substitui nenhum
 > deles: em caso de divergência, o `PHILOSOPHY.md` manda.
 
 ## Register
