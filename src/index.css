@@ -2,64 +2,87 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Gabinete Privado: platina fria de dia, obsidiana com champanhe de noite. */
 @layer base {
   :root {
-    --bg: #FAFAFA;
+    --bg: #ECEEF2;
     --surface: #FFFFFF;
-    --surface-sunken: #F4F4F5;
-    --border: #E4E4E7;
-    --border-strong: #D4D4D8;
-    --ink: #18181B;
-    --ink-secondary: #52525B;
-    --ink-tertiary: #71717A;
-    --accent: #4F46E5;
-    --accent-hover: #4338CA;
-    --accent-subtle: #EEF2FF;
-    --success: #16A34A;
-    --warning: #D97706;
-    --danger: #EF4444;
+    --surface-sunken: #F1F2F5;
+    --border: #DDE1E8;
+    --border-strong: #C3C9D3;
+    --ink: #0C1424;
+    --ink-secondary: #465164;
+    --ink-tertiary: #667085;
+    --accent: #8A6A3A;
+    --accent-hover: #74582E;
+    --accent-subtle: #F4EDE1;
+    --on-accent: #FFFFFF;
+    --success: #1E7F5C;
+    --warning: #B26E12;
+    --danger: #C2413A;
+    --scrim: rgba(12, 20, 36, 0.42);
+    --glow: rgba(176, 141, 87, 0.16);
+    --metal: linear-gradient(145deg, #B8955C 0%, #8A6A3A 55%, #6E5229 100%);
+    --shadow-card: 0 1px 2px rgba(12, 20, 36, 0.05), 0 10px 28px -16px rgba(12, 20, 36, 0.18);
+    --shadow-float: 0 18px 44px -18px rgba(12, 20, 36, 0.35);
+    color-scheme: light;
   }
 
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #0A0A0B;
-      --surface: #18181B;
-      --surface-sunken: #111113;
-      --border: #27272A;
-      --border-strong: #3F3F46;
-      --ink: #FAFAFA;
-      --ink-secondary: #A1A1AA;
-      --ink-tertiary: #71717A;
-      --accent: #6366F1;
-      --accent-hover: #818CF8;
-      --accent-subtle: #1E1B4B;
-      --success: #22C55E;
-      --warning: #F59E0B;
-      --danger: #EF4444;
+      --bg: #06080D;
+      --surface: #0F131B;
+      --surface-sunken: #0A0D13;
+      --border: #1C2230;
+      --border-strong: #2B3342;
+      --ink: #EDEFF4;
+      --ink-secondary: #A4ADBC;
+      --ink-tertiary: #7E889A;
+      --accent: #D4B47C;
+      --accent-hover: #E5CC9F;
+      --accent-subtle: #221D14;
+      --on-accent: #0B0F17;
+      --success: #3FBF8A;
+      --warning: #E0A546;
+      --danger: #F0625A;
+      --scrim: rgba(2, 4, 8, 0.64);
+      --glow: rgba(212, 180, 124, 0.10);
+      --metal: linear-gradient(145deg, #F0DCB4 0%, #D4B47C 45%, #A8854F 100%);
+      --shadow-card: inset 0 1px 0 rgba(255, 255, 255, 0.035), 0 14px 34px -18px rgba(0, 0, 0, 0.8);
+      --shadow-float: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 24px 56px -20px rgba(0, 0, 0, 0.9);
+      color-scheme: dark;
     }
   }
 
   .dark {
-    --bg: #0A0A0B;
-    --surface: #18181B;
-    --surface-sunken: #111113;
-    --border: #27272A;
-    --border-strong: #3F3F46;
-    --ink: #FAFAFA;
-    --ink-secondary: #A1A1AA;
-    --ink-tertiary: #71717A;
-    --accent: #6366F1;
-    --accent-hover: #818CF8;
-    --accent-subtle: #1E1B4B;
-    --success: #22C55E;
-    --warning: #F59E0B;
-    --danger: #EF4444;
+    --bg: #06080D;
+    --surface: #0F131B;
+    --surface-sunken: #0A0D13;
+    --border: #1C2230;
+    --border-strong: #2B3342;
+    --ink: #EDEFF4;
+    --ink-secondary: #A4ADBC;
+    --ink-tertiary: #7E889A;
+    --accent: #D4B47C;
+    --accent-hover: #E5CC9F;
+    --accent-subtle: #221D14;
+    --on-accent: #0B0F17;
+    --success: #3FBF8A;
+    --warning: #E0A546;
+    --danger: #F0625A;
+    --scrim: rgba(2, 4, 8, 0.64);
+    --glow: rgba(212, 180, 124, 0.10);
+    --metal: linear-gradient(145deg, #F0DCB4 0%, #D4B47C 45%, #A8854F 100%);
+    --shadow-card: inset 0 1px 0 rgba(255, 255, 255, 0.035), 0 14px 34px -18px rgba(0, 0, 0, 0.8);
+    --shadow-float: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 24px 56px -20px rgba(0, 0, 0, 0.9);
+    color-scheme: dark;
   }
 
   /* Native-PWA tweaks */
   body {
     background: var(--bg);
-    font-family: "Inter Tight", Inter, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    font-family: Manrope, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+    font-feature-settings: "ss01", "cv11";
     color: var(--ink);
     overscroll-behavior-y: none;
     -webkit-tap-highlight-color: transparent;
@@ -67,6 +90,28 @@
     -webkit-user-select: none;
     -webkit-font-smoothing: antialiased;
     text-rendering: geometricPrecision;
+  }
+
+  /* Luz ambiente fixa atrás de tudo; fica atrás das superfícies translúcidas. */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(900px 520px at 88% -8%, var(--glow), transparent 62%),
+      radial-gradient(700px 480px at -10% 110%, var(--glow), transparent 60%);
+  }
+
+  ::selection {
+    background: var(--accent-subtle);
+    color: var(--ink);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
   }
 }
 
@@ -80,25 +125,54 @@ input, textarea, [contenteditable] {
   .safe-top    { padding-top:    env(safe-area-inset-top);    }
 }
 
-/* ── Direction B helpers ───────────────────────────────────────── */
-
-/* Italic serif display for headings ("Boa noite, Christian." etc.) */
+/* Serif display para a saudação e destaques */
 .font-display {
-  font-family: "Instrument Serif", "Source Serif Pro", Georgia, serif;
+  font-family: "Cormorant Garamond", Georgia, serif;
   font-style: italic;
-  font-weight: 400;
-  letter-spacing: -0.02em;
+  font-weight: 500;
+  letter-spacing: -0.01em;
 }
 
-/* Tabular numerals everywhere numbers stack (times, counters) */
 .tnum { font-variant-numeric: tabular-nums; }
+
+/* Vidro fosco sobre a luz ambiente */
+.glass {
+  background: color-mix(in srgb, var(--bg) 76%, transparent);
+  -webkit-backdrop-filter: blur(20px) saturate(1.5);
+  backdrop-filter: blur(20px) saturate(1.5);
+}
+.glass-surface {
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  -webkit-backdrop-filter: blur(22px) saturate(1.6);
+  backdrop-filter: blur(22px) saturate(1.6);
+}
+
+/* Metal escovado do botão principal */
+.bg-metal {
+  background: var(--metal);
+  color: var(--on-accent);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.18),
+    0 12px 28px -8px color-mix(in srgb, var(--accent) 55%, transparent);
+}
+
+/* Ponteiro do cronógrafo: a linha do "agora" na Agenda */
+.chrono-line {
+  background: linear-gradient(90deg, var(--accent), color-mix(in srgb, var(--accent) 20%, transparent));
+  box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 70%, transparent);
+}
+.chrono-jewel {
+  background: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent), 0 0 12px var(--accent);
+}
 
 /* Bottom sheet animation */
 @keyframes sheet-up {
   from { transform: translateY(100%); }
   to   { transform: translateY(0); }
 }
-.animate-sheet-up { animation: sheet-up 220ms cubic-bezier(.2,.8,.2,1); }
+.animate-sheet-up { animation: sheet-up 240ms cubic-bezier(.2,.8,.2,1); }
 
 @keyframes fade-in {
   from { opacity: 0; }
@@ -109,6 +183,11 @@ input, textarea, [contenteditable] {
 /* Hide scrollbars on horizontal strips */
 .no-scrollbar::-webkit-scrollbar { display: none; }
 .no-scrollbar { scrollbar-width: none; }
+
+/* Scrollbars discretas no desktop */
+@media (pointer: fine) {
+  * { scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
+}
 
 /* Subtle pulse used by the Foco button badge */
 @keyframes ping-soft {
@@ -121,4 +200,12 @@ input, textarea, [contenteditable] {
   border-radius: inherit;
   background: currentColor;
   animation: ping-soft 1.6s cubic-bezier(0,0,.2,1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

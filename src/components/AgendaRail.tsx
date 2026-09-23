@@ -26,7 +26,7 @@ function contextLabel(context: Task['context']): string {
 
 function Panel({ children }: { children: React.ReactNode }) {
   return (
-    <section className="rounded-[20px] border border-line bg-paper">
+    <section className="rounded-[22px] border border-line bg-paper shadow-card">
       {children}
     </section>
   );
@@ -123,7 +123,7 @@ export function AgendaRail({
               onClick={() => onOpenTask(nextAction.task)}
               className="block w-full text-left"
             >
-              <div className="font-display text-[19px] leading-[1.15] text-ink">
+              <div className="font-display text-[23px] leading-[1.1] text-ink">
                 {nextAction.task.title}
               </div>
               <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] font-semibold text-ink-2">
@@ -140,14 +140,14 @@ export function AgendaRail({
               <button
                 type="button"
                 onClick={() => onCompleteTask(nextAction.task)}
-                className="h-9 rounded-lg bg-accent text-[12px] font-bold text-white"
+                className="bg-metal h-10 rounded-full text-[12px] font-bold"
               >
                 Concluir
               </button>
               <button
                 type="button"
                 onClick={() => onPostponeTask(nextAction.task)}
-                className="h-9 rounded-lg border border-border-strong bg-surface text-[12px] font-bold text-ink"
+                className="h-10 rounded-full border border-border-strong bg-surface text-[12px] font-bold text-ink transition-colors hover:border-accent"
               >
                 Amanhã
               </button>

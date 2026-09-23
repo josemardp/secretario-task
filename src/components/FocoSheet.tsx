@@ -145,7 +145,7 @@ export function FocoSheet({
 
   return createPortal(
     <div className="fixed inset-0 z-[9999] animate-fade-in" onClick={onClose}>
-      <div className="absolute inset-0 bg-[rgba(26,24,20,0.45)]" />
+      <div className="absolute inset-0 bg-scrim backdrop-blur-sm" />
       {/* No desktop deixa de ser folha do rodapé e vira diálogo centralizado:
           a folha de largura total esticava os botões de ação pela tela toda. */}
       <div
@@ -196,7 +196,7 @@ export function FocoSheet({
                       key={minutes}
                       type="button"
                       onClick={() => onSetAvailableMinutes(minutes)}
-                      className={`min-h-10 rounded-xl text-[12px] font-bold ${availableMinutes === minutes ? 'bg-accent text-white' : 'bg-paper2 text-ink'}`}
+                      className={`min-h-10 rounded-xl text-[12px] font-bold ${availableMinutes === minutes ? 'bg-accent text-on-accent' : 'bg-paper2 text-ink'}`}
                     >
                       {minutes}m
                     </button>
@@ -216,7 +216,7 @@ export function FocoSheet({
                       key={item.value}
                       type="button"
                       onClick={() => onSetEnergy(item.value)}
-                      className={`min-h-10 rounded-xl text-[12px] font-bold inline-flex items-center justify-center gap-1 ${decisionEnergy === item.value ? 'bg-accent text-white' : 'bg-paper2 text-ink'}`}
+                      className={`min-h-10 rounded-xl text-[12px] font-bold inline-flex items-center justify-center gap-1 ${decisionEnergy === item.value ? 'bg-accent text-on-accent' : 'bg-paper2 text-ink'}`}
                     >
                       <Zap size={12} /> {item.label}
                     </button>

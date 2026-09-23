@@ -70,7 +70,7 @@ function AgendaQuickActions({
             e.stopPropagation();
             onComplete();
           }}
-          className="h-8 min-w-0 px-2 rounded-lg bg-accent text-white text-[12px] font-bold"
+          className="h-8 min-w-0 px-2 rounded-lg bg-accent text-on-accent text-[12px] font-bold"
         >
           Concluir
         </button>
@@ -268,7 +268,7 @@ function TimelineTaskCard({
       <div
         onClick={handleCardClick}
         className={[
-          'group relative min-w-0 h-auto flex flex-col bg-surface border border-border rounded-[18px] sm:min-h-[104px] lg:min-h-0',
+          'group relative min-w-0 h-auto flex flex-col bg-surface border border-border rounded-[18px] shadow-card lg:hover:border-border-strong sm:min-h-[104px] lg:min-h-0',
           'transition-transform',
           isDragging ? 'duration-0' : 'duration-200',
         ].join(' ')}
@@ -475,10 +475,11 @@ function TimelineSlot({
           className="absolute left-0 right-0 z-10 flex items-center pointer-events-none w-full"
           style={{ top: `${topPercent}%`, transform: 'translateY(-50%)' }}
         >
-          <span className="w-12 pr-1.5 text-right text-[12px] font-bold text-danger bg-paper z-20 tnum select-none">
+          <span className="w-12 pr-1.5 text-right text-[12px] font-extrabold text-accent bg-paper z-20 tnum select-none">
             {now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
           </span>
-          <div className="flex-1 h-[1.5px] bg-danger" />
+          <span className="chrono-jewel -ml-1 h-[7px] w-[7px] shrink-0 rounded-full" />
+          <div className="chrono-line flex-1 h-[1.5px]" />
         </div>
       )}
 
@@ -755,7 +756,7 @@ export function TimelineView({
       {/* Timeline grid */}
       <div
         ref={timelineScrollRef}
-        className="bg-paper rounded-[20px] border border-line overflow-y-auto overflow-x-hidden flex flex-col max-h-[calc(100dvh-238px)] py-2 scroll-py-3 lg:h-full lg:max-h-none lg:min-h-0"
+        className="bg-paper rounded-[22px] border border-line shadow-card overflow-y-auto overflow-x-hidden flex flex-col max-h-[calc(100dvh-238px)] py-2 scroll-py-3 lg:h-full lg:max-h-none lg:min-h-0"
       >
         {timeGrid.map((slot, idx) => {
           const slotBlocks = blocks.filter(b => {
@@ -855,7 +856,7 @@ export function TimelineView({
 
       {pendingDeleteTask && createPortal(
         <div
-          className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-[rgba(26,24,20,0.45)] animate-fade-in"
+          className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-scrim backdrop-blur-sm animate-fade-in"
           onClick={() => setPendingDeleteTask(null)}
         >
           <div

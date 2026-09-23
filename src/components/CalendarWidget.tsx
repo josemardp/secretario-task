@@ -97,7 +97,7 @@ export function CalendarWidget({
           className={[
             'aspect-square rounded-[9px] flex items-center justify-center relative transition-colors tnum text-[12px] font-bold',
             isSelected
-              ? 'bg-accent text-white'
+              ? 'bg-accent text-on-accent'
               : isToday
                 ? 'bg-canvas text-ink ring-1 ring-line'
                 : 'text-ink hover:bg-canvas',

@@ -8,8 +8,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans:  ['"Inter Tight"', 'Inter', '-apple-system', 'system-ui', 'sans-serif'],
-        serif: ['"Instrument Serif"', '"Source Serif Pro"', 'Georgia', 'serif'],
+        sans:  ['Manrope', '-apple-system', 'system-ui', 'sans-serif'],
+        serif: ['"Cormorant Garamond"', 'Georgia', 'serif'],
       },
       colors: {
         bg: 'var(--bg)',
@@ -21,6 +21,8 @@ export default {
           hover: 'var(--accent-hover)',
           subtle: 'var(--accent-subtle)',
         },
+        'on-accent': 'var(--on-accent)',
+        scrim: 'var(--scrim)',
 
         // Legacy aliases kept so existing JSX migrates through the new tokens.
         brand: {
@@ -77,9 +79,9 @@ export default {
         '3xl': '22px',
       },
       boxShadow: {
-        card: 'none',
-        soft: 'none',
-        fab:  'none',
+        card: 'var(--shadow-card)',
+        soft: 'var(--shadow-float)',
+        fab:  'var(--shadow-float)',
       },
     },
   },

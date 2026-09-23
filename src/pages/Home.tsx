@@ -68,8 +68,10 @@ function DesktopNavItem({
       onClick={onClick}
       aria-current={active ? 'page' : undefined}
       className={[
-        'flex h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-[13px] font-bold transition-colors',
-        active ? 'bg-amber-soft text-accent' : 'text-ink-2 hover:bg-paper2 hover:text-ink',
+        'relative flex h-11 w-full items-center gap-3 rounded-xl px-3 text-left text-[13px] font-bold transition-colors',
+        active
+          ? 'bg-amber-soft text-accent before:absolute before:left-0 before:top-2.5 before:bottom-2.5 before:w-[2px] before:rounded-full before:bg-accent'
+          : 'text-ink-2 hover:bg-paper2 hover:text-ink',
       ].join(' ')}
     >
       <span className="shrink-0">{icon}</span>
@@ -458,7 +460,7 @@ export default function Home() {
 
   return (
     <div
-      className="min-h-screen bg-canvas font-sans text-ink lg:pl-[220px]"
+      className="min-h-screen font-sans text-ink lg:pl-[220px]"
       style={{ width: '100%', maxWidth: '100vw', overflowX: 'clip' }}
     >
       {isDemoMode() && (
@@ -532,8 +534,16 @@ export default function Home() {
       />
 
       {/* ── Navegação lateral (só ≥1024px) ──────────────────────── */}
-      <aside className="fixed left-0 top-0 bottom-0 z-40 hidden w-[220px] flex-col border-r border-line bg-paper px-3 py-4 lg:flex">
-        <nav className="mt-[76px] flex flex-col gap-1">
+      <aside className="glass-surface fixed left-0 top-0 bottom-0 z-40 hidden w-[220px] flex-col border-r border-line px-3 py-4 lg:flex">
+        <div className="flex h-[60px] items-center gap-2.5 px-2">
+          <span className="bg-metal inline-flex h-9 w-9 items-center justify-center rounded-full font-serif text-[19px] font-semibold italic">
+            S
+          </span>
+          <span className="font-serif text-[21px] font-semibold italic leading-none tracking-tight text-ink">
+            Secretário
+          </span>
+        </div>
+        <nav className="mt-4 flex flex-col gap-1">
           <DesktopNavItem
             icon={<CalendarDays size={17} strokeWidth={2} />}
             label="Agenda"
@@ -586,13 +596,13 @@ export default function Home() {
 
       {/* ── Header ──────────────────────────────────────────────── */}
       <header
-        className="bg-canvas sticky top-0 z-30 safe-top"
+        className="glass sticky top-0 z-30 safe-top"
         style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}
       >
         <div className="px-4 pt-3 pb-3 lg:mx-auto lg:max-w-[1180px] lg:px-6 lg:pb-4 lg:pt-6">
           <div className="flex items-end gap-3 lg:grid lg:grid-cols-[1fr_auto_1fr] lg:items-center">
             <div className="min-w-0 flex-1 flex flex-col gap-2 lg:gap-1">
-              <h1 className="truncate text-center font-display text-[29px] leading-[1.05] text-ink lg:text-left">
+              <h1 className="truncate text-center font-display text-[34px] leading-[1.02] text-ink lg:text-left lg:text-[40px]">
                 {getGreeting()}
               </h1>
               <p className="min-w-0 truncate text-center text-[13px] text-ink-2 tnum leading-snug lg:text-left">
@@ -604,7 +614,7 @@ export default function Home() {
               type="button"
               onClick={() => setCaptureBarExpanded((v) => !v)}
               aria-expanded={captureBarExpanded}
-              className="hidden h-11 items-center justify-center gap-2 rounded-xl bg-accent px-5 text-[13px] font-bold text-white transition-colors hover:bg-accent-hover lg:inline-flex"
+              className="bg-metal hidden h-11 items-center justify-center gap-2 rounded-full px-6 text-[13px] font-bold transition-transform hover:-translate-y-px active:translate-y-0 lg:inline-flex"
             >
               <Plus size={17} strokeWidth={2.4} /> Nova tarefa
             </button>
@@ -616,9 +626,9 @@ export default function Home() {
                   ref={monthButtonRef}
                   type="button"
                   onClick={() => setIsCalendarOpen((v) => !v)}
-                  className="inline-flex h-10 shrink-0 items-center gap-1.5 rounded-[13px] border border-line bg-paper px-3.5 text-[13px] font-bold text-ink active:bg-paper2"
+                  className="inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full border border-line bg-paper px-4 text-[13px] font-bold text-ink shadow-card transition-colors hover:border-border-strong active:bg-paper2"
                 >
-                  <span className="text-[15px] leading-none">📅</span> M{'\u00EA'}s
+                  <CalendarDays size={15} strokeWidth={2} className="text-accent" /> M{'\u00EA'}s
                 </button>
               </div>
               <span className="text-[13px] font-bold text-accent tnum">
@@ -650,7 +660,7 @@ export default function Home() {
                   onClick={handleSemanticSearch}
                   disabled={isSearching || !searchText.trim()}
                   title={!aiApiKey ? 'Busca local ativa - configure API Key para busca semantica' : 'Busca semantica'}
-                  className="h-7 rounded-[9px] bg-accent px-2.5 text-[12px] font-bold text-white disabled:opacity-50"
+                  className="h-7 rounded-[9px] bg-accent px-2.5 text-[12px] font-bold text-on-accent disabled:opacity-50"
                 >
                   {isSearching ? '...' : 'Buscar'}
                 </button>
@@ -793,7 +803,7 @@ export default function Home() {
         <form
           ref={setCaptureElementRef}
           onSubmit={handleTaskSubmit}
-          className="fixed left-0 right-0 z-40 bg-paper border-t border-line rounded-t-[22px] px-4 py-3 flex items-end gap-2.5 select-none shadow-[0_-16px_32px_-8px_rgba(0,0,0,0.28)] lg:left-[220px] lg:mx-auto lg:w-[640px] lg:!bottom-auto lg:!top-[104px] lg:rounded-2xl lg:border lg:shadow-soft"
+          className="glass-surface fixed left-0 right-0 z-40 border-t border-line rounded-t-[22px] px-4 py-3 flex items-end gap-2.5 select-none shadow-soft lg:left-[220px] lg:mx-auto lg:w-[640px] lg:!bottom-auto lg:!top-[104px] lg:rounded-2xl lg:border lg:shadow-soft"
           style={{
             bottom: 'calc(var(--kb, 0px) + 70px + env(safe-area-inset-bottom))',
           }}
@@ -833,7 +843,7 @@ export default function Home() {
           <button
             type="submit"
             disabled={isAddingTask || !taskText.trim() || isTranscribing}
-            className="w-11 h-11 rounded-[14px] bg-accent text-white text-[12px] font-bold disabled:opacity-40 inline-flex items-center justify-center gap-1.5 shrink-0"
+            className="bg-metal w-11 h-11 rounded-full text-[12px] font-bold disabled:opacity-40 inline-flex items-center justify-center gap-1.5 shrink-0"
             aria-label="Adicionar tarefa"
           >
             {isAddingTask ? '...' : (<ArrowRight size={14} strokeWidth={2.4} />)}
@@ -843,7 +853,7 @@ export default function Home() {
 
       {/* ── Tab bar ───────────────────────────────────────────────── */}
       <nav
-        className="fixed bottom-0 left-0 right-0 bg-paper border-t border-line z-50 flex select-none safe-bottom lg:hidden"
+        className="glass-surface fixed bottom-0 left-0 right-0 border-t border-line z-50 flex select-none safe-bottom lg:hidden"
         style={{ height: 'calc(70px + env(safe-area-inset-bottom))' }}
       >
         <button
@@ -854,7 +864,7 @@ export default function Home() {
           }}
           className="flex-1 flex flex-col items-center justify-center gap-1 pb-1 relative focus:outline-none"
         >
-          <span className="text-[19px] leading-none">📅</span>
+          <CalendarDays size={20} strokeWidth={viewMode === 'timeline' ? 2.2 : 1.8} className={viewMode === 'timeline' ? 'text-accent' : 'text-ink-tertiary'} />
           <span className={(viewMode === 'timeline' ? 'text-accent font-extrabold' : 'text-ink-tertiary font-bold') + ' text-[11px]'}>
             Agenda
           </span>
@@ -887,7 +897,7 @@ export default function Home() {
           className="flex-1 flex flex-col items-center justify-center gap-1 pb-1 relative focus:outline-none"
           aria-label="Buscar tarefas"
         >
-          <span className="text-[19px] leading-none">🔍</span>
+          <Search size={20} strokeWidth={searchOpen ? 2.2 : 1.8} className={searchOpen ? 'text-accent' : 'text-ink-tertiary'} />
           <span className={(searchOpen ? 'text-accent font-extrabold' : 'text-ink-tertiary font-bold') + ' text-[11px]'}>
             Busca
           </span>
@@ -900,7 +910,7 @@ export default function Home() {
           }}
           className="flex-1 flex flex-col items-center justify-center gap-1 pb-1 relative focus:outline-none"
         >
-          <span className="text-[19px] leading-none">📊</span>
+          <BarChart3 size={20} strokeWidth={viewMode === 'dashboard' ? 2.2 : 1.8} className={viewMode === 'dashboard' ? 'text-accent' : 'text-ink-tertiary'} />
           <span className={(viewMode === 'dashboard' ? 'text-accent font-extrabold' : 'text-ink-tertiary font-bold') + ' text-[11px]'}>
             Painel
           </span>
@@ -911,7 +921,7 @@ export default function Home() {
             if (isRecording) return;
             setCaptureBarExpanded((v) => !v);
           }}
-          className="absolute left-1/2 top-[-26px] flex h-[58px] w-[58px] -translate-x-1/2 items-center justify-center rounded-full border-[5px] border-canvas bg-accent text-white shadow-[0_10px_22px_-4px_rgba(0,0,0,0.4)] active:scale-95 transition-transform"
+          className="bg-metal absolute left-1/2 top-[-24px] flex h-[58px] w-[58px] -translate-x-1/2 items-center justify-center rounded-full ring-[5px] ring-canvas active:scale-95 transition-transform"
           aria-label={captureBarExpanded ? 'Fechar captura de tarefa' : 'Abrir captura de tarefa'}
           title="Nova tarefa"
         >

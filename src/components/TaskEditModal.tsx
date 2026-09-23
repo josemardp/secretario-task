@@ -244,7 +244,7 @@ export function TaskEditModal({ task, onClose }: TaskEditModalProps) {
     <>
       {task && !pendingDeleteTask && createPortal(
         <div
-          className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-[rgba(26,24,20,0.45)] animate-fade-in"
+          className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-scrim backdrop-blur-sm animate-fade-in"
           onClick={onClose}
         >
           <div
@@ -284,7 +284,7 @@ export function TaskEditModal({ task, onClose }: TaskEditModalProps) {
                     handleReopen(task.id);
                     onClose();
                   }}
-                  className="h-10 rounded-xl bg-accent text-white text-[12px] font-bold inline-flex items-center justify-center gap-1"
+                  className="h-10 rounded-xl bg-accent text-on-accent text-[12px] font-bold inline-flex items-center justify-center gap-1"
                   title="Reabrir tarefa"
                 >
                   <RotateCcw size={13} /> Reabrir
@@ -296,7 +296,7 @@ export function TaskEditModal({ task, onClose }: TaskEditModalProps) {
                     handleComplete(task.id);
                     onClose();
                   }}
-                  className="h-10 rounded-xl bg-accent text-white text-[12px] font-bold"
+                  className="h-10 rounded-xl bg-accent text-on-accent text-[12px] font-bold"
                 >
                   Concluir
                 </button>
@@ -618,7 +618,7 @@ export function TaskEditModal({ task, onClose }: TaskEditModalProps) {
               </button>
               <button
                 onClick={saveEdit}
-                className="flex-1 py-2.5 rounded-xl bg-accent text-[13px] font-bold text-white"
+                className="flex-1 py-2.5 rounded-xl bg-accent text-[13px] font-bold text-on-accent"
               >
                 Salvar
               </button>
@@ -629,7 +629,7 @@ export function TaskEditModal({ task, onClose }: TaskEditModalProps) {
 
       {pendingDeleteTask && createPortal(
         <div
-          className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-[rgba(26,24,20,0.45)] animate-fade-in"
+          className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-scrim backdrop-blur-sm animate-fade-in"
           onClick={() => setPendingDeleteTask(null)}
         >
           <div

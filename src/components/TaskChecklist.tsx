@@ -77,7 +77,7 @@ export function TaskChecklist({ task, variant, onCompleteTask }: TaskChecklistPr
                   className={[
                     'w-[22px] h-[22px] shrink-0 rounded-md inline-flex items-center justify-center border-2 transition-colors',
                     item.done
-                      ? 'bg-accent border-accent text-white'
+                      ? 'bg-accent border-accent text-on-accent'
                       : 'bg-surface border-border-strong text-transparent',
                   ].join(' ')}
                 >
@@ -150,7 +150,7 @@ export function TaskChecklist({ task, variant, onCompleteTask }: TaskChecklistPr
           <button
             type="button"
             onClick={onCompleteTask}
-            className="min-h-9 shrink-0 rounded-lg bg-accent px-3 text-[12px] font-bold text-white"
+            className="min-h-9 shrink-0 rounded-lg bg-accent px-3 text-[12px] font-bold text-on-accent"
           >
             Concluir tarefa
           </button>

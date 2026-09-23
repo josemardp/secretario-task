@@ -78,7 +78,7 @@ export function WeeklyReview({ tasks, onUpdateTask, onClose }: WeeklyReviewProps
 
   return createPortal(
     <div
-      className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-[rgba(26,24,20,0.45)] animate-fade-in"
+      className="fixed inset-0 z-[9999] flex items-end sm:items-center justify-center bg-scrim backdrop-blur-sm animate-fade-in"
       onClick={onClose}
     >
       <div
@@ -166,7 +166,7 @@ export function WeeklyReview({ tasks, onUpdateTask, onClose }: WeeklyReviewProps
                       <button
                         type="button"
                         onClick={() => completeTask(task)}
-                        className="min-h-11 rounded-xl bg-accent text-white text-[12px] font-bold inline-flex items-center justify-center gap-1.5 px-2"
+                        className="min-h-11 rounded-xl bg-accent text-on-accent text-[12px] font-bold inline-flex items-center justify-center gap-1.5 px-2"
                       >
                         <Check size={14} />
                         Concluir
@@ -200,7 +200,7 @@ export function WeeklyReview({ tasks, onUpdateTask, onClose }: WeeklyReviewProps
           <button
             type="button"
             onClick={onClose}
-            className="w-full min-h-11 rounded-xl bg-accent text-white text-[13px] font-bold"
+            className="w-full min-h-11 rounded-xl bg-accent text-on-accent text-[13px] font-bold"
           >
             Encerrar revisão
           </button>
