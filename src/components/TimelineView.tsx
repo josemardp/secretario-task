@@ -329,7 +329,7 @@ function TimelineTaskCard({
                   {block.title}
                 </span>
               </h3>
-              {(truncated || expanded) && (
+              {(truncated || expanded || Boolean(t.description?.trim())) && (
                 <button
                   type="button"
                   onClick={(e) => {
@@ -390,6 +390,14 @@ function TimelineTaskCard({
             <Edit3 size={15} strokeWidth={2.2} />
           </button>
         </div>
+
+        {expanded && t.description?.trim() && (
+          <div className="mt-2 border-t border-line2 pt-1.5 lg:order-last lg:basis-full">
+            <p className="text-[13px] text-ink-2 leading-snug whitespace-pre-wrap break-words">
+              {t.description}
+            </p>
+          </div>
+        )}
 
         {expanded && checklistCount.total > 0 && (
           <div className="mt-2 border-t border-line2 pt-1.5 lg:order-last lg:basis-full">
