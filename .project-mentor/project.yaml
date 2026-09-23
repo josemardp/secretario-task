@@ -19,14 +19,14 @@ status:
   health: unknown
   phase: Producao e refinamento continuo
   priority: 4
-  updated_at: 2026-09-16T09:40:18-03:00
-  last_session_at: 2026-09-16T09:16:22-03:00
-  confidence: inferred
+  updated_at: 2026-09-23T18:37:24-03:00
+  last_session_at: 2026-09-23T18:37:24-03:00
+  confidence: confirmed
 focus:
   objective: Sistema de gerenciamento de tarefas, rotinas e compromissos com assistente contextual
-  current: Últimos commits (13/09/2026) ativaram o modo demo seguro com mock data e restringiram a ativação via URL.
-  last_completed: Implementação e restrição do modo de demonstração seguro em 13/09/2026.
-  recommended_next_action: act-003
+  current: Abrir o app no celular após o deploy e validar o visual novo nos dois temas
+  last_completed: Duas tarefas pessoais cadastradas no Supabase a pedido do usuário
+  recommended_next_action: act-004
 next_actions:
   - id: act-001
     title: Avaliar melhorias de usabilidade no modal de tarefas no desktop
@@ -64,12 +64,28 @@ next_actions:
     created_at: 2026-09-16T09:16:20-03:00
     done_at: null
     note: null
+  - id: act-004
+    title: Abrir o app no celular após o deploy e validar o visual novo nos dois temas
+    status: pending
+    impact: null
+    urgency: null
+    effort: null
+    due_date: null
+    unblocks: []
+    blocked_by: []
+    created_at: 2026-09-23T18:37:24-03:00
+    done_at: null
+    note: null
 blockers: []
 decisions_recent:
   - date: 2026-09-16
     text: Estado preenchido com base em STATUS.md e histórico recente
   - date: 2026-09-16
     text: 'Alinhar focus.current e próxima ação com evidência real: STATUS.md e commits 13/09/2026 ("fix(demo): restringe ativacao...")'
+  - date: 2026-09-23
+    text: Redesign feito só na camada de tokens e classes, sem tocar em lógica
+  - date: 2026-09-23
+    text: Linha do agora passa de vermelho para champanhe; vermelho fica reservado para ATRASADA
 milestones: []
 review:
   stale_after_days: null
