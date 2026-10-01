@@ -1,6 +1,6 @@
 # STATUS.md — SecretárioTask
 
-Última atualização: 2026-08-21
+Última atualização: 2026-10-01
 
 > Estado atual e próximo passo. Nada mais entra aqui.
 > Histórico completo (hotfixes, sprints, causas-raiz, validações): [`docs/HISTORICO.md`](docs/HISTORICO.md)
@@ -13,6 +13,8 @@
 - **Início/fim de sprint:** rituais no `AGENTS.md` (Modos 2 e 3).
 
 ## Onde estamos
+
+Hotfix de recorrência mensal (01/10/2026): corrigida falha em `src/lib/recurrence.ts` (`getNextOccurrenceV2`) onde regras mensais simples (`monthly`) fixavam o dia em 1 ao virar o mês, fazendo com que 16 tarefas mensais caíssem no dia 01/out. A função agora restaura `base.getDate()` respeitando o teto de dias do mês de destino. As 16 tarefas afetadas no Supabase foram corrigidas para suas respectivas datas reais de outubro com base no histórico. Testes automatizados adicionados em `scripts/coachV41Flows.fixtures.ts`, linter e build 100% verdes.
 
 Ajuste vindo do uso real no notebook (21/08): o botão **Nova tarefa** saiu do topo da barra lateral e foi para o centro do cabeçalho, na mesma linha do "Bom dia". A barra de captura já abria centralizada em `lg:top-[104px]`, então agora ela nasce logo abaixo do próprio botão que a abriu. Só classes `lg:` (o cabeçalho vira grid de três colunas a partir de 1024px); o celular continua idêntico, com o botão redondo na barra inferior. Conferido no app real em 1440px, 1024px, 390px e tema escuro.
 

@@ -187,6 +187,10 @@ export function getNextOccurrenceV2(
         }
       } else if (rule.byDay != null && rule.bySetPos != null) {
         next = getNthWeekdayOfMonth(next.getFullYear(), next.getMonth(), rule.byDay, rule.bySetPos);
+      } else {
+        const originalDay = base.getDate();
+        const maxDaysInTarget = new Date(next.getFullYear(), targetMonth + 1, 0).getDate();
+        next.setDate(Math.min(originalDay, maxDaysInTarget));
       }
       break;
     }

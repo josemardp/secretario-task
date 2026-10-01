@@ -534,6 +534,12 @@ await runFlow('recorrencia. encerramento gera nova instancia sem herdar postpone
   const cancelClone = useTaskStore.getState().tasks.find((item) => item.id !== 'flow-recurring-cancel');
   assert(cancelClone, 'encerramento sem execucao recorrente deve criar nova instancia');
   assertEqual(cancelClone.postponed_count ?? null, null, 'clone de encerramento sem execucao nao herda postponed_count');
+
+  const monthlyCalc = computeNextRuleAndDate('2026-09-15T10:00:00.000Z', 'monthly');
+  assertEqual(monthlyCalc.nextDueAt, '2026-10-15T10:00:00.000Z', 'recorrencia mensal simples preserva dia original');
+
+  const monthlyOverflow = computeNextRuleAndDate('2026-01-31T10:00:00.000Z', 'monthly');
+  assertEqual(monthlyOverflow.nextDueAt, '2026-02-28T10:00:00.000Z', 'recorrencia mensal protege overflow de fim de mes');
 });
 
 await runFlow('partialize. slice(-100) preserva tarefa mais recente com 101+ tasks', 'sim', () => {

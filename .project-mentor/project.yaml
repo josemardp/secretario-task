@@ -19,14 +19,14 @@ status:
   health: unknown
   phase: Producao e refinamento continuo
   priority: 4
-  updated_at: 2026-09-23T18:37:24-03:00
-  last_session_at: 2026-09-23T18:37:24-03:00
+  updated_at: 2026-10-01T11:29:08-03:00
+  last_session_at: 2026-10-01T11:29:08-03:00
   confidence: confirmed
 focus:
   objective: Sistema de gerenciamento de tarefas, rotinas e compromissos com assistente contextual
-  current: Abrir o app no celular após o deploy e validar o visual novo nos dois temas
-  last_completed: Duas tarefas pessoais cadastradas no Supabase a pedido do usuário
-  recommended_next_action: act-004
+  current: Acompanhar no uso diário a conclusão das tarefas de outubro e validar a geração correta para novembro
+  last_completed: Build do Vite e eslint validados com sucesso
+  recommended_next_action: act-005
 next_actions:
   - id: act-001
     title: Avaliar melhorias de usabilidade no modal de tarefas no desktop
@@ -76,6 +76,18 @@ next_actions:
     created_at: 2026-09-23T18:37:24-03:00
     done_at: null
     note: null
+  - id: act-005
+    title: Acompanhar no uso diário a conclusão das tarefas de outubro e validar a geração correta para novembro
+    status: pending
+    impact: null
+    urgency: null
+    effort: null
+    due_date: null
+    unblocks: []
+    blocked_by: []
+    created_at: 2026-10-01T11:29:08-03:00
+    done_at: null
+    note: null
 blockers: []
 decisions_recent:
   - date: 2026-09-16
@@ -86,6 +98,8 @@ decisions_recent:
     text: Redesign feito só na camada de tokens e classes, sem tocar em lógica
   - date: 2026-09-23
     text: Linha do agora passa de vermelho para champanhe; vermelho fica reservado para ATRASADA
+  - date: 2026-10-01
+    text: Preservação explícita de base.getDate() em getNextOccurrenceV2 com teto no último dia do mês alvo quando não há byMonthDay configurado
 milestones: []
 review:
   stale_after_days: null

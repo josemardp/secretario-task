@@ -1,7 +1,17 @@
 # DECISIONS.md — SecretárioTask
 
-Última atualização: 2026-08-14 (Layout de desktop)
+Última atualização: 2026-10-01 (Hotfix de recorrência mensal)
 Status: registro vivo de decisões técnicas e operacionais
+
+---
+
+# Decisões: Hotfix de recorrência mensal simples (2026-10-01)
+
+## 2026-10-01: Preservação do dia do mês em recorrência mensal simples (getNextOccurrenceV2)
+Decisão: a função `getNextOccurrenceV2` em `src/lib/recurrence.ts` passa a restaurar explicitamente o dia do mês original (`base.getDate()`), limitado ao teto de dias do mês de destino, quando a regra mensal não define `byMonthDay` nem `byDay`/`bySetPos`.
+Motivo: em 01/08/2026, uma correção para evitar overflow de mês introduziu `next.setDate(1)` antes de avançar o mês, mas só recolocava o dia quando `rule.byMonthDay != null`. Como tarefas mensais simples (`monthly`) não possuem `byMonthDay`, todas as ocorrências geradas após a conclusão em setembro tiveram seu vencimento fixado no dia 1 do mês seguinte (01/10/2026), acumulando 16 tarefas indevidamente na data.
+Alternativas descartadas: forçar toda regra mensal a virar V2 JSON no momento da captura: criaria acoplamento desnecessário no parser e não resolveria tarefas existentes; manter o comportamento e depender de edição manual da data: quebraria o fluxo autônomo de conclusão de séries recorrentes.
+Contexto: 16 tarefas afetadas no Supabase tiveram seu `due_at` corrigido para os dias reais de outubro apurados a partir do histórico de repetições anteriores. Fixtures em `scripts/coachV41Flows.fixtures.ts` foram adicionadas para proteger contra regressões.
 
 ---
 
