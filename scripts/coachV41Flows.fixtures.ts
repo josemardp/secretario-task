@@ -22,6 +22,8 @@ import {
   hasStalePendingMutation,
   isActiveTask,
   isOpenTask,
+  orderBySemanticRank,
+  sortSearchResults,
 } from '../src/lib/taskFilters.js';
 import { buildCompleteUpdates, buildResolutionUpdates } from '../src/lib/taskLifecycle.js';
 import { buildReopenUpdates } from '../src/lib/timeTracking.js';
@@ -689,6 +691,26 @@ await runFlow('busca. tarefa deletada pode ser excluida antes de filtrar', 'sim'
   const result = filterTasksByText(active, 'reunião');
   assertEqual(result.length, 1, 'apos filtrar deletadas, busca retorna somente a ativa');
   assertEqual(result[0].id, 'b11', 'id correto');
+});
+
+await runFlow('busca. ordena abertas por data proxima, sem data depois, encerradas por ultimo', 'sim', () => {
+  const pool = [
+    task({ id: 'o1', status: 'done', completed_at: '2026-06-01T10:00:00.000Z' }),
+    task({ id: 'o2', due_at: '2026-06-20T10:00:00.000Z' }),
+    task({ id: 'o3', due_at: null, created_at: '2026-05-01T10:00:00.000Z' }),
+    task({ id: 'o4', due_at: '2026-06-05T10:00:00.000Z' }),
+    task({ id: 'o5', status: 'done', completed_at: '2026-06-10T10:00:00.000Z' }),
+    task({ id: 'o6', due_at: null, created_at: '2026-05-20T10:00:00.000Z' }),
+    task({ id: 'o7', resolution_type: 'cancelled', resolved_at: '2026-06-08T10:00:00.000Z' }),
+  ];
+  const ids = sortSearchResults(pool).map((t) => t.id).join(',');
+  assertEqual(ids, 'o4,o2,o6,o3,o5,o7,o1', 'ordem da busca local');
+});
+
+await runFlow('busca. semantica mantem ordem de semelhanca do servidor', 'sim', () => {
+  const pool = [task({ id: 's1' }), task({ id: 's2' }), task({ id: 's3' })];
+  const ids = orderBySemanticRank(pool, ['s3', 'inexistente', 's1']).map((t) => t.id).join(',');
+  assertEqual(ids, 's3,s1', 'ordem do ranking semantico, ignorando id ausente');
 });
 
 await runFlow('sync. marcador de nao sincronizada so aparece com a fila parada', 'sim', () => {

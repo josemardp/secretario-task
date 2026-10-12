@@ -77,6 +77,48 @@ export function filterTasksByText(tasks: Task[], query: string): Task[] {
   );
 }
 
+function timeOrNull(iso: string | null | undefined): number | null {
+  if (!iso) return null;
+  const time = new Date(iso).getTime();
+  return Number.isFinite(time) ? time : null;
+}
+
+/** Ordem de exibição da busca local.
+ *
+ * 1. Abertas antes de encerradas (concluídas, canceladas, delegadas, obsoletas).
+ * 2. Abertas com data: a mais próxima primeiro (atrasadas sobem ao topo).
+ * 3. Abertas sem data: depois das com data, a criada mais recente primeiro.
+ * 4. Encerradas: a resolvida mais recente primeiro. */
+export function sortSearchResults(tasks: Task[]): Task[] {
+  return [...tasks].sort((a, b) => {
+    const aOpen = isOpenTask(a);
+    const bOpen = isOpenTask(b);
+    if (aOpen !== bOpen) return aOpen ? -1 : 1;
+
+    if (aOpen) {
+      const aDue = timeOrNull(a.due_at);
+      const bDue = timeOrNull(b.due_at);
+      if (aDue !== null && bDue !== null && aDue !== bDue) return aDue - bDue;
+      if (aDue !== null && bDue === null) return -1;
+      if (aDue === null && bDue !== null) return 1;
+      return (timeOrNull(b.created_at) ?? 0) - (timeOrNull(a.created_at) ?? 0);
+    }
+
+    const aResolved = timeOrNull(getTaskResolvedAt(a)) ?? timeOrNull(a.updated_at) ?? 0;
+    const bResolved = timeOrNull(getTaskResolvedAt(b)) ?? timeOrNull(b.updated_at) ?? 0;
+    return bResolved - aResolved;
+  });
+}
+
+/** Mantém a ordem de semelhança devolvida pelo `match_tasks` (mais parecida primeiro). */
+export function orderBySemanticRank(tasks: Task[], rankedIds: string[]): Task[] {
+  const byId = new Map(tasks.map((task) => [task.id, task]));
+  return rankedIds.flatMap((id) => {
+    const task = byId.get(id);
+    return task ? [task] : [];
+  });
+}
+
 export function getReviewEligibleTasks(tasks: Task[], topN?: number): Task[] {
   const eligible = tasks
     .filter((task) => isOpenTask(task) && !task.blocker_type)

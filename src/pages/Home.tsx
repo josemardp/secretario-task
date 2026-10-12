@@ -25,7 +25,13 @@ import { NotificationEngine } from '../components/NotificationEngine';
 import { FocoSheet } from '../components/FocoSheet';
 import { useToast } from '../components/toastContext';
 import { generateBriefingFromTopTasks, getDailyBriefing } from '../lib/briefing';
-import { isOpenTask, filterTasksByText, getReviewEligibleTasks } from '../lib/taskFilters';
+import {
+  isOpenTask,
+  filterTasksByText,
+  getReviewEligibleTasks,
+  orderBySemanticRank,
+  sortSearchResults,
+} from '../lib/taskFilters';
 import { buildCompleteUpdates } from '../lib/taskLifecycle';
 import { postponeToTomorrow } from '../lib/datetime';
 import { buildDailyReview, buildDecisionPlan } from '../lib/decisionEngine';
@@ -453,6 +459,13 @@ export default function Home() {
     return filterTasksByText(activeTasks, searchText);
   }, [tasks, semanticResults, searchText]);
 
+  const searchResults = useMemo(
+    () => semanticResults
+      ? orderBySemanticRank(baseVisibleTasks, semanticResults.map((r) => r.id))
+      : sortSearchResults(baseVisibleTasks),
+    [baseVisibleTasks, semanticResults],
+  );
+
   const captureBarVisible = true;
   const setCaptureElementRef = (node: HTMLElement | null) => {
     captureBarRef.current = node;
@@ -696,7 +709,7 @@ export default function Home() {
           <div className="flex flex-col gap-2 pb-4 lg:max-w-[900px]">
             {isSearching ? (
               <p className="text-center py-8 text-ink-2 text-[14px]">Buscando…</p>
-            ) : baseVisibleTasks.length === 0 ? (
+            ) : searchResults.length === 0 ? (
               <p className="text-center py-8 text-ink-2 text-[14px]">
                 Nenhum resultado para{' '}
                 <span className="text-ink font-semibold">«{searchText}»</span>
@@ -704,10 +717,10 @@ export default function Home() {
             ) : (
               <>
                 <p className="text-[12px] text-ink-2 font-semibold pb-1">
-                  {baseVisibleTasks.length} resultado{baseVisibleTasks.length !== 1 ? 's' : ''}
+                  {searchResults.length} resultado{searchResults.length !== 1 ? 's' : ''}
                   {semanticResults ? ' · busca semântica' : ' · busca local'}
                 </p>
-                {baseVisibleTasks.map((t) => (
+                {searchResults.map((t) => (
                   <div
                     key={t.id}
                     role="button"
